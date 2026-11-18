@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>感知→决策→行动 闭环实验</title>
+<link rel="stylesheet" href="../assets/loop-original.css"><link rel="stylesheet" href="../assets/experiment.css"><link rel="stylesheet" href="../assets/loop.css">
+</head>
+<body>
+<div class="container">
+    <div class="main">
+        <div class="panel">
+            <div class="panel-title">感知 → 决策 → 行动</div>
+            <div class="panel-list">
+                <div class="mod sb" draggable="true" data-module="sense">
+                    <div class="mi">👁️</div>
+                    <div><div class="ml">感知</div><div class="md">观察收集信息</div></div>
+                </div>
+                <div class="mod db" draggable="true" data-module="decision">
+                    <div class="mi">🧠</div>
+                    <div><div class="ml">决策</div><div class="md">分析做出判断</div></div>
+                </div>
+                <div class="mod ab" draggable="true" data-module="action">
+                    <div class="mi">⚡</div>
+                    <div><div class="ml">行动</div><div class="md">执行产生影响</div></div>
+                </div>
+            </div>
+            <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+
+        <div class="main-row">
+            <div class="canvas-wrap" id="canvas">
+                <svg preserveAspectRatio="none" class="canvas-svg" viewBox="0 0 480 280">
+                    <defs>
+                        <marker id="ah" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+                            <polygon points="0 0, 7 2.5, 0 5" fill="#4ade80"/>
+                        </marker>
+                        <marker id="ahy" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+                            <polygon points="0 0, 7 2.5, 0 5" fill="#fbbf24"/>
+                        </marker>
+                    </defs>
+                    <line id="la1" class="on"  x1="144" y1="140" x2="200" y2="140" marker-end="url(#ah)"/>
+                    <line id="la2" class="on"  x1="279" y1="140" x2="335" y2="140" marker-end="url(#ah)"/>
+                    <line id="ta1" class="off" x1="258" y1="90" x2="358" y2="196" marker-end="url(#ah)"/>
+                    <line id="ta2" class="off" x1="342" y1="221" x2="138" y2="221" marker-end="url(#ah)"/>
+                    <line id="ta3" class="off" x1="134" y1="198" x2="222" y2="90" marker-end="url(#ahy)"/>
+                </svg>
+                <div class="dt p1" id="dt1" data-target="sense"></div>
+                <div class="dt p2" id="dt2" data-target="decision"></div>
+                <div class="dt p3" id="dt3" data-target="action"></div>
+            </div>
+            <div class="side-actions">
+                <span class="mode-tag" id="modeTag">第一阶段</span>
+                <button class="btn btn-go" id="submitBtn" disabled>运行</button><button class="btn" id="resetLoop">重置组装</button>
+            </div>
+        </div>
+    </div>
+</div><div class="feedback" id="feedback" role="status"></div>
+<script type="module" src="../assets/loop.js"></script><script src="../assets/frame.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>传感器安装与试跑</title><link rel="stylesheet" href="../assets/experiment.css"></head><body>
+<div class="sensor-grid" id="sensors" aria-label="传感器模块"></div>
+<div class="two" id="installArea" style="margin-top:18px;align-items:center"><img src="../assets/robot.svg" alt="待安装传感器的机器人" style="width:100%;max-height:260px"><div><div class="drop-zone" id="dropzone" tabindex="0" aria-label="将传感器拖到机器人身上">把传感器拖到这里安装</div><p id="installed" class="muted"></p></div></div>
+<div class="track" id="trialArea"><canvas id="track" width="520" height="340" aria-label="机器人在红色操场试跑"></canvas></div>
+<div class="controls"><button id="run" class="primary">开始试跑</button><button id="reset">恢复初代机</button></div>
+<div class="stats" id="stats"></div><div id="feedback" class="feedback" role="status"></div>
+<script type="module" src="../assets/selection.js"></script><script src="../assets/frame.js"></script></body></html>

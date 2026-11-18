@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>选手档案 - 赛道试跑区</title>
+  <style>*{box-sizing:border-box}body{margin:0}.container{max-width:1200px;margin:auto}.card{border-radius:10px;overflow:hidden;border:1px solid #4a5870}.card-body{padding:10px}.hidden{display:none!important}.btn-primary{background:#2563eb;color:white}</style>
+<link rel="stylesheet" href="../assets/experiment.css"><style>body{background:#171b2b;color:#eef2ff}.card{background:#222b3d;border-color:#4a5870}.container{padding:0}.card-body{padding:10px}#simStatus{font-size:15px!important;color:#d2d9e7!important}#trackPanels{align-items:start}#failOverlay{position:static!important;background:transparent!important;margin-top:10px}#failOverlay>div{max-width:none!important;width:100%!important;padding:12px!important;border:0!important;border-left:3px solid #e6b269!important;border-radius:4px!important;background:#222b3d!important;box-shadow:none!important}#failOverlay>div>div{display:none}#failOverlay h3{font-size:18px!important}#failOverlay p{margin:0!important;color:#d7dce8!important}#failOverlay button{margin-top:8px}@media(max-width:600px){#trackPanels{grid-template-columns:1fr!important}}</style></head>
+<body>
+  <main class="container">
+    <section id="profile">
+      <div style="position:relative;margin-bottom:.25rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem" id="trackPanels">
+          <div class="card">
+            <div class="card-body" style="text-align:center">
+              <h3 style="font-size:1rem;font-weight:600;margin-bottom:.25rem;color:#c0392b;font-size:.9rem">第一视角 · 机器人所见画面</h3>
+              <canvas id="fpvCanvas" width="520" height="320" style="width:100%;height:auto;border-radius:.5rem;background:#000"></canvas>
+              <button id="simBtn" class="btn btn-primary" style="padding:.75rem 2.5rem;font-size:1.05rem;font-weight:700;margin-top:.4rem">开始试跑</button>
+              <p id="simStatus" style="margin-top:.25rem;font-size:.75rem;color:#64748b">点击按钮，观察初代机（仅摄像头）在赛道上的表现</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body" style="text-align:center">
+              <h3 style="font-size:1rem;font-weight:600;margin-bottom:.25rem;color:#c0392b;font-size:.9rem">第三视角 · 俯瞰赛道</h3>
+              <canvas id="tpvCanvas" width="520" height="380" style="width:100%;height:auto;border-radius:.5rem;background:#000"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- 失败弹窗，覆盖在两个视角中间 -->
+        <div id="failOverlay" class="hidden" style="position:absolute;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:50;border-radius:.75rem">
+          <div style="background:var(--card);border-radius:1rem;padding:2.5rem 2rem;text-align:center;max-width:400px;width:90%;border:3px solid #ef4444;box-shadow:0 20px 60px rgba(239,68,68,.3);animation:fadeIn .3s">
+            <div style="font-size:4rem;margin-bottom:.75rem">⚠️</div>
+            <h3 style="color:#dc2626;font-weight:700;font-size:1.5rem;margin-bottom:.75rem">犯规出局！</h3>
+            <p style="color:#64748b;line-height:1.8;font-size:.95rem;margin-bottom:.5rem">
+              初代机在<strong style="color:#c0392b">直道</strong>上跑得很顺利
+            </p>
+            <p style="color:#64748b;line-height:1.8;font-size:.95rem;margin-bottom:.5rem">
+              但快进入<strong style="color:#c0392b">弯道</strong>时<strong style="color:#dc2626">提前转弯</strong>，冲出了跑道
+            </p>
+            <p style="color:#94a3b8;line-height:1.7;font-size:.85rem;margin-bottom:1.5rem">
+              原因：本演示的视觉判断发生偏差，导致提前转弯；这不代表所有单摄像头机器人都会失败
+            </p>
+            <button onclick="resetSim()" class="btn btn-primary" style="min-width:120px">再看一次</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ========== Tab 1: 赛道试跑区 — 双视角Canvas动画 ==========
+    const fpvCanvas = document.getElementById('fpvCanvas');
+    const fpvCtx = fpvCanvas.getContext('2d');
+    const tpvCanvas = document.getElementById('tpvCanvas');
+    const tpvCtx = tpvCanvas.getContext('2d');
+    const failOverlay = document.getElementById('failOverlay');
+    const simBtn = document.getElementById('simBtn');
+    const simStatus = document.getElementById('simStatus');
+
+    // 标准操场跑道参数（横放：上下两条直道 + 左右两端半圆形弯道）
+    const T = {
+      cx: 260, cy: 190,          // 赛道中心
+      leftX: 155,                 // 左弯道圆心 X
+      rightX: 365,                // 右弯道圆心 X
+      curveR: 90,                 // 弯道半径（中心线）
+      halfW: 24,                  // 跑道半宽 (总宽48px)
+      get outerTop()    { return this.cy - this.curveR - this.halfW; },   // 91
+      get outerBottom() { return this.cy + this.curveR + this.halfW; },   // 289
+      get innerTop()    { return this.cy - this.curveR + this.halfW; },   // 139
+      get innerBottom() { return this.cy + this.curveR - this.halfW; },   // 241
+      get outerR()      { return this.curveR + this.halfW; },              // 99
+      get innerR()      { return this.curveR - this.halfW; }               // 51
+    };
+
+    let animState = 'idle';       // idle | straight | approaching | offtrack | done
+    let robot = { x: 400, y: T.outerBottom - 22 };  // 起点：右下直道
+    let fpvCurve = 0;             // 第一视角弯道弯曲程度
+    let fpvOfftrack = 0;          // 偏离跑道程度
+    let scrollOffset = 0;         // 第一视角跑道后退滚动
+    let animFrame = 0;
+    let animId = null;
+
+    // 判断点是否在跑道上（横放标准操场）
+    function isOnTrack(x, y) {
+      if (x >= T.leftX && x <= T.rightX) {
+        // 直道区域：检查 y 是否在上下直道范围内
+        return (y >= T.outerTop && y <= T.innerTop) ||
+               (y >= T.innerBottom && y <= T.outerBottom);
+      } else if (x < T.leftX) {
+        // 左弯道区域：检查到左弯道圆心的距离
+        const dx = x - T.leftX, dy = y - T.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist >= T.innerR && dist <= T.outerR;
+      } else {
+        // 右弯道区域
+        const dx = x - T.rightX, dy = y - T.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist >= T.innerR && dist <= T.outerR;
+      }
+    }
+
+    // 绘制第三视角（横放标准操场俯瞰）
+    function drawTPV() {
+      const ctx = tpvCtx;
+      const W = tpvCanvas.width, H = tpvCanvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // 背景草地
+      ctx.fillStyle = '#7cb342';
+      ctx.fillRect(0, 0, W, H);
+
+      // ===== 红色橡胶跑道（横放：上下直道 + 左右弯道）=====
+      // 外轮廓（顺时针）
+      ctx.beginPath();
+      ctx.moveTo(T.leftX, T.outerTop);
+      ctx.lineTo(T.rightX, T.outerTop);
+      ctx.arc(T.rightX, T.cy, T.outerR, -Math.PI/2, Math.PI/2);
+      ctx.lineTo(T.leftX, T.outerBottom);
+      ctx.arc(T.leftX, T.cy, T.outerR, Math.PI/2, -Math.PI/2);
+      ctx.closePath();
+      // 内轮廓（逆时针挖空）
+      ctx.moveTo(T.leftX, T.innerTop);
+      ctx.lineTo(T.rightX, T.innerTop);
+      ctx.arc(T.rightX, T.cy, T.innerR, -Math.PI/2, Math.PI/2, true);
+      ctx.lineTo(T.leftX, T.innerBottom);
+      ctx.arc(T.leftX, T.cy, T.innerR, Math.PI/2, -Math.PI/2, true);
+      ctx.closePath();
+      ctx.fillStyle = '#c0392b';
+      ctx.fill('evenodd');
+
+      // 跑道颗粒纹理
+      ctx.fillStyle = 'rgba(180,60,40,0.2)';
+      for (let i = 0; i < 220; i++) {
+        let px, py;
+        const sec = Math.random();
+        if (sec < 0.4) {
+          px = T.leftX + Math.random() * (T.rightX - T.leftX);
+          py = T.outerTop + Math.random() * (T.innerTop - T.outerTop);
+        } else if (sec < 0.8) {
+          px = T.leftX + Math.random() * (T.rightX - T.leftX);
+          py = T.innerBottom + Math.random() * (T.outerBottom - T.innerBottom);
+        } else if (sec < 0.9) {
+          const a = -Math.PI/2 + Math.random() * Math.PI;
+          const r = T.innerR + Math.random() * (T.outerR - T.innerR);
+          px = T.rightX + r * Math.cos(a); py = T.cy + r * Math.sin(a);
+        } else {
+          const a = Math.PI/2 + Math.random() * Math.PI;
+          const r = T.innerR + Math.random() * (T.outerR - T.innerR);
+          px = T.leftX + r * Math.cos(a); py = T.cy + r * Math.sin(a);
+        }
+        ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI*2); ctx.fill();
+      }
+
+      // 跑道分道线（白色虚线）
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6, 10]);
+      for (let lane = 1; lane <= 3; lane++) {
+        const t = lane / 4;
+        const topY = T.outerTop + (T.innerTop - T.outerTop) * t;
+        const btmY = T.innerBottom + (T.outerBottom - T.innerBottom) * t;
+        const r = T.innerR + (T.outerR - T.innerR) * t;
+        // 上直道
+        ctx.beginPath(); ctx.moveTo(T.leftX, topY); ctx.lineTo(T.rightX, topY); ctx.stroke();
+        // 下直道
+        ctx.beginPath(); ctx.moveTo(T.leftX, btmY); ctx.lineTo(T.rightX, btmY); ctx.stroke();
+        // 右弯道
+        ctx.beginPath(); ctx.arc(T.rightX, T.cy, r, -Math.PI/2, Math.PI/2); ctx.stroke();
+        // 左弯道
+        ctx.beginPath(); ctx.arc(T.leftX, T.cy, r, Math.PI/2, -Math.PI/2); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // 跑道边缘白线
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(T.leftX, T.outerTop); ctx.lineTo(T.rightX, T.outerTop);
+      ctx.arc(T.rightX, T.cy, T.outerR, -Math.PI/2, Math.PI/2);
+      ctx.lineTo(T.leftX, T.outerBottom);
+      ctx.arc(T.leftX, T.cy, T.outerR, Math.PI/2, -Math.PI/2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(T.leftX, T.innerTop); ctx.lineTo(T.rightX, T.innerTop);
+      ctx.arc(T.rightX, T.cy, T.innerR, -Math.PI/2, Math.PI/2);
+      ctx.lineTo(T.leftX, T.innerBottom);
+      ctx.arc(T.leftX, T.cy, T.innerR, Math.PI/2, -Math.PI/2);
+      ctx.stroke();
+
+      // 中心草坪
+      const grassGrad = ctx.createLinearGradient(0, T.outerTop, 0, T.outerBottom);
+      grassGrad.addColorStop(0, '#66bb6a'); grassGrad.addColorStop(0.5, '#4caf50'); grassGrad.addColorStop(1, '#388e3c');
+      ctx.fillStyle = grassGrad;
+      ctx.beginPath();
+      ctx.moveTo(T.leftX, T.innerTop); ctx.lineTo(T.rightX, T.innerTop);
+      ctx.arc(T.rightX, T.cy, T.innerR, -Math.PI/2, Math.PI/2);
+      ctx.lineTo(T.leftX, T.innerBottom);
+      ctx.arc(T.leftX, T.cy, T.innerR, Math.PI/2, -Math.PI/2);
+      ctx.closePath(); ctx.fill();
+
+      // 足球场中线 + 中圈
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 6]);
+      ctx.beginPath(); ctx.moveTo(T.leftX + 10, T.cy); ctx.lineTo(T.rightX - 10, T.cy); ctx.stroke();
+      ctx.beginPath(); ctx.arc((T.leftX+T.rightX)/2, T.cy, 28, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 起点/终点线（右下直道）
+      ctx.fillStyle = '#fff';
+      const startX = T.rightX - 40;
+      ctx.fillRect(startX, T.innerBottom, 36, T.outerBottom - T.innerBottom);
+      ctx.fillStyle = '#333';
+      ctx.font = 'bold 9px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('起/终点', startX + 18, T.innerBottom - 5);
+
+      // ===== 机器人 - 绿色小机器人 =====
+      if (animState !== 'idle') {
+        const rx = robot.x, ry = robot.y;
+        const BW = 20, BH = 16; // body size
+
+        // 阴影
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.beginPath(); ctx.ellipse(rx, ry + 2, BW/2 + 2, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+        // 腿部（交替动画）
+        ctx.fillStyle = '#00cc00';
+        if (animFrame % 2 === 0) {
+          ctx.fillRect(rx - BW/2 + 2, ry - 2, 5, 6);
+          ctx.fillRect(rx + BW/2 - 7, ry - 4, 5, 6);
+        } else {
+          ctx.fillRect(rx - BW/2 + 2, ry - 4, 5, 6);
+          ctx.fillRect(rx + BW/2 - 7, ry - 2, 5, 6);
+        }
+
+        // 身体
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(rx - BW/2, ry - BH - 2, BW, BH);
+
+        // 手臂（交替动画）
+        ctx.fillStyle = '#00ff00';
+        if (animFrame % 2 === 0) {
+          ctx.fillRect(rx - BW/2 - 2, ry - BH + 2, 2, 6);
+          ctx.fillRect(rx + BW/2, ry - BH + 8, 2, 6);
+        } else {
+          ctx.fillRect(rx - BW/2 - 2, ry - BH + 8, 2, 6);
+          ctx.fillRect(rx + BW/2, ry - BH + 2, 2, 6);
+        }
+
+        // 头部
+        ctx.fillStyle = '#00cc00';
+        ctx.fillRect(rx - 6, ry - BH - 10, 12, 8);
+
+        // 眼睛
+        ctx.fillStyle = '#000';
+        ctx.fillRect(rx - 4, ry - BH - 7, 2.5, 2.5);
+        ctx.fillRect(rx + 1.5, ry - BH - 7, 2.5, 2.5);
+
+
+
+        if (animState === 'offtrack' || animState === 'done') {
+          ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(rx-7, ry-7); ctx.lineTo(rx+7, ry+7);
+          ctx.moveTo(rx+7, ry-7); ctx.lineTo(rx-7, ry+7); ctx.stroke();
+        }
+      }
+      ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('标准操场 · 红色橡胶跑道', 10, H - 8);
+    }
+
+    // 绘制第一视角（机器人所见画面，跑道向后倒退）
+    function drawFPV() {
+      const ctx = fpvCtx;
+      const W = fpvCanvas.width, H = fpvCanvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // 轻微左右晃动
+      const wobble = Math.sin(animFrame * 0.15) * 3;
+      ctx.save();
+      ctx.translate(wobble, 0);
+
+      // 天空
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      skyGrad.addColorStop(0, '#87ceeb'); skyGrad.addColorStop(1, '#c9e8f5');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H * 0.45);
+
+      // 学校建筑（底部落在水平线上）
+      const horizonY = H * 0.42;
+      const buildings = [
+        { x: 10, w: 50, h: H * 0.26 },
+        { x: 70, w: 48, h: H * 0.30 },
+        { x: 340, w: 60, h: H * 0.28 },
+        { x: 415, w: 48, h: H * 0.24 },
+      ];
+      buildings.forEach(b => {
+        const by = horizonY - b.h;
+        ctx.fillStyle = '#e8d5b5'; ctx.fillRect(b.x, by, b.w, b.h);
+        ctx.fillStyle = '#d4c4a8'; ctx.fillRect(b.x + 5, by - 3, b.w - 10, 5);
+        ctx.fillStyle = '#87ceeb';
+        for (let wx = b.x + 5; wx < b.x + b.w - 7; wx += 11)
+          for (let wy = by + 10; wy < by + b.h - 10; wy += 13)
+            ctx.fillRect(wx, wy, 5, 7);
+      });
+
+      // 远处树木（底部落在水平线上）
+      for (let tx = 140; tx < 370; tx += 50) {
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(tx - 2, horizonY - 18, 4, 18);
+        ctx.fillStyle = '#388e3c'; ctx.beginPath(); ctx.arc(tx, horizonY - 22, 12, 0, Math.PI*2); ctx.fill();
+      }
+
+      // ===== 跑道区域 =====
+      const centerX = W / 2;
+      const vanishX = centerX + fpvCurve * 70 + fpvOfftrack * 25;
+
+      // 背景草地
+      ctx.fillStyle = '#7cb342'; ctx.fillRect(0, horizonY, W, H - horizonY);
+
+      // 跑道梯形（透视）
+      const nearL = vanishX - 240 + fpvOfftrack * 20;
+      const nearR = vanishX + 240 + fpvOfftrack * 20;
+      const farL  = vanishX - 65 - fpvCurve * 50;
+      const farR  = vanishX + 65 - fpvCurve * 40;
+
+      // 红色跑道
+      ctx.fillStyle = '#c0392b';
+      ctx.beginPath();
+      ctx.moveTo(nearL, H); ctx.lineTo(nearR, H);
+      if (fpvCurve > 0.08) {
+        const cpY = horizonY + (H - horizonY) * 0.35;
+        ctx.quadraticCurveTo(nearR * 0.6 + farR * 0.4, cpY, farR, horizonY);
+        ctx.lineTo(farL, horizonY);
+        ctx.quadraticCurveTo(nearL * 0.6 + farL * 0.4, cpY, nearL, H);
+      } else {
+        ctx.lineTo(farR, horizonY); ctx.lineTo(farL, horizonY); ctx.closePath();
+      }
+      ctx.fill();
+
+      // 跑道颗粒（跑道向后倒退 — 向视野下方流动）
+      ctx.fillStyle = 'rgba(180,60,40,0.22)';
+      const particleCount = 50;
+      for (let i = 0; i < particleCount; i++) {
+        const baseT = (i / particleCount + scrollOffset / 600) % 1;
+        const t = 0.08 + baseT * 0.88;
+        const y = horizonY + (H - horizonY) * t;
+        const lx = nearL + (farL - nearL) * (1 - t) * 0.85;
+        const rx = nearR + (farR - nearR) * (1 - t) * 0.85;
+        const x = lx + (rx - lx) * (0.08 + (i * 0.017) % 0.85);
+        ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill();
+      }
+
+      // 跑道分道线（裁剪到跑道区域内，不超出）
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(nearL, H); ctx.lineTo(nearR, H);
+      if (fpvCurve > 0.08) {
+        const cpY = horizonY + (H - horizonY) * 0.35;
+        ctx.quadraticCurveTo(nearR * 0.6 + farR * 0.4, cpY, farR, horizonY);
+        ctx.lineTo(farL, horizonY);
+        ctx.quadraticCurveTo(nearL * 0.6 + farL * 0.4, cpY, nearL, H);
+      } else {
+        ctx.lineTo(farR, horizonY); ctx.lineTo(farL, horizonY); ctx.closePath();
+      }
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1.5;
+      for (let lane = 1; lane <= 5; lane++) {
+        const t = lane / 6;
+        const lx = nearL + (nearR - nearL) * t;
+        const rx = farL + (farR - farL) * t;
+        ctx.setLineDash([10, 12]);
+        ctx.lineDashOffset = scrollOffset;
+        ctx.beginPath(); ctx.moveTo(lx, H); ctx.lineTo(rx, horizonY);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+      ctx.restore();
+
+      // 跑道边缘白线
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(nearL, H);
+      if (fpvCurve > 0.08) {
+        const cpY = horizonY + (H - horizonY) * 0.32;
+        ctx.quadraticCurveTo(nearL * 0.55 + farL * 0.45, cpY, farL, horizonY);
+      } else { ctx.lineTo(farL, horizonY); }
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(nearR, H);
+      if (fpvCurve > 0.08) {
+        const cpY = horizonY + (H - horizonY) * 0.32;
+        ctx.quadraticCurveTo(nearR * 0.55 + farR * 0.45, cpY, farR, horizonY);
+      } else { ctx.lineTo(farR, horizonY); }
+      ctx.stroke();
+
+      // 前方弯道时，跑道弯曲 + 偏离后出现草地
+      if (fpvOfftrack > 0.2) {
+        const a = fpvOfftrack;
+        ctx.fillStyle = `rgba(124,179,66,${a * 0.55})`;
+        ctx.beginPath();
+        ctx.moveTo(vanishX - 35, horizonY); ctx.lineTo(vanishX + 35, horizonY);
+        ctx.lineTo(vanishX + 25, horizonY + 70); ctx.lineTo(vanishX - 25, horizonY + 70);
+        ctx.closePath(); ctx.fill();
+      }
+
+      if (animState === 'offtrack') {
+        const a = 0.3 + Math.sin(animFrame * 0.22) * 0.18;
+        ctx.fillStyle = `rgba(239,68,68,${a})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('⚠ 冲出跑道！', W/2, H*0.55);
+        ctx.font = '14px system-ui';
+        ctx.fillText('摄像头无法判断弯道距离', W/2, H*0.62);
+      }
+      if (animState === 'done') {
+        ctx.fillStyle = 'rgba(239,68,68,0.28)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 24px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('⚠ 冲出跑道！', W/2, H*0.55);
+      }
+      ctx.restore();
+    }
+
+    drawTPV(); drawFPV();
+
+    function resetSim() {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      animState = 'idle';
+      robot = { x: T.rightX - 20, y: T.outerBottom - 22 };
+      fpvCurve = 0; fpvOfftrack = 0; scrollOffset = 0; animFrame = 0;
+      failOverlay.classList.add('hidden');
+      simBtn.disabled = false;
+      simBtn.textContent = '开始试跑';
+      simStatus.textContent = '点击按钮，观察初代机（仅摄像头）在赛道上的表现';
+      drawTPV(); drawFPV();
+    }
+
+    simBtn.addEventListener('click', startSim);
+
+    function startSim() {
+      if (animState === 'straight' || animState === 'approaching' || animState === 'offtrack') return;
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      animState = 'straight';
+      robot = { x: T.rightX - 20, y: T.outerBottom - 22 };
+      fpvCurve = 0; fpvOfftrack = 0; scrollOffset = 0; animFrame = 0;
+      failOverlay.classList.add('hidden');
+      simBtn.disabled = true;
+      simBtn.textContent = '试跑中...';
+      simStatus.textContent = '初代机仅靠摄像头在赛道上行驶...';
+      loop();
+    }
+
+    function loop() {
+      animFrame++;
+      scrollOffset += 2.5;  // 跑道向后倒退
+
+      if (animState === 'straight') {
+        // 沿下直道向左匀速移动，轻微上下摇晃
+        robot.x -= 0.55;
+        robot.y += Math.sin(animFrame * 0.12) * 0.6;
+        fpvCurve = 0; fpvOfftrack = 0;
+
+        // 接近左弯道（距圆心约40px）
+        if (robot.x <= T.leftX + 45) {
+          animState = 'approaching';
+        }
+      } else if (animState === 'approaching') {
+        // 应沿左弯道转弯，但初代机判断不了弯道距离
+        robot.x -= 0.5;
+        robot.y -= 0.3;   // 提前且不足的上转
+        fpvCurve = Math.min(1, fpvCurve + 0.022);
+        fpvOfftrack = Math.min(1, fpvOfftrack + 0.012);
+
+        if (!isOnTrack(robot.x, robot.y)) {
+          animState = 'offtrack';
+        }
+      } else if (animState === 'offtrack') {
+        robot.x -= 0.5;
+        robot.y -= 0.7;   // 继续偏移
+        fpvCurve = Math.min(1, fpvCurve + 0.025);
+        fpvOfftrack = Math.min(1, fpvOfftrack + 0.035);
+
+        if (fpvOfftrack >= 0.95) {
+          animState = 'done';
+          failOverlay.classList.remove('hidden');
+          try{localStorage.setItem('robotcoach:diagnosis','done');}catch{} simStatus.textContent='试跑结束：进入弯道时偏离了跑道'; simBtn.disabled=false; simBtn.textContent='重新试跑';
+          cancelAnimationFrame(animId); animId = null;
+          drawTPV(); drawFPV();
+          return;
+        }
+      }
+
+      drawTPV(); drawFPV();
+      if (animState !== 'done') animId = requestAnimationFrame(loop);
+    }
+
+  </script>
+<script>let diagnosisSaved=false;try{diagnosisSaved=localStorage.getItem("robotcoach:diagnosis")==="done";}catch{}if(diagnosisSaved){failOverlay.classList.remove("hidden");simStatus.textContent="上次试跑：弯道偏离，可重新观察";}document.addEventListener("visibilitychange",()=>{if(document.hidden&&animId){cancelAnimationFrame(animId);animId=null;animState="idle";simBtn.disabled=false;simBtn.textContent="重新试跑";}});window.addEventListener("pagehide",()=>cancelAnimationFrame(animId));</script><script src="../assets/frame.js"></script></body>
+</html>

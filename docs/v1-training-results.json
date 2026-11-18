@@ -1,0 +1,533 @@
+{
+  "method": "100000 real Q updates per seed, same 20-episode frozen evaluation schedule before/after; no expert data",
+  "results": [
+    {
+      "seed": 17,
+      "updates": 100000,
+      "attempts": 535,
+      "states": 649,
+      "before": {
+        "episodes": 20,
+        "meanScore": 33,
+        "meanPassed": 0,
+        "scores": [
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33
+        ],
+        "passed": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "after": {
+        "episodes": 20,
+        "meanScore": 300,
+        "meanPassed": 18,
+        "scores": [
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300
+        ],
+        "passed": [
+          17,
+          18,
+          18,
+          18,
+          18,
+          17,
+          19,
+          18,
+          19,
+          18,
+          18,
+          18,
+          18,
+          18,
+          17,
+          18,
+          18,
+          19,
+          18,
+          18
+        ]
+      },
+      "lastTen": [
+        {
+          "attempt": 526,
+          "score": 209,
+          "passed": 11,
+          "reward": 94.855,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 527,
+          "score": 168,
+          "passed": 9,
+          "reward": 75.195,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 528,
+          "score": 173,
+          "passed": 9,
+          "reward": 75.615,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 529,
+          "score": 95,
+          "passed": 4,
+          "reward": 28.55,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 530,
+          "score": 97,
+          "passed": 4,
+          "reward": 28.79,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 531,
+          "score": 67,
+          "passed": 2,
+          "reward": 10.03,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 532,
+          "score": 300,
+          "passed": 18,
+          "reward": 171,
+          "reason": "本轮观察结束"
+        },
+        {
+          "attempt": 533,
+          "score": 207,
+          "passed": 12,
+          "reward": 102.66,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 534,
+          "score": 46,
+          "passed": 1,
+          "reward": 0.17,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 535,
+          "score": 237,
+          "passed": 13,
+          "reward": 113.375,
+          "reason": "碰到横梁"
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "updates": 100000,
+      "attempts": 612,
+      "states": 647,
+      "before": {
+        "episodes": 20,
+        "meanScore": 33,
+        "meanPassed": 0,
+        "scores": [
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33
+        ],
+        "passed": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "after": {
+        "episodes": 20,
+        "meanScore": 300,
+        "meanPassed": 18,
+        "scores": [
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300,
+          300
+        ],
+        "passed": [
+          17,
+          18,
+          18,
+          18,
+          18,
+          17,
+          19,
+          18,
+          19,
+          18,
+          18,
+          18,
+          18,
+          18,
+          17,
+          18,
+          18,
+          19,
+          18,
+          18
+        ]
+      },
+      "lastTen": [
+        {
+          "attempt": 603,
+          "score": 172,
+          "passed": 9,
+          "reward": 75.48,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 604,
+          "score": 136,
+          "passed": 7,
+          "reward": 56.255,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 605,
+          "score": 180,
+          "passed": 10,
+          "reward": 84.275,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 606,
+          "score": 48,
+          "passed": 1,
+          "reward": 0.365,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 607,
+          "score": 187,
+          "passed": 10,
+          "reward": 84.905,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 608,
+          "score": 94,
+          "passed": 4,
+          "reward": 28.535,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 609,
+          "score": 52,
+          "passed": 1,
+          "reward": 0.695,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 610,
+          "score": 52,
+          "passed": 1,
+          "reward": 0.695,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 611,
+          "score": 100,
+          "passed": 4,
+          "reward": 29.045,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 612,
+          "score": 300,
+          "passed": 18,
+          "reward": 171,
+          "reason": "本轮观察结束"
+        }
+      ]
+    },
+    {
+      "seed": 2026,
+      "updates": 100000,
+      "attempts": 559,
+      "states": 640,
+      "before": {
+        "episodes": 20,
+        "meanScore": 33,
+        "meanPassed": 0,
+        "scores": [
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33,
+          33
+        ],
+        "passed": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "after": {
+        "episodes": 20,
+        "meanScore": 265.45,
+        "meanPassed": 15.55,
+        "scores": [
+          300,
+          300,
+          300,
+          300,
+          300,
+          238,
+          300,
+          273,
+          300,
+          300,
+          300,
+          300,
+          134,
+          300,
+          300,
+          300,
+          75,
+          300,
+          300,
+          89
+        ],
+        "passed": [
+          17,
+          18,
+          18,
+          18,
+          18,
+          13,
+          18,
+          16,
+          18,
+          18,
+          18,
+          18,
+          7,
+          18,
+          18,
+          17,
+          3,
+          18,
+          18,
+          4
+        ]
+      },
+      "lastTen": [
+        {
+          "attempt": 550,
+          "score": 151,
+          "passed": 8,
+          "reward": 65.62,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 551,
+          "score": 174,
+          "passed": 9,
+          "reward": 75.675,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 552,
+          "score": 300,
+          "passed": 17,
+          "reward": 163,
+          "reason": "本轮观察结束"
+        },
+        {
+          "attempt": 553,
+          "score": 234,
+          "passed": 13,
+          "reward": 113.12,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 554,
+          "score": 150,
+          "passed": 8,
+          "reward": 65.575,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 555,
+          "score": 82,
+          "passed": 3,
+          "reward": 19.425,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 556,
+          "score": 61,
+          "passed": 2,
+          "reward": 9.565,
+          "reason": "撞上地面障碍"
+        },
+        {
+          "attempt": 557,
+          "score": 184,
+          "passed": 10,
+          "reward": 84.59,
+          "reason": "碰到横梁"
+        },
+        {
+          "attempt": 558,
+          "score": 300,
+          "passed": 17,
+          "reward": 163,
+          "reason": "本轮观察结束"
+        },
+        {
+          "attempt": 559,
+          "score": 300,
+          "passed": 18,
+          "reward": 171,
+          "reason": "本轮观察结束"
+        }
+      ]
+    }
+  ]
+}
