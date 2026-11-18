@@ -1,0 +1,13 @@
+{
+  "name": "robotcoach-ai-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/learning.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": { "@playwright/test": "1.61.1" }
+}

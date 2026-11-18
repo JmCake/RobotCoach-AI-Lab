@@ -1,0 +1,11 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>感官大发现</title><link rel="stylesheet" href="../assets/experiment.css"></head><body>
+<div class="robot-area"><img src="../assets/robot.svg" alt="头部有视觉和测距感官、身体感受姿态、脚底感受接触的机器人" style="width:100%;display:block">
+<button class="hotspot" data-sensor="camera" style="left:50%;top:12%" aria-label="发现视觉摄像头">📷</button><button class="hotspot" data-sensor="lidar" style="left:50%;top:29%" aria-label="发现激光雷达">📡</button><button class="hotspot" data-sensor="imu" style="left:35%;top:46%" aria-label="发现姿态传感器">🧭</button><button class="hotspot" data-sensor="force" style="left:50%;top:87%" aria-label="发现足底力觉传感器">🦶</button></div>
+<p id="count" class="muted" style="text-align:center"></p><div id="feedback" class="feedback" role="status">点亮一个感官，认识它能提供的信息。</div>
+<script type="module">
+import {load,save,storageNotice} from '../assets/state.js';
+import {sensors} from '../assets/sensors.js';
+const found=load().discovered;
+function update(){document.getElementById('count').textContent=`已认识 ${found.length} / 4 种感官`;for(const b of document.querySelectorAll('[data-sensor]'))b.setAttribute('aria-pressed',found.includes(b.dataset.sensor));}
+for(const b of document.querySelectorAll('[data-sensor]'))b.onclick=()=>{const id=b.dataset.sensor;if(!found.includes(id))found.push(id);storageNotice(save({discovered:found}));update();document.getElementById('feedback').textContent=sensors[id].name+'：'+sensors[id].desc+(found.length===4?' 多种信息互相补充，就是多模态感知。':'');};update();
+</script><script src="../assets/frame.js"></script></body></html>

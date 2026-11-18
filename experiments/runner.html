@@ -1,0 +1,8 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>机器人统一训练场</title><link rel="stylesheet" href="../assets/experiment.css"><style>.arena{max-width:880px;margin:auto}canvas{background:#111827;border:1px solid #465567;width:100%}#chart{height:100px;margin-top:12px}#reward{color:#9be9c9}.touch{touch-action:manipulation}select{background:#293347;color:#fff;padding:8px;border-radius:6px;min-height:44px}#game{outline-offset:3px}</style></head><body>
+<div class="arena"><div class="stats"><span id="modeLabel"></span><span>本轮 <b id="score">0</b></span><span>跨过 <b id="passed">0</b> 个障碍</span></div>
+<canvas id="game" width="800" height="300" tabindex="0" aria-label="机器人跑酷训练场；空格或上箭头跳跃，下箭头下蹲"></canvas>
+<div class="controls"><button id="start" class="primary">开始</button><button id="retry">重试本轮</button><button id="jump" class="touch">↑ 跳跃</button><button id="duck" class="touch" aria-pressed="false">↓ 下蹲</button><label id="speedLabel">训练速度 <select id="speed" aria-label="训练速度"><option value="1">1 倍</option><option value="8">8 倍</option><option value="32">32 倍</option></select></label><button id="reset">重置训练</button></div>
+<div class="stats" id="trainingStats"><span>已完成 <b id="attempts">0</b> 轮</span><span>Q 更新 <b id="updates">0</b> 次</span><span>探索率 <b id="epsilon">0</b></span><span>训练最高 <b id="best">0</b></span></div>
+<p id="reward" role="status"></p><div id="feedback" class="feedback" role="status"></div>
+<canvas id="chart" width="800" height="100" aria-label="最近完成轮次的真实奖励曲线"></canvas><p class="muted" id="history"></p></div>
+<script type="module" src="../assets/runner.js"></script><script src="../assets/frame.js"></script></body></html>
