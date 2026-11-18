@@ -1,5 +1,29 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>综合机器人方案</title><link rel="stylesheet" href="../assets/experiment.css"><style>.design{max-width:850px;margin:auto}.choices button{display:flex;flex-direction:column;align-items:center;gap:4px}.choices .icon{font-size:25px}.summary{border-top:1px solid #465267;padding-top:16px;margin-top:22px}.summary h2{font-size:19px;margin:0 0 8px}.system{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0;color:#9ee4ce}.system span{border:1px solid #496f6a;border-radius:8px;padding:8px 14px}</style></head><body><div class="design"><div id="choices"></div><div class="feedback" id="result" role="status"></div><div class="system" aria-label="机器人系统组合"><span>👁️ 感知</span>→<span>🧠 决策</span>→<span>⚡ 行动</span>↩</div><div class="summary"><h2>你已走过完整的机器人学习闭环</h2><p>感官带来信息，学习改变选择，行动之后继续观察。</p><p>把这三个问题带到下一次设计：需要知道什么？如何作出选择？怎样确认行动有效？</p><p class="muted">以上组合是方案说明；尚未在真实机器人或复杂场景中验证。</p></div></div>
-<script type="module">
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>综合机器人方案</title><link rel="stylesheet" href="../assets/experiment.css"><style>.design{max-width:850px;margin:auto}.choices button{display:flex;flex-direction:column;align-items:center;gap:4px}.choices .icon{font-size:25px}.summary{border-top:1px solid #465267;padding-top:16px;margin-top:22px}.summary h2{font-size:19px;margin:0 0 8px}.system{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0;color:#9ee4ce}.system span{border:1px solid #496f6a;border-radius:8px;padding:8px 14px}</style></head><body>
+<section id="challenge" aria-labelledby="challengeTitle">
+ <h2 id="challengeTitle">选择感官与自主策略</h2>
+ <p>选择感官与策略，在同一赛道上比较。先看规则控制，再训练自己的模仿或试错策略。</p>
+ <div class="sensor-grid" id="challengeSensors" aria-label="综合挑战传感器"></div>
+ <div class="controls">
+  <label>挑战环境 <select id="environment"><option value="clear">晴天跨栏</option><option value="moving">动态横梁</option><option value="wet">湿滑变速</option><option value="night">弱光混合挑战</option></select></label>
+  <label>自主策略 <select id="policy"><option value="rule">规则控制</option><option value="clone">行为克隆</option><option value="q">Q-learning</option></select></label>
+  <label>赛道种子 <input id="challengeSeed" type="number" min="1" max="4294967295" value="9001" inputmode="numeric"></label>
+ </div>
+ <canvas id="challengeCanvas" width="800" height="300" aria-label="综合挑战实时跑道"></canvas>
+ <div class="controls"><button id="challengeRun" class="primary">运行挑战</button><button id="challengeStop" disabled>暂停</button><button id="challengeCompare">固定条件比较 · 各 20 轮</button></div>
+ <div class="stats" aria-live="polite"><span id="challengeScore">跨过 0 个</span><span id="challengeAction">决策：等待</span><span id="cloneStats">模仿样本 0</span><span id="qStats">试错更新 0</span></div>
+ <div class="feedback" id="challengeFeedback" role="status">传感器提供观测，策略选择等待、跳跃或下蹲；不保证任一配置通关。</div>
+ <p id="sensorReadout" class="muted" aria-live="off"></p>
+ <div class="controls"><button id="cloneTrain">采集示范并训练模仿</button><button id="qTrain">自主试错 +10 万次</button><button id="challengeExport">导出实验数据</button></div>
+ <details><summary>训练记录与实验边界</summary>
+  <p id="trainingDescription">训练使用 101–130 号随机环境；冻结比较使用未参与训练的 9001–9020 号赛道。模仿学习观测与专家动作；Q-learning 从空表独立试错。挑战需存活 30 秒，碰撞即失败；完成进度按已运行时间计算。</p>
+  <p id="challengeTrainingLog" class="muted">尚未训练。</p>
+  <p class="muted">这是二维教学仿真。视觉按光照限制视距，测距使用高低两束射线；IMU 测量运动状态，足底力觉测量触地与受力。湿滑影响速度和起跳，横梁会真实移动；没有模拟三维双足动力学。第一章试跑和第二章动作回放仍为原有原理演示。</p>
+  <button id="challengeReset">清空 V2 训练与成绩</button>
+ </details>
+ <div class="table-wrap" id="challengeResults" hidden><table><caption id="challengeCaption">冻结比较结果</caption><thead><tr><th>策略</th><th>成功率</th><th>碰撞轮数</th><th>平均跨障碍</th><th>完成进度</th></tr></thead><tbody id="challengeRows"></tbody></table></div>
+</section>
+<details id="designActivity"><summary>保留活动：图形化方案设计与课程总结</summary><div class="design"><div id="choices"></div><div class="feedback" id="result" role="status"></div><div class="system" aria-label="机器人系统组合"><span>👁️ 感知</span>→<span>🧠 决策</span>→<span>⚡ 行动</span>↩</div><div class="summary"><h2>你已走过完整的机器人学习闭环</h2><p>感官带来信息，学习改变选择，行动之后继续观察。</p><p>把这三个问题带到下一次设计：需要知道什么？如何作出选择？怎样确认行动有效？</p><p class="muted">以上组合是方案说明；尚未在真实机器人或复杂场景中验证。</p></div></div>
+</details><script type="module" src="../assets/challenge.js"></script><script type="module">
 import {load,save,storageNotice} from '../assets/state.js';import {sensors} from '../assets/sensors.js';
 const config=load().design;
 const groups=[['scene','使用场景',[['🏫','校园'],['🏭','工厂'],['🌳','公园']]],['task','执行任务',[['📦','递送物品'],['🔎','巡检避障'],['🤝','引导行人']]],['sensors','感知配置',Object.entries(sensors).map(([id,d])=>[d.icon,id,d.name])],['training','训练方式',[['📏','规则控制'],['👀','模仿示范'],['🔁','自主试错']]],['feedback','反馈方式',[['👁️','重新观察'],['🦶','触地确认'],['🛑','异常停车']]]];

@@ -3,6 +3,7 @@
 export const C={WIDTH:800,HEIGHT:300,GROUND_Y:235,GRAVITY:.6,JUMP_FORCE:-12,BASE_SPEED:5};
 export const REWARDS={pass:8,collision:-12,complete:4,jump:-.03,duck:-.002};
 export const REWARD_VERSION=2;
+export const intersects=(r,o)=>r.x<o.x+o.width&&r.x+r.width>o.x&&r.y-r.height<o.y+o.height&&r.y>o.y;
 export function rng(seed=2026){let x=seed>>>0;return()=>{x=(1664525*x+1013904223)>>>0;return x/4294967296;};}
 export class Runner {
  constructor(random=Math.random){this.random=random;this.reset();}
@@ -27,7 +28,7 @@ export class Runner {
    }
    for(const o of this.obstacles){
     o.x-=this.speed;
-    if(r.x<o.x+o.width&&r.x+r.width>o.x&&r.y-r.height<o.y+o.height&&r.y>o.y){this.done=true;this.reason=o.type==='beam'?'碰到横梁':'撞上地面障碍';events.collision+=REWARDS.collision;break;}
+    if(intersects(r,o)){this.done=true;this.reason=o.type==='beam'?'碰到横梁':'撞上地面障碍';events.collision+=REWARDS.collision;break;}
     if(!o.passed&&o.x+o.width<r.x){o.passed=true;this.passed++;events.pass+=REWARDS.pass;}
    }
    this.obstacles=this.obstacles.filter(o=>o.x+o.width>0);

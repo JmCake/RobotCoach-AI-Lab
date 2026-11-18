@@ -10,6 +10,8 @@
 
 未引入 Google Fonts、远端 CDN、AI API、QuickForm 或其他云数据库依赖。字体使用操作系统字体。Playwright 仅为开发测试依赖，其 Apache-2.0 许可随 npm 包提供，不属于生产站点资源。
 
+V2.0 继续复用以上机器人绘制、Runner 基础与 Q-learning 更新；新增的观测融合、复杂环境、决策树模仿、独立策略状态、评估及综合挑战界面为本项目扩展，采用同一 MIT 许可。未新增第三方图像、字体、视频或运行依赖。
+
 ## 上游代码适用的 MIT 条款
 
 Copyright (c) PumpkinKiller04 (RobotCoachAI contributors)
