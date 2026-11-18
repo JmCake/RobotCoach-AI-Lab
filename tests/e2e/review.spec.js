@@ -2,6 +2,20 @@ import {test,expect} from '@playwright/test';
 const frame=page=>page.frameLocator('#experiment');
 
 test('navigating away before the periodic save preserves the latest actual Q updates',async({page})=>{
+ // Some browsers do not deliver pagehide when an iframe is removed. Exercise
+ // that path explicitly instead of relying on the local browser's behavior.
+ await page.addInitScript(()=>{
+  const add=window.addEventListener;
+  window.addEventListener=function(type,listener,options){
+   if(window!==window.top&&type==='pagehide')return;
+   return add.call(this,type,listener,options);
+  };
+  const addDocument=document.addEventListener;
+  document.addEventListener=function(type,listener,options){
+   if(window!==window.top&&type==='visibilitychange')return;
+   return addDocument.call(this,type,listener,options);
+  };
+ });
  await page.goto('/#training');
  await frame(page).getByRole('button',{name:'开始',exact:true}).click();
  await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThan(3);

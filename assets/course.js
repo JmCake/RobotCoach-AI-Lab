@@ -20,7 +20,10 @@ function render(index,focus=false){
   if(current===index)return;
   current=index;storageNotice(save({page:index}));
   const [id,title,lead,src]=pages[index];
-  // Removing the frame destroys its loops/listeners; state persists in versioned local storage.
+  // Flush and pause synchronously before removal: native iframe pagehide and
+  // visibility events are not delivered consistently by all browsers.
+  document.getElementById('experiment')?.contentDocument?.dispatchEvent(new CustomEvent('coursevisibility',{detail:true}));
+  // Removing the frame then destroys its remaining loops/listeners.
   host.replaceChildren();host.style.animation='none';void host.offsetWidth;host.style.animation='';
   const eyebrow=document.createElement('p');eyebrow.className='eyebrow';eyebrow.textContent=['第一章 · 感知与选拔','第二章 · 学习与训练','第三章 · AI闭环'][index<4?0:index<8?1:2];
   const h=document.createElement('h1');h.id='pageTitle';h.textContent=title;h.tabIndex=-1;
