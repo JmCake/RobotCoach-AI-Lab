@@ -1,8 +1,8 @@
-name: V1 verification
+name: Course verification
 on:
   pull_request:
   push:
-    branches: [main, codex/v1-foundation, 'codex/v1.1-*']
+    branches: [main, codex/v1-foundation, 'codex/v1.1-*', 'codex/v2-*']
 permissions:
   contents: read
 jobs:
@@ -20,11 +20,16 @@ jobs:
       - run: npm test
       - run: npm run check
       - run: npm run test:e2e
+        env:
+          EVIDENCE_DIR: test-results/evidence
+      - run: npm run evaluate:v2
+        env:
+          EVIDENCE_DIR: test-results/v2
       - run: npm run build
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: v1-static-site-and-test-evidence
+          name: static-site-and-test-evidence
           path: |
             dist/
             test-results/
