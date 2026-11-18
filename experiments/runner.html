@@ -4,5 +4,12 @@
 <div class="controls"><button id="start" class="primary">开始</button><button id="retry">重试本轮</button><button id="jump" class="touch">↑ 跳跃</button><button id="duck" class="touch" aria-pressed="false">↓ 下蹲</button><label id="speedLabel">训练速度 <select id="speed" aria-label="训练速度"><option value="1">1 倍</option><option value="8">8 倍</option><option value="32">32 倍</option></select></label><button id="reset">重置训练</button></div>
 <div class="stats" id="trainingStats"><span>已完成 <b id="attempts">0</b> 轮</span><span>Q 更新 <b id="updates">0</b> 次</span><span>探索率 <b id="epsilon">0</b></span><span>训练最高 <b id="best">0</b></span></div>
 <p id="reward" role="status"></p><div id="feedback" class="feedback" role="status"></div>
-<canvas id="chart" width="800" height="100" aria-label="最近完成轮次的真实奖励曲线"></canvas><p class="muted" id="history"></p></div>
+<canvas id="chart" width="800" height="100" aria-label="最近完成轮次的真实奖励曲线"></canvas>
+<section id="learningPanel" aria-label="训练效果与奖励">
+<p id="trend" class="feedback"></p>
+<div class="controls"><button id="compare" class="primary">比较训练前后 · 各 20 轮</button><button id="cancelCompare" hidden>取消比较</button></div>
+<p id="comparisonStatus" role="status">固定种子 9001–9020；双方关闭探索，测试不更新 Q 表。</p>
+<div class="table-wrap"><table id="comparisonTable" hidden><caption>相同条件下的冻结测试</caption><thead><tr><th>策略</th><th>平均分</th><th>平均跨障碍</th><th>完整跑完率</th></tr></thead><tbody id="comparisonRows"></tbody></table></div>
+<details><summary>奖励规则与真实更新记录</summary><p class="muted">越过一个障碍 +8，碰撞 −12，完整跑完 1800 帧 +4；起跳 −0.03，每次下蹲决策 −0.002。等待不加分。Q 更新：α = 0.2，γ = 0.95；终止不自举。</p><p class="muted" id="history"></p><p id="rewardBreakdown"></p><div class="table-wrap"><table><caption>最近 12 次训练更新（状态、动作、即时奖励、Q 值）</caption><thead><tr><th>更新</th><th>状态 → 下一状态</th><th>动作</th><th>奖励</th><th>Q 前 → 后</th></tr></thead><tbody id="auditRows"></tbody></table></div></details>
+</section></div>
 <script type="module" src="../assets/runner.js"></script><script src="../assets/frame.js"></script></body></html>

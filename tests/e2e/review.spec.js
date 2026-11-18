@@ -8,6 +8,8 @@ test('navigating away before the periodic save preserves the latest actual Q upd
   const add=window.addEventListener;
   window.addEventListener=function(type,listener,options){
    if(window!==window.top&&type==='pagehide')return;
+   // A delayed hashchange must not delay the save initiated by a chapter click.
+   if(window===window.top&&type==='hashchange')return add.call(this,type,event=>setTimeout(()=>listener.call(this,event),150),options);
    return add.call(this,type,listener,options);
   };
   const addDocument=document.addEventListener;

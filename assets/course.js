@@ -38,7 +38,13 @@ function render(index,focus=false){
   if(location.hash!=='#'+id)history.replaceState(null,'','#'+id);
   if(focus){h.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
 }
-function go(n){location.hash=pages[Math.max(0,Math.min(10,n))][0];}
+function go(n){
+ const index=Math.max(0,Math.min(10,n));
+ location.hash=pages[index][0];
+ // Chapter/next/back clicks must flush the active experiment before returning.
+ // hashchange is asynchronous and remains responsible for browser history changes.
+ render(index,true);
+}
 document.getElementById('prev').onclick=()=>go(current-1);
 document.getElementById('next').onclick=()=>go(current+1);
 for(const el of document.querySelectorAll('[data-chapter]'))el.onclick=()=>go(Number(el.dataset.chapter));

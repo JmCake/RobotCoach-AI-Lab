@@ -1,4 +1,5 @@
 /* Adapted from PumpkinKiller04/RobotCoachAI, README declares MIT. See THIRD_PARTY_NOTICES.md. */
+import {rng} from './learning.js';
 export function drawStadium(tpvCanvas, {T,robot,phase,frame,animState}) {
 const tpvCtx=tpvCanvas.getContext("2d");
     function drawTPV() {
@@ -25,22 +26,24 @@ const tpvCtx=tpvCanvas.getContext("2d");
 
       // 颗粒纹理
       ctx.fillStyle = 'rgba(180,60,40,0.2)';
+      // Stable texture avoids fresh random pixels flickering on every animation frame.
+      const random=rng(73);
       for (let i = 0; i < 200; i++) {
         let px, py;
-        const sec = Math.random();
+        const sec = random();
         if (sec < 0.35) {
-          px = T.leftX + Math.random() * (T.rightX - T.leftX);
-          py = T.outerTop + Math.random() * (T.innerTop - T.outerTop);
+          px = T.leftX + random() * (T.rightX - T.leftX);
+          py = T.outerTop + random() * (T.innerTop - T.outerTop);
         } else if (sec < 0.7) {
-          px = T.leftX + Math.random() * (T.rightX - T.leftX);
-          py = T.innerBottom + Math.random() * (T.outerBottom - T.innerBottom);
+          px = T.leftX + random() * (T.rightX - T.leftX);
+          py = T.innerBottom + random() * (T.outerBottom - T.innerBottom);
         } else if (sec < 0.85) {
-          const a = -Math.PI/2 + Math.random() * Math.PI;
-          const r = T.innerR + Math.random() * (T.outerR - T.innerR);
+          const a = -Math.PI/2 + random() * Math.PI;
+          const r = T.innerR + random() * (T.outerR - T.innerR);
           px = T.rightX + r * Math.cos(a); py = T.cy + r * Math.sin(a);
         } else {
-          const a = Math.PI/2 + Math.random() * Math.PI;
-          const r = T.innerR + Math.random() * (T.outerR - T.innerR);
+          const a = Math.PI/2 + random() * Math.PI;
+          const r = T.innerR + random() * (T.outerR - T.innerR);
           px = T.leftX + r * Math.cos(a); py = T.cy + r * Math.sin(a);
         }
         ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI*2); ctx.fill();
