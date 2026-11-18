@@ -8,7 +8,7 @@ const $=id=>document.getElementById(id),canvas=$('game');let playing=false,raf=0
 $('modeLabel').textContent=manual?'人工操控':training?'Q-learning · 自主试错':'冻结策略 · 成果展示';
 for(const id of ['jump','duck'])$(id).hidden=!manual;
 $('speedLabel').hidden=!training;$('reset').hidden=!training;$('trainingStats').hidden=manual;$('chart').hidden=manual;$('history').hidden=manual;
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(learner.snapshot()));}catch{storageNotice(false);}}
+function persist(){if(!training)return;try{localStorage.setItem(KEY,JSON.stringify(learner.snapshot()));}catch{storageNotice(false);}}
 function stats(){
  $('score').textContent=world.score;$('passed').textContent=world.passed;$('attempts').textContent=learner.attempts;$('updates').textContent=learner.updates;$('epsilon').textContent=training?(learner.epsilon*100).toFixed(1)+'%':'0%（展示）';$('best').textContent=learner.best;
  $('duck').setAttribute('aria-pressed',duck);
@@ -37,7 +37,7 @@ $('retry').onclick=()=>{const was=playing;stop();world.reset();$('feedback').tex
 $('jump').onclick=()=>{if(playing)jump=true;else $('feedback').textContent='先点击开始，再跳跃。';};
 $('duck').onclick=()=>{if(playing){duck=!duck;$('duck').setAttribute('aria-pressed',duck);}else $('feedback').textContent='先点击开始，再下蹲。';};
 $('reset').onclick=()=>{stop();Object.assign(learner,new Learner());world.reset();persist();$('feedback').textContent='训练已清空：Q 表、轮次、奖励记录均从零开始。';$('reward').textContent='';paint();};
-window.addEventListener('keydown',e=>{if(!manual||!['Space','ArrowUp','ArrowDown'].includes(e.code)||e.target.matches('select,button'))return;e.preventDefault();if(!playing)return;if(e.code==='ArrowDown')duck=true;else if(!e.repeat)jump=true;});
+window.addEventListener('keydown',e=>{if(!manual||!['Space','ArrowUp','ArrowDown'].includes(e.code)||e.target.matches('select,input,textarea')||(e.code==='Space'&&e.target.matches('button')))return;e.preventDefault();if(!playing)return;if(e.code==='ArrowDown')duck=true;else if(!e.repeat)jump=true;});
 window.addEventListener('keyup',e=>{if(e.code==='ArrowDown')duck=false;});
 window.addEventListener('blur',()=>{duck=jump=false;});
 function pause(){if(playing)stop('已暂停；返回后点击继续，Q 表和训练记录仍在。');}

@@ -28,6 +28,7 @@ function drawBackground() {
 }
 
 function drawRobot() {
+    const gaitFrame = Math.floor(robot.frame / 6) % 2;
     // 机器人身体
     ctx.fillStyle = '#00ff00';
     ctx.fillRect(robot.x, robot.y - robot.height, robot.width, robot.height);
@@ -50,7 +51,7 @@ function drawRobot() {
     } else {
         // 跑步时的手臂姿势
         ctx.fillStyle = '#00ff00';
-        if (robot.frame % 2 === 0) {
+        if (gaitFrame === 0) {
             ctx.fillRect(robot.x - 5, robot.y - robot.height + 5, 5, 15);
             ctx.fillRect(robot.x + robot.width, robot.y - robot.height + 15, 5, 15);
         } else {
@@ -61,7 +62,7 @@ function drawRobot() {
 
     // 机器人腿部
     if (!robot.isJumping) {
-        if (robot.frame % 2 === 0) {
+        if (gaitFrame === 0) {
             ctx.fillStyle = '#00ff00';
             ctx.fillRect(robot.x + 10, robot.y, 10, 15);
             ctx.fillRect(robot.x + 30, robot.y - 5, 10, 15);
@@ -72,8 +73,7 @@ function drawRobot() {
         }
     }
 
-    // 更新帧计数器
-    robot.frame++;
+    // Animation follows simulation time; rendering must not mutate the world.
 }
 
 
