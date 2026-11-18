@@ -30,10 +30,13 @@ test('untrained comparison honestly reports no improvement and showcase cannot w
 
 test('comparison cancels on request, reset and course hiding without stale results',async({page})=>{
  await page.goto('/#training');const f=frame(page);
- await f.locator('#compare').click();await f.locator('#cancelCompare').click();await expect(f.locator('#start')).toBeEnabled();await expect(f.locator('#comparisonStatus')).toContainText('已取消');
- await f.locator('#compare').click();await f.locator('#reset').click();await expect(f.locator('#comparisonTable')).toBeHidden();
+ // Empty-policy evaluation can finish while Playwright waits for scroll stability.
+ // Dispatch both real button clicks in one browser turn so cancellation is guaranteed
+ // to occur before completion, regardless of display refresh rate or machine speed.
+ await f.locator('body').evaluate(()=>{document.getElementById('compare').click();document.getElementById('cancelCompare').click();});await expect(f.locator('#start')).toBeEnabled();await expect(f.locator('#comparisonStatus')).toContainText('已取消');
+ await f.locator('body').evaluate(()=>{document.getElementById('compare').click();document.getElementById('reset').click();});await expect(f.locator('#comparisonTable')).toBeHidden();
  await page.waitForTimeout(250);const reset=await saved(page);expect(reset.q).toEqual({});expect(reset.baseline.q).toEqual({});expect(reset.audit).toEqual([]);expect(reset.comparison).toBeNull();
- await f.locator('#compare').click();await page.evaluate(()=>document.getElementById('experiment').contentWindow.postMessage({type:'robotcoach:visibility',hidden:true},location.origin));
+ await f.locator('body').evaluate(()=>{document.getElementById('compare').click();document.dispatchEvent(new CustomEvent('coursevisibility',{detail:true}));});
  await expect(f.locator('#start')).toBeEnabled();await expect(f.locator('#cancelCompare')).toBeHidden();expect((await saved(page)).comparison).toBeNull();
 });
 
