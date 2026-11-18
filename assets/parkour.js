@@ -4,9 +4,10 @@
 
         // 设置画布尺寸
         function resizeCanvas() {
-            canvas.width = canvas.offsetWidth * 2;
-            canvas.height = canvas.offsetHeight * 2;
-            ctx.scale(2, 2);
+            const scale=Math.min(devicePixelRatio||1,2);
+            canvas.width = canvas.offsetWidth * scale;
+            canvas.height = canvas.offsetHeight * scale;
+            ctx.setTransform(scale,0,0,scale,0,0);
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -318,11 +319,7 @@
         }
 
         // 游戏主循环
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-
-            drawBackground();
-
+        function updateGame() {
             // 模式切换逻辑 - 障碍物和飞鸟分开出现
             modeSwitchTimer++;
 
@@ -402,7 +399,15 @@
 
             // 检测障碍物和飞鸟
             checkObstacles();
+        }
 
+        let animation=0,lastTime=0,accumulator=0;
+        function gameLoop(now) {
+            if(document.hidden)return;
+            accumulator+=Math.min(now-lastTime,100);lastTime=now;
+            while(accumulator>=1000/60){updateGame();accumulator-=1000/60;}
+            ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+            drawBackground();
             // 绘制所有元素
             drawObstacles();
             drawBirds();
@@ -412,6 +417,7 @@
         }
 
         // 启动游戏
-        let animation; gameLoop();
-        document.addEventListener('visibilitychange',()=>{cancelAnimationFrame(animation);if(!document.hidden) gameLoop();});
+        function resume(){cancelAnimationFrame(animation);lastTime=performance.now();accumulator=0;animation=requestAnimationFrame(gameLoop);}
+        resume();
+        document.addEventListener('visibilitychange',()=>{cancelAnimationFrame(animation);if(!document.hidden)resume();});
         window.addEventListener('pagehide',()=>cancelAnimationFrame(animation));
