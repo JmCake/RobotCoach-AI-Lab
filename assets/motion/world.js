@@ -14,7 +14,7 @@ export const SCENES={
   night:{name:'弱光跑道',hint:'看不清时，怎样知道距离？',recommended:['camera','lidar','imu'],focus:'弱光时增加激光测距，保留 IMU 稳定跨越和落地；测距可替代视觉避障'},
   curve:{name:'急弯跑道',hint:'看见方向，还要稳住身体',recommended:['camera','imu'],focus:'摄像头辨认弯道，IMU 纠正身体倾斜'},
   rough:{name:'凹凸路面',hint:'身体稳了，脚下呢？',recommended:['camera','imu','force'],focus:'IMU + 足底力觉配合：测身体姿态，也测落脚冲击；摄像头可保留'},
-  wet:{name:'湿滑路面',hint:'提前放慢，留意脚下的变化',recommended:['camera','imu','force'],focus:'摄像头提前减速，足底力觉感知滑移，IMU 帮助站稳；更低速也可能靠视觉通过'}
+  wet:{name:'湿滑路面',hint:'已经放慢了，身体还稳吗？',recommended:['camera','imu','force'],focus:'标准演示中 IMU 纠正打滑后的倾斜；摄像头提前减速，足底力觉反馈滑移，分别观察各自作用'}
 };
 export const STATE_NAMES={running:'稳定奔跑',unbalanced:'正在纠偏',stumbling:'连续踉跄',falling:'正在摔倒',fallen:'倒地停留',recovering:'撑地起身',finished:'已过终点',incomplete:'本轮待改进'};
 export const SENSOR_NAMES={camera:'摄像头',lidar:'激光测距',imu:'姿态传感器 IMU',force:'足底力觉'};
@@ -114,7 +114,9 @@ export class MotionWorld{
     const tractionExcess=Math.max(0,lateralForce-mu*9.81*.65);
     const phaseRate=(1.05+this.speed*.31)*(1+Math.min(.18,Math.abs(this.theta)*.2));
     this.phase+=phaseRate*DT;
-    this.slip+=(Math.max(0,this.speed-3.0)*Math.max(0,.7-mu)*1.15-this.slip)*DT*5;
+    // Available traction sets the safe support-transfer speed: a wet step can still slip after slowing down.
+    const supportSpeed=1.2+2*mu;
+    this.slip+=(Math.max(0,this.speed-supportSpeed)*Math.max(0,.7-mu)*1.15-this.slip)*DT*5;
     if(c.jump&&!this.result){
       this.vy=4.8;this.jumpCount++;this.passedAtTakeoff=this.passed;
       // A push-off behind the centre of mass carries forward angular momentum.
@@ -183,7 +185,7 @@ export class MotionWorld{
     const angularAccel=disturbance+3.5*Math.sin(this.theta)-4.7*this.theta-1.5*this.omega+c.torque;
     this.omega+=angularAccel*DT;this.theta+=this.omega*DT;
     this.peakTilt=Math.max(this.peakTilt,Math.abs(this.theta));
-    if(this.slip>.8)this.cause='足部滑移 · 支撑点向前滑动';
+    if(this.slip>.15)this.cause='足部滑移 · 支撑点向前滑动';
     if(tractionExcess>1)this.cause='转弯侧向载荷超过可用抓地力';
     if(Math.abs(this.lateral)>1.5){this.omega+=DT*.9;this.cause='转向不足 · 偏离中间跑道';}
     if(Math.abs(this.lateral)>3.2){this.offTrack=true;this.recordFailure('偏离跑道边界');}

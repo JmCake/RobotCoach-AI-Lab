@@ -130,8 +130,8 @@ test('recommended progressive configurations pass; removing foot feedback makes 
       assert.ok(noFeet.falls>0);assert.ok(noFeet.compression>.31);assert.ok(noFeet.fallFeedback.cause.includes('高度差'));
     }
   }
-  // Slow visual anticipation is a valid alternative on a wet straight; no sensor count gate.
-  const cautious=new MotionWorld({scene:'wet',sensors:{camera:true,lidar:false,imu:false,force:false},repeat:false});
+  // A deliberately very slow experiment remains a valid alternative; the classroom comparison fixes 6.4 m/s.
+  const cautious=new MotionWorld({scene:'wet',target:2,sensors:{camera:true,lidar:false,imu:false,force:false},repeat:false});
   for(let i=0;i<3600&&!cautious.done&&!cautious.falls;i++)cautious.step();assert.equal(cautious.result?.success,true);
 });
 
@@ -177,4 +177,20 @@ test('automatic retries restart the same seed and finish while preserving failed
   assert.deepEqual(w.obstacles.map(o=>o.x),obstacles);assert.ok(w.obstacles.every(o=>!o.hit));
   for(let i=0;i<3600&&w.attempt===2;i++)w.step();assert.equal(w.attempt,3);assert.equal(w.attemptResults.length,2);assert.equal(w.totalCollisions,2);
   assert.ok(w.attemptResults.every(r=>r.success===false&&r.collisions===1));assert.equal(w.finishX,40);
+});
+
+test('rain still slips after visual slowdown and needs IMU feedback under the standard lesson conditions',()=>{
+  for(const seed of [1,7,17,42,2026]){
+    const sensors={camera:true,lidar:false,imu:false,force:true};
+    const off=new MotionWorld({scene:'wet',seed,sensors,repeat:false}),on=new MotionWorld({scene:'wet',seed,sensors:{...sensors,imu:true},repeat:false});
+    for(let i=0;i<480;i++){off.step();on.step();}
+    assert.ok(off.control.target<3);assert.ok(off.speed<3);assert.ok(off.slip>.15);
+    assert.equal(off.speed,on.speed);assert.equal(off.slip,on.slip);assert.ok(Math.abs(off.theta)>Math.abs(on.theta));
+    assert.equal(off.observation.imu,null);assert.equal(off.control.torque,0);assert.ok(off.observation.contact.slip>.15);
+    for(let i=0;i<3600&&!off.done;i++)off.step();assert.equal(off.result.success,false);assert.equal(off.result.collisions,0);assert.ok(off.falls>0);
+    assert.ok(off.fallFeedback.text.includes('我感觉脚底在滑'));assert.ok(off.fallFeedback.text.includes('歪了多少'));
+    for(let i=0;i<3600&&!on.done;i++)on.step();assert.equal(on.result.success,true);assert.equal(on.falls,0);
+  }
+  const dry=new MotionWorld({scene:'straight',sensors:{camera:true,lidar:false,imu:false,force:true},repeat:false});
+  for(let i=0;i<2400&&!dry.done;i++)dry.step();assert.equal(dry.result.success,true);assert.equal(dry.slip,0);
 });

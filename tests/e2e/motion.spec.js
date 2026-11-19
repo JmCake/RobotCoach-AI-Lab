@@ -16,6 +16,21 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('rain with vision and foot feedback still needs IMU after slowing down',async({page})=>{
+  await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=wet]').click();
+  for(const key of ['camera','force'])await page.locator(`#sensor-${key}`).check();
+  await page.locator('#play').click();await page.clock.runFor(4000);const off=await snapshot(page);
+  expect(off.control.target).toBeLessThan(3);expect(off.speed).toBeLessThan(3);expect(off.observation.contact.slip).toBeGreaterThan(.15);expect(off.control.torque).toBe(0);
+  await page.clock.runFor(5000);let s=await snapshot(page);expect(s.falls).toBe(1);expect(s.result.success).toBe(false);
+  await expect(page.locator('#fallMessage')).toContainText('我感觉脚底在滑');await expect(page.locator('#resultTitle')).toContainText('本轮失败');
+  await page.locator('.stage').screenshot({path:join(evidence,'motion-rain-imu-off.png')});
+  await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,'motion-rain-imu-off-mobile.png'),fullPage:true});
+  await page.locator('#sensor-imu').check();await page.locator('#play').click();await page.clock.runFor(4000);s=await snapshot(page);
+  expect(s.speed).toBeCloseTo(off.speed,2);expect(s.observation.contact.slip).toBeCloseTo(off.observation.contact.slip,2);expect(Math.abs(s.theta)).toBeLessThan(Math.abs(off.theta));
+  await page.clock.runFor(14000);s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.result.falls).toBe(0);
+  await expect(page.locator('#resultTitle')).toContainText('成功过线');await page.screenshot({path:join(evidence,'motion-rain-imu-on-mobile.png'),fullPage:true});
+});
+
 test('night collision without IMU falls and locks failure; retry starts at zero and changing a passed setup clears its badge',async({page})=>{
   await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=night]').click();
   await page.locator('#sensor-camera').check();await page.locator('#sensor-force').check();
@@ -100,11 +115,12 @@ test('optional narration uses local Chinese voices once per fall and stops on pa
     window.SpeechSynthesisUtterance=function(text){this.text=text;};
     Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{getVoices:()=>[{lang:'zh-CN',localService:false},{lang:'en-US',localService:true},{lang:'zh-CN',localService:true}],addEventListener(){},speak(u){window.narrated.push(u.text);window.narrationSources.push(u.voice.localService&&/^zh/.test(u.voice.lang));},cancel(){window.cancelCount++;}}});
   });
-  await page.reload();await page.locator('[data-scene=wet]').click();await page.locator('#assist').uncheck();await page.locator('#play').click();await page.clock.runFor(6200);
+  await page.reload();await page.locator('[data-scene=wet]').click();await page.locator('#assist').uncheck();await page.locator('#play').click();await page.clock.runFor(5300);
   await expect(page.locator('#voice')).toBeVisible();expect(await page.evaluate(()=>window.narrated)).toHaveLength(1);
   expect(await page.evaluate(()=>window.narrationSources)).toEqual([true]);
   await page.clock.runFor(500);expect(await page.evaluate(()=>window.narrated)).toHaveLength(1);
   const before=await page.evaluate(()=>window.cancelCount);await page.locator('#play').click();expect(await page.evaluate(()=>window.cancelCount)).toBeGreaterThan(before);
+  expect((await snapshot(page)).running).toBe(false);
   await page.locator('#voice').click();await expect(page.locator('#voice')).toHaveText('语音提示：关');
 });
 
