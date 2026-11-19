@@ -30,6 +30,7 @@ export class MotionWorld{
     this.imbalance=0;this.lastImpact=0;this.collision=null;this.fallFeedback=null;this.history=[];this.visualHistory=[];this.contacts=[true,true];
     this.footX=[-.18,.18];this.footY=[0,0];this.footSlip=[0,0];this.previousPhase=[0,.5];
     this.contactHeight=[0,0];
+    this.jumpCount=0;this.landings=0;this.lastLanding=null;
     this.swings=[null,null];
     this.terrainPhase=this.random()*Math.PI*2;
     this.obstacles=Array.from({length:240},(_,i)=>({x:12+i*9+this.random()*1.4,type:i%3===1?'beam':'hurdle',width:.42,height:i%3===1?1.23:.48+this.random()*.1,hit:false,passed:false}));
@@ -94,9 +95,27 @@ export class MotionWorld{
     const phaseRate=(1.05+this.speed*.31)*(1+Math.min(.18,Math.abs(this.theta)*.2));
     this.phase+=phaseRate*DT;
     this.slip+=(Math.max(0,this.speed-3.0)*Math.max(0,.7-mu)*1.15-this.slip)*DT*5;
-    if(c.jump&&!this.done){this.vy=4.8;this.event='测得前方矮栏 · 起跳跨越';}
+    if(c.jump&&!this.done){
+      this.vy=4.8;this.jumpCount++;this.passedAtTakeoff=this.passed;
+      // A push-off behind the centre of mass carries forward angular momentum.
+      // The same impulse applies to every sensor configuration; feedback must cancel it.
+      this.omega+=this.speed*this.vy*.045;
+      this.event='测得前方矮栏 · 起跳跨越';
+    }
     this.vy-=12*DT;this.y+=this.vy*DT;
-    if(this.y<0){if(this.vy<-1.5){this.lastImpact=-this.vy;this.omega+=Math.max(0,-this.vy-3)*.02;}this.y=0;this.vy=0;}
+    if(this.y<0){
+      if(this.vy<-1.5){
+        const impact=-this.vy,impulse=this.speed*impact*.04;
+        this.lastImpact=impact;this.omega+=impulse;this.landings++;
+        const cleared=this.passed>this.passedAtTakeoff;
+        this.lastLanding={time:this.time,x:this.x,speed:this.speed,impact,impulse,tilt:this.theta,passed:this.passed,cleared};
+        if(!this.collision||this.time-this.collision.time>1){
+          this.cause=cleared?'越障落地 · 身体前倾未稳住':'跳跃落地 · 身体前倾未稳住';
+          this.event=cleared?'已跨过障碍 · 落地缓冲与姿态恢复':'双脚落地 · 正在恢复姿态';
+        }
+      }
+      this.y=0;this.vy=0;
+    }
     this.crouch+=((c.duck&&!this.done?1:0)-this.crouch)*DT*13;
     if(c.duck&&!this.done)this.event='测得前方横梁 · 屈膝收身';
     for(let i=0;i<2;i++){

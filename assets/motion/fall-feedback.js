@@ -7,6 +7,8 @@ export function explainFall({cause='',sensors,scene,observation={},control={}}){
     if(control.jump)return '我发现障碍了，可这一步抬得还不够高。';
     return observation.obstacle?'我知道前面有东西，可这次没来得及调整脚步。':'等我发现前面被挡住时，已经来不及收住脚步了。';
   }
+  if(cause.includes('越障落地'))return sensors.imu?'我察觉落地时身体往前倾，也试着调整，可这次还是没稳住。':'我跳过去了，可落地时身体往前倒，没及时稳住。';
+  if(cause.includes('跳跃落地'))return sensors.imu?'我察觉落地时身体还在晃，可这次没调整过来。':'双脚落地了，可身体还在往前倒，我没及时稳住。';
   if(cause.includes('滑移')){
     if(!sensors.force)return '脚底悄悄滑走了，我还以为自己踩得很稳。';
     if(!sensors.imu)return '我感觉脚底在滑，可身体歪了多少，我有点拿不准。';

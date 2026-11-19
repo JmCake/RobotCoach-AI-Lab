@@ -134,3 +134,22 @@ test('recommended progressive configurations pass; removing foot feedback makes 
   const cautious=new MotionWorld({scene:'wet',sensors:{camera:true,lidar:false,imu:false,force:false},repeat:false});
   for(let i=0;i<3600&&!cautious.done&&!cautious.falls;i++)cautious.step();assert.equal(cautious.result?.success,true);
 });
+
+test('a hurdle is cleared before uncontrolled landing pitch causes a fall; IMU counters the same impulse',()=>{
+  for(const scene of ['obstacles','night'])for(const seed of [1,7,17,42,2026]){
+    const sensors={camera:true,lidar:scene==='night',imu:false,force:false};
+    const off=new MotionWorld({scene,seed,sensors,repeat:false}),on=new MotionWorld({scene,seed,sensors:{...sensors,imu:true},repeat:false});
+    while(!off.landings&&!off.falls)off.step();while(!on.landings&&!on.falls)on.step();
+    assert.equal(off.landings,1);assert.equal(on.landings,1);assert.equal(off.collisions,0);assert.ok(off.lastLanding.cleared);
+    assert.equal(off.lastLanding.impulse,on.lastLanding.impulse);assert.equal(off.lastLanding.x,on.lastLanding.x);
+    assert.ok(Math.abs(off.theta)>Math.abs(on.theta));assert.equal(off.falls,0,'fall must happen after landing, not at takeoff');
+    for(let i=0;i<3600&&!off.falls&&!off.done;i++)off.step();
+    assert.equal(off.falls,1);assert.ok(off.time>off.lastLanding.time);assert.ok(off.passed>=1);assert.equal(off.collisions,0);
+    assert.ok(off.fallFeedback.text.includes('我跳过去了'));assert.ok(off.fallFeedback.cause.includes('落地'));
+    for(let i=0;i<3600&&!on.done&&!on.falls;i++)on.step();assert.equal(on.result?.success,true);assert.equal(on.falls,0);
+  }
+  // Changing feedback during the motion changes the actual recovery, not an outcome flag.
+  const rescue=new MotionWorld({scene:'obstacles',sensors:{camera:true,lidar:false,imu:false,force:false},repeat:false});
+  while(!rescue.landings)rescue.step();rescue.sensors.imu=true;
+  for(let i=0;i<3600&&!rescue.done&&!rescue.falls;i++)rescue.step();assert.equal(rescue.result?.success,true);
+});

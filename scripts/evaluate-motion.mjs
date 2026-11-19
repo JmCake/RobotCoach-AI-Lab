@@ -7,7 +7,7 @@ for(const scene of Object.keys(SCENES))for(let mask=0;mask<16;mask++)for(const s
   const sensors=Object.fromEntries(keys.map((key,i)=>[key,!!(mask&(1<<i))]));
   const w=new MotionWorld({scene,seed,sensors,repeat:false});let peakCompression=0;
   for(let tick=0;tick<3600&&!w.done&&!w.falls;tick++){w.step();peakCompression=Math.max(peakCompression,w.compression);}
-  runs.push({scene,seed,mask,sensors,success:w.result?.success??false,distance:w.progress,time:w.time,falls:w.falls,collisions:w.collisions,offTrack:w.offTrack,peakCompression,cause:w.cause,result:w.result});
+  runs.push({scene,seed,mask,sensors,success:w.result?.success??false,distance:w.progress,time:w.time,falls:w.falls,collisions:w.collisions,offTrack:w.offTrack,peakCompression,peakTilt:w.peakTilt,jumpCount:w.jumpCount,landings:w.landings,lastLanding:w.lastLanding,cause:w.cause,result:w.result});
 }
 const summary=Object.keys(SCENES).map(scene=>{
   const recommendedMask=keys.reduce((m,k,i)=>m|(SCENES[scene].recommended.includes(k)?1<<i:0),0);

@@ -15,6 +15,20 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('hurdle without IMU clears first, then falls on landing; identical impact with IMU finishes',async({page})=>{
+  await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=obstacles]').click();await page.locator('#sensor-camera').check();
+  await page.locator('#play').click();await page.clock.runFor(3400);
+  const off=await snapshot(page);expect(off.passed).toBeGreaterThan(0);expect(off.landings).toBe(1);expect(off.falls).toBe(0);expect(off.lastLanding.cleared).toBe(true);
+  await page.clock.runFor(1200);let s=await snapshot(page);expect(s.falls).toBe(1);expect(s.result).toBeNull();
+  await expect(page.locator('#fallMessage')).toContainText('我跳过去了');await expect(page.locator('#finishNotice')).toBeHidden();
+  await page.locator('.stage').screenshot({path:join(evidence,'motion-obstacle-imu-off.png')});
+  await page.setViewportSize({width:390,height:844});await page.locator('.stage').screenshot({path:join(evidence,'motion-obstacle-imu-off-mobile.png')});
+  await page.setViewportSize({width:1280,height:1000});await page.locator('#reset').click();await page.locator('#sensor-imu').check();await page.locator('#play').click();await page.clock.runFor(3400);
+  s=await snapshot(page);expect(s.lastLanding.impulse).toBe(off.lastLanding.impulse);expect(Math.abs(s.theta)).toBeLessThan(Math.abs(off.theta));
+  await page.clock.runFor(4400);s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.falls).toBe(0);expect(s.result.collisions).toBe(0);
+  await page.locator('.stage').screenshot({path:join(evidence,'motion-obstacle-imu-on.png')});
+});
+
 test('beginner starts without sensors at 6.4 m/s, crosses a real finish and moves to the next lesson',async({page})=>{
   await page.setViewportSize({width:1280,height:1050});await page.reload();
   expect(Object.values((await snapshot(page)).sensors).some(Boolean)).toBe(false);
