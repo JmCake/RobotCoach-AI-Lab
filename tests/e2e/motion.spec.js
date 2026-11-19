@@ -10,8 +10,39 @@ test.beforeEach(async({page})=>{
   page._motionErrors=errors;
   await page.clock.install({time:new Date('2026-11-19T00:00:00Z')});await page.goto('/demo-motion.html');
   await page.clock.pauseAt(new Date('2026-11-19T00:00:02Z'));
+  // Existing animation regression keeps its original speed; new course tests use the new defaults.
+  await page.locator('#assist').check();await page.locator('#target').evaluate(el=>{el.value='5.6';el.dispatchEvent(new Event('change',{bubbles:true}));});
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
+
+test('beginner starts without sensors at 6.4 m/s, crosses a real finish and moves to the next lesson',async({page})=>{
+  await page.setViewportSize({width:1280,height:1050});await page.reload();
+  expect(Object.values((await snapshot(page)).sensors).some(Boolean)).toBe(false);
+  await expect(page.locator('#target')).toHaveValue('6.4');
+  expect(await page.locator('[data-scene]').evaluateAll(bs=>bs.map(b=>b.dataset.scene))).toEqual(['straight','obstacles','night','curve','rough','wet']);
+  await page.locator('#play').click();await page.clock.runFor(6500);expect((await snapshot(page)).result).toBeNull();await expect(page.locator('#finishNotice')).toBeHidden();
+  await page.clock.runFor(1300);const s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.x).toBeGreaterThanOrEqual(40);
+  await expect(page.locator('#resultTitle')).toContainText('成功过线');await expect(page.locator('#fallMessage')).toContainText('终点');
+  await expect(page.locator('#distance')).toHaveText('40.0 / 40 m');
+  await page.locator('.stage').screenshot({path:join(evidence,'motion-finish.png')});
+  await page.clock.runFor(4000);expect((await snapshot(page)).running).toBe(false);await expect(page.locator('#play')).toHaveText('再跑一次');
+  await page.locator('#nextScene').click();expect((await snapshot(page)).scene).toBe('obstacles');expect((await snapshot(page)).result).toBeNull();
+  await expect(page.locator('#finishNotice')).toBeHidden();
+  await page.locator('[data-scene=curve]').click();for(const key of ['camera','imu'])await page.locator(`#sensor-${key}`).check();
+  await page.locator('#play').click();await page.clock.runFor(8700);expect((await snapshot(page)).result.success).toBe(true);
+  await page.locator('.stage').screenshot({path:join(evidence,'motion-curve-finish.png')});
+});
+
+test('rough ground visibly needs landing feedback at the default pace and the recommended modules finish',async({page})=>{
+  await page.setViewportSize({width:390,height:844});await page.reload();await page.locator('[data-scene=rough]').click();
+  for(const key of ['camera','imu'])await page.locator(`#sensor-${key}`).check();
+  await page.locator('#play').click();await page.clock.runFor(4500);
+  let s=await snapshot(page);expect(s.falls).toBeGreaterThan(0);expect(s.result).toBeNull();await expect(page.locator('#fallMessage')).toContainText('落点');
+  await page.locator('#reset').click();await page.locator('#sensor-force').check();await page.locator('#play').click();await page.clock.runFor(16000);
+  s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.falls).toBe(0);
+  await expect(page.locator('#resultTitle')).toContainText('成功过线');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:join(evidence,'motion-finish-mobile.png'),fullPage:true});
+});
 
 test('fall speech follows the cause, stays readable, freezes at the event and resets',async({page})=>{
   await page.setViewportSize({width:1280,height:1000});await expect(page.locator('#robotSpeech')).toBeHidden();
@@ -98,7 +129,7 @@ test('weak light causes actual collision without ranging; assisted hurdles jump 
   await page.locator('[data-scene=night]').click();await page.locator('#assist').uncheck();await page.locator('#play').click();await page.clock.runFor(4800);
   const off=await snapshot(page);expect(off.falls).toBe(1);await expect(page.locator('#event')).toContainText('小腿');
   await page.locator('#reset').click();await page.locator('#assist').check();await page.locator('#play').click();await page.clock.runFor(15000);
-  const on=await snapshot(page);expect(on.falls).toBe(0);expect(on.passed).toBeGreaterThan(5);expect(on.x).toBeGreaterThan(off.x);
+  const on=await snapshot(page);expect(on.falls).toBe(0);expect(on.passed).toBeGreaterThan(2);expect(on.result.success).toBe(true);expect(on.x).toBeGreaterThan(off.x);
   await page.screenshot({path:join(evidence,'motion-night.png'),fullPage:true});
   await page.locator('[data-scene=obstacles]').click();await page.locator('#play').click();await page.clock.runFor(3000);expect((await snapshot(page)).observation.jumpHeight).toBeGreaterThan(0);
   await page.clock.runFor(1600);expect((await snapshot(page)).control.duck).toBe(true);
@@ -109,12 +140,13 @@ test('mobile touch, narrow screens, slow playback, seeded reset and hiding pause
   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
   const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.clock.install();await p.goto('/demo-motion.html');await p.clock.pauseAt(new Date(Date.now()+1000));
+  await p.locator('#assist').check();
   await p.locator('[data-scene=rough]').tap();await p.locator('#slow').tap();await p.locator('#play').tap();await p.clock.runFor(6000);
   let a=await snapshot(p);expect(a.time).toBeGreaterThan(1.9);expect(a.time).toBeLessThan(2.3);expect(a.falls).toBe(0);
   await p.locator('#play').tap();await p.screenshot({path:join(evidence,'motion-mobile.png'),fullPage:true});
   expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await p.setViewportSize({width:320,height:740});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await p.locator('summary').tap();await p.locator('#seed').fill('17');await p.locator('#seed').dispatchEvent('change');expect((await snapshot(p)).seed).toBe(17);expect((await snapshot(p)).x).toBe(0);
+  await p.getByText('实验条件与控制观测',{exact:true}).tap();await p.locator('#seed').fill('17');await p.locator('#seed').dispatchEvent('change');expect((await snapshot(p)).seed).toBe(17);expect((await snapshot(p)).x).toBe(0);
   await p.locator('#play').tap();await p.clock.runFor(1000);
   await p.evaluate(()=>window.dispatchEvent(new Event('pagehide')));expect((await snapshot(p)).running).toBe(false);
   expect(errors).toEqual([]);await context.close();

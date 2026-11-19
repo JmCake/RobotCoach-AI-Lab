@@ -15,14 +15,23 @@ function findLocalVoice(){
 }
 function positionSpeech(){
   const bubble=$('robotSpeech'),anchor=renderer.speechAnchor;if(bubble.hidden||!anchor)return;
-  const width=canvas.clientWidth,height=canvas.clientHeight,left=Math.max(12,Math.min(width-bubble.offsetWidth-12,anchor.x/renderer.width*width-40));
-  const top=Math.max(76,anchor.y/renderer.height*height-bubble.offsetHeight-24);
+  const width=canvas.clientWidth,height=canvas.clientHeight,hx=anchor.x/renderer.width*width,hy=anchor.y/renderer.height*height;
+  bubble.style.width=`${Math.min(width<650?254:280,width-24)}px`;bubble.classList.remove('side-right','side-left');
+  let left=Math.max(12,Math.min(width-bubble.offsetWidth-12,hx-40)),top=hy-bubble.offsetHeight-32;
+  // Standing runners have little room above their head. Put speech beside them rather than over their face.
+  if(top<60){
+    const right=width-hx-34,isRight=right>=hx-34,space=isRight?right:hx-34;
+    bubble.style.width=`${Math.min(width<650?254:280,Math.max(130,space-12))}px`;
+    left=isRight?hx+28:hx-bubble.offsetWidth-28;top=Math.max(60,Math.min(height-bubble.offsetHeight-45,hy-35));
+    bubble.classList.add(isRight?'side-right':'side-left');
+  }
+  left=Math.max(12,Math.min(width-bubble.offsetWidth-12,left));
   bubble.style.left=`${left}px`;bubble.style.top=`${top}px`;bubble.style.setProperty('--tip',`${Math.max(20,Math.min(bubble.offsetWidth-25,anchor.x/renderer.width*width-left))}px`);
 }
 function paint(){renderer.draw(world);positionSpeech();}
 function updateSpeech(){
-  const feedback=world.fallFeedback,bubble=$('robotSpeech');
-  bubble.hidden=!feedback||!(world.time-feedback.time<9||['falling','fallen','recovering'].includes(world.state));
+  const feedback=world.finishFeedback??world.fallFeedback,bubble=$('robotSpeech');
+  bubble.hidden=!feedback||!(world.done||world.time-feedback.time<9||['falling','fallen','recovering'].includes(world.state));
   if(!feedback)return;
   if($('fallMessage').textContent!==feedback.text)$('fallMessage').textContent=feedback.text;
   if(feedback.id!==lastSpeech){lastSpeech=feedback.id;if(running)narrate(feedback.text);}
@@ -36,11 +45,11 @@ function create(){
   accumulator=0;last=0;lastSpeech=0;stopSpeech();readout();paint();return true;
 }
 function setRunning(value){running=value;if(!value)stopSpeech();last=0;accumulator=0;$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
-function reset(){setRunning(false);if(create()){$('play').textContent='开始奔跑';$('playState').textContent='准备就绪';$('event').textContent='点击开始，观察机器人的完整步态。';}}
+function reset(){setRunning(false);if(create()){$('play').textContent='开始奔跑';$('playState').textContent='准备就绪';$('event').textContent='试着完整跑过 40 m：不碰撞，不跑出跑道。';}}
 function readout(){
   $('state').textContent=world.time===0?'待机':STATE_NAMES[world.state];$('speed').innerHTML=`${world.speed.toFixed(1)} <small>m/s</small>`;
   $('tilt').innerHTML=`${(Math.abs(world.theta)*180/Math.PI).toFixed(1)}<small>°</small>`;
-  $('falls').innerHTML=`${world.falls} <small>次</small>`;$('distance').textContent=`${world.x.toFixed(1)} m`;
+  $('falls').innerHTML=`${world.falls} <small>次</small>`;$('distance').textContent=`${Math.min(world.courseDistance,world.progress).toFixed(1)} / ${world.courseDistance} m`;
   $('contact').textContent=['fallen','recovering'].includes(world.state)?'手掌 / 躯干':world.state==='falling'?'支撑丢失':world.y>.05?'腾空':world.contacts.every(Boolean)?'双足支撑':world.contacts[0]?'左足支撑':world.contacts[1]?'右足支撑':'换步腾空';
   $('event').textContent=world.event;
   const o=world.observation,c=world.control;
@@ -49,6 +58,14 @@ function readout(){
   $('reading-imu').textContent=o.imu?`倾斜 ${(o.imu.tilt*180/Math.PI).toFixed(1)}° · 纠偏 ${c.torque.toFixed(2)}`:'已关闭 · 不作姿态纠偏';
   $('reading-force').textContent=o.contact?`触地 ${o.contact.feet.every(Boolean)?'双足':o.contact.feet[0]?'左足':o.contact.feet[1]?'右足':'无'} · 滑移 ${o.contact.slip.toFixed(2)} · 补偿 ${c.placement.toFixed(2)}`:'已关闭 · 无足底补偿';
   $('observations').textContent=`有效观测距离 ${o.range.toFixed(2)} m ｜ 控制限速 ${c.target.toFixed(1)} m/s · 纠偏力矩 ${c.torque.toFixed(2)} · 落脚补偿 ${c.placement.toFixed(2)}${o.obstacle?` · ${o.source}发现${o.obstacle.type==='beam'?'横梁':'矮栏'} ${o.obstacle.distance.toFixed(1)} m`:''}`;
+  $('finishNotice').hidden=!world.done;
+  if(world.done){
+    $('finishNotice').classList.toggle('needs-retry',!world.result.success);
+    $('resultTitle').textContent=world.result.success?'挑战完成 · 成功过线':'本轮还需改进';
+    $('resultDetail').textContent=`第 ${world.attempt} 次尝试 · ${world.courseDistance} m · 用时 ${world.result.time.toFixed(1)} 秒 · 碰撞 ${world.result.collisions} 次${world.result.offTrack?' · 曾跑出跑道':''}`;
+    $('nextScene').hidden=!world.result.success||world.scene==='wet';
+    $('playState').textContent=world.result.success?'已过终点':'请重试';
+  }
   updateSpeech();
 }
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
@@ -56,7 +73,9 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListene
   const scene=button.dataset.scene;$('sceneName').textContent=SCENES[scene].name;$('sceneHint').textContent=SCENES[scene].hint;
   document.querySelector('.stage').classList.toggle('night',scene==='night');reset();
 }));
-$('play').addEventListener('click',()=>setRunning(!running));$('reset').addEventListener('click',reset);
+$('play').addEventListener('click',()=>{if(world.done){reset();setRunning(true);}else setRunning(!running);});$('reset').addEventListener('click',reset);
+$('nextScene').addEventListener('click',()=>{const order=Object.keys(SCENES),next=order[order.indexOf(world.scene)+1];if(next)document.querySelector(`[data-scene="${next}"]`).click();});
+$('teachingGuide').innerHTML=Object.entries(SCENES).map(([key,s])=>`<li><strong>${s.name}</strong><span>${s.recommended.map(k=>SENSOR_NAMES[k]).join(' + ')||'无需传感器'}</span><p>${s.focus}</p></li>`).join('');
 $('slow').addEventListener('click',()=>{slow=!slow;$('slow').setAttribute('aria-pressed',String(slow));if(running)$('playState').textContent=slow?'慢速观察':'正在运行';});
 function updateSensors(){
   for(const key of Object.keys(SENSOR_NAMES)){world.sensors[key]=$(`sensor-${key}`).checked;$(`sensor-${key}`).closest('.sensor').classList.toggle('disabled',!world.sensors[key]);}
@@ -67,7 +86,7 @@ function updateSensors(){
 }
 $('assist').addEventListener('change',()=>{for(const k of Object.keys(SENSOR_NAMES))$(`sensor-${k}`).checked=$('assist').checked;updateSensors();});
 for(const key of Object.keys(SENSOR_NAMES))$(`sensor-${key}`).addEventListener('change',updateSensors);
-$('voice').addEventListener('click',()=>{voiceOn=!voiceOn;$('voice').setAttribute('aria-pressed',String(voiceOn));$('voice').textContent=`语音提示：${voiceOn?'开':'关'}`;if(!voiceOn)stopSpeech();else if(world.fallFeedback&&!$('robotSpeech').hidden)narrate(world.fallFeedback.text);});
+$('voice').addEventListener('click',()=>{voiceOn=!voiceOn;$('voice').setAttribute('aria-pressed',String(voiceOn));$('voice').textContent=`语音提示：${voiceOn?'开':'关'}`;if(!voiceOn)stopSpeech();else if(!$('robotSpeech').hidden)narrate((world.finishFeedback??world.fallFeedback).text);});
 findLocalVoice();window.speechSynthesis?.addEventListener('voiceschanged',findLocalVoice);
 $('repeat').addEventListener('change',()=>{world.repeat=$('repeat').checked;});
 $('seed').addEventListener('input',()=>$('seed').setCustomValidity(''));$('seed').addEventListener('change',reset);
@@ -79,11 +98,12 @@ function frame(now){
   if(running&&last){
     accumulator+=Math.min((now-last)/1000,.1)*(slow?.35:1);
     while(accumulator>=DT){world.step();accumulator-=DT;}
+    if(world.done&&world.speed<.04&&world.age>3){running=false;last=0;accumulator=0;$('play').textContent='再跑一次';readout();}
   }
   last=now;paint();
   if(now-paintReadout>100){readout();paintReadout=now;}
   requestAnimationFrame(frame);
 }
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
-window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),history:structuredClone(world.history)})};
+window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,compression:world.compression,attempt:world.attempt,progress:world.progress,finishX:world.finishX,result:structuredClone(world.result),sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),finishFeedback:structuredClone(world.finishFeedback),history:structuredClone(world.history)})};
 renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);

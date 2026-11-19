@@ -22,6 +22,7 @@ export class MotionRenderer{
     const sky=c.createLinearGradient(0,0,0,H);sky.addColorStop(0,night?'#162431':'#deeeea');sky.addColorStop(1,night?'#34474b':'#b8cdb6');c.fillStyle=sky;c.fillRect(0,0,W,H);
     this.background(w,night);
     this.track(w,night);
+    this.finishLine(w,night);
     // Back obstacles, robot, then near uprights preserve depth cues.
     if(w.hasObstacles)for(const o of w.obstacles)if(o.x>w.x-4&&o.x<w.x+13)this.obstacle(w,o,false,night);
     this.robot(w);
@@ -54,6 +55,20 @@ export class MotionRenderer{
       this.line({x,y:H*.35},{x,y:H*.17},night?'#647e78':'#9db5a9',3);
       this.round(x-24,H*.17-4,48,7,2,night?'#c5ccaa':'#e8ead9');
     }
+  }
+  finishLine(w,night){
+    if(!Number.isFinite(w.finishX)||w.finishX<w.x-7||w.finishX>w.x+16)return;
+    const x=w.finishX,h=w.height(x),center=w.center(x),c=this.ctx;
+    for(let row=0;row<2;row++)for(let j=0;j<16;j++){
+      const a=x+(row-.5)*.24,z=center-3.6+j*.45;
+      this.path([this.project(a,h+.012,z),this.project(a+.24,h+.012,z),this.project(a+.24,h+.012,z+.45),this.project(a,h+.012,z+.45)],(row+j)%2?'#f9e8cf':'#354641');
+    }
+    for(const z of [-3.7,3.7]){
+      const bottom=this.project(x,h,center+z),top=this.project(x,h+1.9,center+z);
+      this.line(bottom,top,night?'#c5c4a5':'#617b6e',4);
+      this.path([top,{x:top.x+36,y:top.y+4},{x:top.x+26,y:top.y+19},{x:top.x,y:top.y+17}],'#e8c889');
+    }
+    const label=this.project(x,h+2.18,center-3.7);c.fillStyle=night?'#e8d9b9':'#486455';c.font='bold 13px system-ui';c.fillText('终点 · 40 m',label.x-30,label.y);
   }
   track(w,night){
     const c=this.ctx,left=w.x-8,right=w.x+16,points=[];

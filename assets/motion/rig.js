@@ -11,7 +11,7 @@ export function makePose(w){
   const fallen=['falling','fallen','recovering'].includes(w.state),recover=w.state==='recovering'?smooth(w.age/2):0;
   const fall=fallen?(w.state==='falling'?smooth(w.age/.85):1-recover):0;
   const bob=.035*Math.cos(w.phase*Math.PI*4)*Math.min(1,w.speed/2)*(1-fall);
-  const floor=w.height(w.x),hipH=mix(.94+bob-w.crouch*.43+w.y+floor,.22+floor,fall);
+  const floor=w.height(w.x),hipH=mix(.94+bob-w.crouch*.43-Math.min(.3,w.compression)+w.y+floor,.22+floor,fall);
   const bank=clamp(w.speed*w.speed*w.curvature(w.x)/9.81,-.55,.55)*.45*(1-fall);
   const angle=clamp(.1*Math.min(1,w.speed/3)+w.theta+bank+w.crouch*(1-fall),-.4,1.63),lean=Math.sin(angle),up=Math.cos(angle);
   const z=w.center(w.x)+w.lateral;
