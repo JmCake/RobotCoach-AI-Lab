@@ -116,4 +116,34 @@ function frame(now){
 }
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
 window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,collisions:world.collisions,totalCollisions:world.totalCollisions,previousResult:structuredClone(world.previousResult),attemptResults:structuredClone(world.attemptResults),repeat:world.repeat,passed:world.passed,jumpCount:world.jumpCount,landings:world.landings,lastLanding:structuredClone(world.lastLanding),running,assist:world.assist,compression:world.compression,attempt:world.attempt,progress:world.progress,finishX:world.finishX,result:structuredClone(world.result),sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),finishFeedback:structuredClone(world.finishFeedback),history:structuredClone(world.history)})};
+// Optional link from the book's page four. Standalone Demo keeps its own defaults.
+const entry=new URLSearchParams(location.search);
+const bookEntry=entry.get('from')==='book';
+const back=entry.get('back');
+const localBook=back==='course.html'||back==='index.html'?back:
+  location.hostname.endsWith('github.io')?'course.html':'index.html';
+$('backToBook').href=localBook+'#trial';
+if(bookEntry){
+ const scene=entry.get('scene');
+ if(Object.hasOwn(SCENES,scene)){
+  for(const el of document.querySelectorAll('[data-scene]'))el.setAttribute('aria-pressed',String(el.dataset.scene===scene));
+  $('sceneName').textContent=SCENES[scene].name;
+  $('sceneHint').textContent=SCENES[scene].hint;
+  document.querySelector('.stage').classList.toggle('night',scene==='night');
+ }
+ if(entry.has('sensors')){
+  const enabled=new Set(entry.get('sensors').split(','));
+  for(const key of Object.keys(SENSOR_NAMES))$('sensor-'+key).checked=enabled.has(key);
+ }
+}
+$('backToBook').addEventListener('click',()=>{
+ if(!bookEntry)return;
+ // Deliberately persist sensor choices only when returning to the book.
+ try{
+  const saved=JSON.parse(localStorage.getItem('robotcoach:v1'));
+  if(saved?.version!==1)return;
+  saved.sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(key=>[key,$('sensor-'+key).checked]));
+  localStorage.setItem('robotcoach:v1',JSON.stringify(saved));
+ }catch{/* The course can still be reopened when storage is disabled. */}
+});
 renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);
