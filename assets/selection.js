@@ -3,6 +3,16 @@ import {sensors,sensorButtons} from './sensors.js';
 import {drawStadium} from './stadium.js';
 const state=load(),config=state.sensors,trial=new URLSearchParams(location.search).get('mode')==='trial';
 const canvas=document.getElementById('track'),feedback=document.getElementById('feedback'),run=document.getElementById('run');
+const motionEntry=document.getElementById('motionEntry'),motionLink=document.getElementById('motionLink');
+motionEntry.hidden=!trial;
+function updateMotionLink(){
+ if(!trial)return;
+ // The book is index.html in development and course.html in the Pages build.
+ const back=window.parent.location.pathname.endsWith('/course.html')?'course.html':'index.html';
+ const sensors=Object.entries(config).filter(([,enabled])=>enabled).map(([key])=>key).join(',');
+ const params=new URLSearchParams({from:'book',back,scene:'curve',sensors});
+ motionLink.href='../demo-motion.html?'+params;
+}
 document.getElementById('installArea').hidden=trial;
 document.getElementById('trialArea').hidden=!trial;
 run.hidden=!trial;
@@ -11,6 +21,7 @@ let frame=0,raf=0,running=false,phase=0,robot={x:345,y:280},animState='ready',pr
 const pathLength=420+Math.PI*180;
 function draw(){drawStadium(canvas,{T,robot,phase,frame,animState});}
 function update(){
+ updateMotionLink();
  const list=document.getElementById('sensors');list.replaceChildren();sensorButtons(list,config,change);
  document.getElementById('installed').textContent='已安装：'+(Object.keys(config).filter(k=>config[k]).map(k=>sensors[k].name).join('、')||'无');
  const last=state.runs.at(-1);document.getElementById('stats').textContent=last?`上次：${last.label} · 演示运行 ${last.seconds} 秒`:'初代机参考：仅视觉，弯道判断偏差';
