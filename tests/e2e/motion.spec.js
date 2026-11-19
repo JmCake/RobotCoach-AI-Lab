@@ -16,6 +16,26 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('book page four opens curve practice with sensor choices and returns to the book',async({page})=>{
+ await page.goto('/index.html#trial');
+ const book=page.frameLocator('#experiment');
+ await expect(book.locator('#motionLink')).toBeVisible();
+ await book.locator('[data-sensor=camera]').click();
+ await book.locator('[data-sensor=imu]').click();
+ await book.locator('#motionLink').click();
+ await expect(page).toHaveURL(/demo-motion\.html\?from=book/);
+ const trial=await snapshot(page);
+ expect(trial.scene).toBe('curve');
+ expect(trial.sensors.camera).toBe(false);
+ expect(trial.sensors.imu).toBe(true);
+ await page.locator('#sensor-camera').check();
+ await page.locator('#backToBook').click();
+ await expect(page).toHaveURL(/index\.html#trial$/);
+ await expect(page.frameLocator('#experiment').locator('[data-sensor=camera]')).toHaveAttribute('aria-pressed','true');
+});
+
+
+
 test('an invalid seed cannot change the selected track or its title before the world resets',async({page})=>{
   await page.reload();
   await page.locator('details').last().locator('summary').click();
