@@ -13,6 +13,26 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('four named sensor switches show purpose, live readings and independent control effects',async({page})=>{
+  await page.setViewportSize({width:1440,height:1200});
+  for(const [key,name] of Object.entries({camera:'摄像头',lidar:'激光测距',imu:'姿态传感器 IMU',force:'足底力觉'})){
+    await expect(page.locator(`#sensor-${key}`)).toBeChecked();
+    await expect(page.locator('.sensor').filter({has:page.locator(`#sensor-${key}`)})).toContainText(name);
+    await page.locator(`#sensor-${key}`).uncheck();
+    const s=await snapshot(page);expect(s.sensors[key]).toBe(false);expect(s.observation[key==='force'?'contact':key]).toBeNull();
+    expect(Object.values(s.sensors).filter(Boolean)).toHaveLength(3);await expect(page.locator(`#reading-${key}`)).toContainText('已关闭');
+    await expect(page.locator('#assistText')).toHaveText('已开启 3/4');
+    await page.locator(`#sensor-${key}`).check();
+  }
+  await page.locator('[data-scene=wet]').click();await page.locator('#play').click();await page.clock.runFor(4000);
+  expect((await snapshot(page)).control.target).toBeLessThan(3);await expect(page.locator('#reading-camera')).toContainText('湿滑');
+  await page.locator('#sensor-imu').uncheck();expect((await snapshot(page)).control.torque).toBe(0);
+  await page.locator('#reset').click();expect((await snapshot(page)).sensors.imu).toBe(false);
+  await page.screenshot({path:join(evidence,'motion-sensors.png'),fullPage:true});
+  await page.locator('#assist').check();expect(Object.values((await snapshot(page)).sensors).every(Boolean)).toBe(true);
+  await page.locator('#assist').uncheck();expect(Object.values((await snapshot(page)).sensors).some(Boolean)).toBe(false);
+});
+
 test('desktop standalone page runs articulated gait, pauses, resets and switches all six scenes',async({page})=>{
   await page.setViewportSize({width:1440,height:1100});await expect(page).toHaveTitle('人形机器人 · 跑道运动 Demo');
   await expect(page.getByRole('heading',{level:1})).toContainText('跑得更稳');await expect(page.locator('vite-error-overlay')).toHaveCount(0);

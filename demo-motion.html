@@ -27,12 +27,18 @@
   </section>
   <div class="toolbar">
     <div class="playback"><button type="button" id="play" class="primary">开始奔跑</button><button type="button" id="reset">重置</button><button type="button" id="slow" aria-pressed="false">慢放 ×0.35</button></div>
-    <label class="switch"><input type="checkbox" id="assist" checked><span class="switch-track" aria-hidden="true"></span><span>传感器辅助<strong id="assistText">已开启</strong></span></label>
+    <label class="switch"><input type="checkbox" id="assist" checked><span class="switch-track" aria-hidden="true"></span><span>全部传感器<strong id="assistText">全部开启</strong></span></label>
   </div>
+  <fieldset class="sensors"><legend>传感器配置 <span>可独立开关，即时影响运动</span></legend>
+    <label class="sensor"><span class="sensor-name"><input type="checkbox" id="sensor-camera" checked>摄像头</span><span class="sensor-purpose">看弯道与湿滑路面，规划减速</span><output id="reading-camera">等待观测</output></label>
+    <label class="sensor"><span class="sensor-name"><input type="checkbox" id="sensor-lidar" checked>激光测距</span><span class="sensor-purpose">测前方障碍，辅助跨栏与收身</span><output id="reading-lidar">等待观测</output></label>
+    <label class="sensor"><span class="sensor-name"><input type="checkbox" id="sensor-imu" checked>姿态传感器 IMU</span><span class="sensor-purpose">测倾斜与转动，反馈纠偏力矩</span><output id="reading-imu">等待观测</output></label>
+    <label class="sensor"><span class="sensor-name"><input type="checkbox" id="sensor-force" checked>足底力觉</span><span class="sensor-purpose">测触地与滑移，补偿落脚</span><output id="reading-force">等待观测</output></label>
+  </fieldset>
   <section class="readouts" aria-label="实时运动数据">
     <div><span>运动状态</span><strong id="state">待机</strong></div><div><span>实际速度</span><strong id="speed">0.0 <small>m/s</small></strong></div><div><span>失衡角度</span><strong id="tilt">0.0<small>°</small></strong></div><div><span>足部接触</span><strong id="contact">双足支撑</strong></div><div><span>本轮摔倒</span><strong id="falls">0 <small>次</small></strong></div>
   </section>
-  <details><summary>实验条件与控制观测</summary><div class="settings"><label>随机种子<input id="seed" type="number" min="0" max="4294967295" step="1" value="2026"></label><label>目标速度 <output id="targetValue">5.6 m/s</output><input id="target" type="range" min="2" max="8" step="0.2" value="5.6"></label><label class="repeat"><input type="checkbox" id="repeat" checked> 摔倒后起身，连续重试</label><p id="observations">启动后显示观测与实际控制输入。</p></div><p class="boundary">固定 120 Hz 的简化二维运动控制与关节动画。辅助使用模拟测距、姿态和足底反馈，不是摄像头像素识别、真实人形动力学或学习训练结果。相同参数与种子可复现；辅助不保证成功。切换环境、种子或速度会重新开始本轮。</p></details>
+  <details><summary>实验条件与控制观测</summary><div class="settings"><label>随机种子<input id="seed" type="number" min="0" max="4294967295" step="1" value="2026"></label><label>目标速度 <output id="targetValue">5.6 m/s</output><input id="target" type="range" min="2" max="8" step="0.2" value="5.6"></label><label class="repeat"><input type="checkbox" id="repeat" checked> 摔倒后起身，连续重试</label><p id="observations">启动后显示观测与实际控制输入。</p></div><p class="boundary">固定 120 Hz 的简化二维运动控制与关节动画。摄像头、激光测距、IMU 和足底力觉均为简化模拟观测，未接入摄像头像素识别、实体传感器或学习训练。相同参数与种子可复现；更多传感器不保证成功。切换环境、种子或速度会重新开始本轮。</p></details>
   <footer><span>先看动作，再理解控制。</span><span>造型延续原项目 · <a href="THIRD_PARTY_NOTICES.md">素材与许可</a></span></footer>
 </main>
 <script type="module" src="assets/motion/demo.js"></script>

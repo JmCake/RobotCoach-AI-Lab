@@ -31,7 +31,7 @@ export class MotionRenderer{
       const p=this.project(w.x,.8,w.center(w.x));
       const light=c.createRadialGradient(p.x+60,p.y,40,p.x+60,p.y,mobile?320:460);
       light.addColorStop(0,'#07111d00');light.addColorStop(.65,'#07111d4d');light.addColorStop(1,'#07111db5');c.fillStyle=light;c.fillRect(0,0,W,H);
-      c.fillStyle='#bed3da';c.font='11px system-ui';c.fillText('视觉范围 1.05 m',28,H-74);
+      c.fillStyle='#bed3da';c.font='11px system-ui';c.fillText(w.sensors.camera?'摄像头视距 1.05 m':'摄像头已关闭',28,H-74);
     }
     c.font='11px system-ui';c.fillStyle=night?'#9fb3bb':'#608379';c.fillText('双足关节运动 / 简化动力学',26,85);
     this.scaleBar(night);
@@ -95,7 +95,7 @@ export class MotionRenderer{
     const c=this.ctx,pose=makePose(w),P=p=>this.project(p.x,p.h,p.z),ground=this.project(w.x,0,pose.hip.z);
     this.ellipse(ground.x+12,ground.y+4,45+pose.fall*55,8,`rgba(47,48,35,${.22-clamp(w.y*.1,0,.12)})`);
     // Ranging arc and contact dots are actual enabled observations, never a success animation.
-    if(w.assist){
+    if(w.observation.range>0){
       const a=this.project(w.x+.6,.08,pose.hip.z),b=this.project(w.x+Math.min(w.observation.range,5),.08,pose.hip.z);
       c.save();c.setLineDash([4,7]);this.line(a,b,w.scene==='night'?'#82c6d5aa':'#3b8f8b80',1.2);c.restore();
       const end=w.observation.obstacle?this.project(w.x+w.observation.obstacle.distance,.12,pose.hip.z):b;
@@ -111,7 +111,7 @@ export class MotionRenderer{
       limb(l.hip,l.knee,21,back);joint(l.knee,9,back);limb(l.knee,l.ankle,17,back);joint(l.ankle,7,back);
       const a=P(l.ankle),toe=P(l.toe);c.save();c.translate(a.x,a.y);c.rotate(l.contact?Math.atan2(toe.y-a.y,toe.x-a.x):-.22*Math.sin(l.phase*TAU));
       this.round(-10,-5,36,14,5,back?'#647e88':C.edge);this.round(-7,-5,31,8,3,back?'#97adb3':C.shell);c.restore();
-      if(l.contact&&w.assist){this.ellipse(a.x+8,a.y+11,15,2.5,'#6bc9b5aa');}
+      if(l.contact&&w.sensors.force){this.ellipse(a.x+8,a.y+11,15,2.5,'#6bc9b5aa');}
       if(l.contact&&l.slip>.45){this.line({x:a.x-29,y:a.y+12},{x:a.x-8,y:a.y+12},'#e9dcbe',2);this.line({x:a.x-20,y:a.y+17},{x:a.x-5,y:a.y+17},'#e9dcbe90',1);}
     };
     arm(pose.arms[0],true);leg(pose.legs[0],true);

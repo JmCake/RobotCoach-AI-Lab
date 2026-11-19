@@ -14,15 +14,18 @@ export const SCENES={
   night:{name:'弱光跑道',hint:'视距缩短，测距辅助'}
 };
 export const STATE_NAMES={running:'稳定奔跑',unbalanced:'正在纠偏',stumbling:'连续踉跄',falling:'正在摔倒',fallen:'倒地停留',recovering:'撑地起身'};
+export const SENSOR_NAMES={camera:'摄像头',lidar:'激光测距',imu:'姿态传感器 IMU',force:'足底力觉'};
 
 export class MotionWorld{
-  constructor({scene='straight',seed=2026,target=5.6,assist=true,repeat=true}={}){
-    this.scene=SCENES[scene]?scene:'straight';this.seed=seed>>>0;this.target=clamp(target,2,8);this.assist=assist;this.repeat=repeat;
+  constructor({scene='straight',seed=2026,target=5.6,assist=true,sensors,repeat=true}={}){
+    this.scene=SCENES[scene]?scene:'straight';this.seed=seed>>>0;this.target=clamp(target,2,8);this.repeat=repeat;
+    this.sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,sensors?.[k]??assist]));
     this.random=rng(this.seed);this.time=0;this.x=0;this.speed=0;this.phase=0;this.y=0;this.vy=0;
     this.theta=0;this.omega=0;this.lateral=0;this.heading=0;this.turn=0;this.slip=0;this.crouch=0;
     this.state='running';this.age=0;this.falls=0;this.passed=0;this.peakTilt=0;this.cause='';this.event='交替落脚，保持节奏';
     this.imbalance=0;this.lastImpact=0;this.collision=null;this.history=[];this.visualHistory=[];this.contacts=[true,true];
     this.footX=[-.18,.18];this.footY=[0,0];this.footSlip=[0,0];this.previousPhase=[0,.5];
+    this.contactHeight=[0,0];
     this.swings=[null,null];
     this.terrainPhase=this.random()*Math.PI*2;
     this.obstacles=Array.from({length:240},(_,i)=>({x:12+i*9+this.random()*1.4,type:i%3===1?'beam':'hurdle',width:.42,height:i%3===1?1.23:.48+this.random()*.1,hit:false,passed:false}));
@@ -33,27 +36,32 @@ export class MotionWorld{
   height(x){return this.scene==='rough'?(.105*Math.sin(x*3.7+this.terrainPhase)+.045*Math.sin(x*8.1))*smooth((x-5)/3):0;}
   friction(x){return this.scene==='wet'&&x>7?.22+.045*Math.sin(x*1.9+this.terrainPhase):.88;}
   get hasObstacles(){return this.scene==='obstacles'||this.scene==='night';}
+  get assist(){return Object.values(this.sensors).some(Boolean);}
+  set assist(value){for(const key of Object.keys(this.sensors))this.sensors[key]=value;}
   // A bounded synthetic sensor model, not pixel vision. Controllers only receive this snapshot.
   observe(){
-    const visualRange=this.scene==='night'?1.05:4.3,range=this.assist?7.5:visualRange;
+    const s=this.sensors,visualRange=this.scene==='night'?1.05:4.3,range=s.lidar?7.5:s.camera?visualRange:0;
     const obstacle=this.hasObstacles?this.obstacles.find(o=>o.x+o.width>this.x-.3&&o.x-this.x<range):null;
     const reading=obstacle?{distance:obstacle.x-this.x,type:obstacle.type,height:obstacle.height}:null;
-    this.visualHistory.push({time:this.time,reading:reading&&reading.distance<visualRange?reading:null});
+    this.visualHistory.push({time:this.time,reading:s.camera&&reading&&reading.distance<visualRange?reading:null});
     this.visualHistory=this.visualHistory.filter(s=>s.time>=this.time-.35);
     const delay=this.scene==='night'?.2:.06;
     const delayed=this.visualHistory.findLast(s=>s.time<=this.time-delay)?.reading||null;
-    return {range,visualRange,obstacle:this.assist?reading:delayed,
-      imu:this.assist?{tilt:this.theta,rate:this.omega,speed:this.speed,heading:this.heading}:null,
-      contact:this.assist?{feet:[...this.contacts],slip:this.slip,roughness:Math.abs(this.height(this.x+.6)-this.height(this.x))}:null,
-      surface:this.assist?this.friction(this.x+2):null,curve:this.curvature(this.x+(this.assist?2:0)),offset:this.lateral,
+    const camera=s.camera?{range:visualRange,obstacle:delayed,curve:this.curvature(this.x+(this.scene==='night'?.3:2)),offset:this.lateral,wet:this.friction(this.x+(this.scene==='night'?.3:2))<.4}:null;
+    const lidar=s.lidar?{range:7.5,obstacle:reading}:null;
+    const detected=lidar?.obstacle??camera?.obstacle??null;
+    return {range,visualRange:s.camera?visualRange:0,camera,lidar,obstacle:detected,source:lidar?.obstacle?'激光测距':camera?.obstacle?'摄像头':null,
+      imu:s.imu?{tilt:this.theta,rate:this.omega,speed:this.speed,heading:this.heading}:null,
+      contact:s.force?{feet:[...this.contacts],slip:this.slip,roughness:Math.abs(this.contactHeight[0]-this.contactHeight[1])}:null,
+      surface:camera?(camera.wet?.24:.88):null,curve:camera?.curve??0,offset:camera?.offset??0,
       grounded:this.y<=0,jumpHeight:this.y};
   }
   decide(o){
     let target=this.target,torque=0,placement=0;
     if(o.surface!==null)target=Math.min(target,Math.sqrt(o.surface*9.81/Math.max(.035,Math.abs(o.curve)))*.8,o.surface<.4?2.65:9);
-    if(o.contact){target=Math.min(target,Math.max(2.3,this.target-o.contact.roughness*15-o.contact.slip*1.4));placement=clamp(o.contact.roughness*2+Math.abs(o.imu.tilt)*.7,0,.6);}
+    if(o.contact){target=Math.min(target,Math.max(2.3,this.target-o.contact.roughness*15-o.contact.slip*1.4));placement=clamp(o.contact.roughness*2+Math.abs(o.imu?.tilt??0)*.7,0,.6);}
     if(o.imu)torque=-19*o.imu.tilt-7*o.imu.rate;
-    const steer=clamp(o.curve*this.speed-(o.imu?2.8:1.1)*o.offset-(o.imu?4.5:1.4)*this.heading,-2.5,2.5);
+    const steer=clamp(o.curve*this.speed-(o.imu?2.8:1.1)*o.offset-(o.imu&&o.camera?4.5*o.imu.heading:0),-2.5,2.5);
     const obs=o.obstacle;
     const jump=!!(obs&&obs.type==='hurdle'&&obs.distance<this.speed*.43+.32&&obs.distance>.2&&o.grounded);
     const duck=!!(obs&&obs.type==='beam'&&obs.distance<this.speed*.6+.7&&obs.distance>-.7);
@@ -66,7 +74,7 @@ export class MotionWorld{
   }
   step(){
     this.time+=DT;this.age+=DT;this.lastImpact*=Math.exp(-DT*10);
-    if(['falling','fallen','recovering'].includes(this.state)){this.stepFall();return;}
+    if(['falling','fallen','recovering'].includes(this.state)){this.stepFall();this.observation=this.observe();return;}
     this.observation=this.observe();this.control=this.decide(this.observation);const c=this.control;
     const mu=this.friction(this.x),oldSpeed=this.speed;
     this.speed+=clamp((c.target-this.speed)*2,-mu*9.81,3.2)*DT;
@@ -91,6 +99,7 @@ export class MotionWorld{
         this.swings[i]={x:this.footX[i],h:this.footY[i],end:this.x+this.speed*.44/phaseRate+reach,progress:0};
       }
       if(stance&&!this.contacts[i]){
+        this.contactHeight[i]=this.height(this.footX[i]);
         const rough=Math.abs(this.height(this.footX[i])-this.height(this.x-.5));
         const shock=rough*this.speed*(1-c.placement*1.1);
         this.lastImpact=Math.max(this.lastImpact,shock*8);
@@ -133,7 +142,7 @@ export class MotionWorld{
     if(Math.abs(this.theta)>.78||this.imbalance>1.6){this.falls++;this.fallStart=this.theta;this.fallCrouch=this.crouch;this.fallHeight=this.y;this.fallFeet=this.footX.map((x,i)=>({x,h:this.footY[i]}));this.event=this.cause||'重心越过支撑范围';this.transition('falling');}
     else if(this.imbalance>.38||Math.abs(this.theta)>.4)this.transition('stumbling');
     else if(Math.abs(this.theta)>.13||Math.abs(this.lateral)>.45)this.transition('unbalanced');
-    else {this.transition('running');if(this.y===0&&!c.duck&&this.time>1&&this.time%3<DT)this.event=this.assist?'姿态与落脚反馈正在调节控制':'基础节奏运行 · 无姿态与足底反馈';}
+    else {this.transition('running');if(this.y===0&&!c.duck&&this.time>1&&this.time%3<DT)this.event=this.assist?`已接入：${Object.keys(this.sensors).filter(k=>this.sensors[k]).map(k=>SENSOR_NAMES[k]).join('、')}`:'基础节奏运行 · 所有传感器已关闭';}
     this.accel=(this.speed-oldSpeed)/DT;
   }
   stepFall(){

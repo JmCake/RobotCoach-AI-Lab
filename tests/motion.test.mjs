@@ -51,7 +51,29 @@ test('jumping and crouching clear actual geometry; weak light has delayed detect
   }
   assert.ok(jumped&&ducked);assert.ok(w.passed>4);assert.equal(w.falls,0);assert.ok(maxStep<.23);
   const night=run({scene:'night',assist:false});assert.equal(night.collision.part,'小腿');assert.ok(night.cause.includes('矮栏'));
-  assert.equal(night.observation.imu,null);assert.equal(night.observation.range,1.05);
+  assert.equal(night.observation.imu,null);assert.equal(night.observation.range,0);
+});
+
+test('four sensors independently remove their observation and the matching control input',()=>{
+  const cases=[
+    {sensor:'camera',scene:'wet',prepare:w=>{w.x=10;w.speed=5;},field:'target'},
+    {sensor:'lidar',scene:'night',prepare:w=>{w.x=10;w.speed=5;},field:'jump'},
+    {sensor:'imu',scene:'wet',prepare:w=>{w.theta=.2;w.omega=.1;},field:'torque'},
+    {sensor:'force',scene:'rough',prepare:w=>{w.contactHeight=[.12,0];w.slip=.5;},field:'placement'}
+  ];
+  for(const {sensor,scene,prepare,field} of cases){
+    const w=new MotionWorld({scene});prepare(w);
+    const before=w.observe(),control=w.decide(before);w.sensors[sensor]=false;
+    const after=w.observe(),changed=w.decide(after);
+    assert.equal(after[sensor==='force'?'contact':sensor],null,sensor);
+    assert.notEqual(control[field],changed[field],`${sensor} must affect ${field}`);
+    for(const other of Object.keys(w.sensors).filter(k=>k!==sensor))assert.equal(w.sensors[other],true);
+  }
+  // A camera alone retains short, delayed sight; ranging works when the camera is off.
+  const camera=new MotionWorld({scene:'night',sensors:{camera:true,lidar:false,imu:false,force:false}});
+  assert.equal(camera.observation.range,1.05);assert.equal(camera.observation.lidar,null);
+  const lidar=new MotionWorld({scene:'night',sensors:{camera:false,lidar:true,imu:false,force:false}});
+  lidar.x=10;assert.equal(lidar.observe().source,'激光测距');assert.equal(lidar.observe().camera,null);
 });
 
 test('all six environments and several seeds remain finite through repeated falls and recovery',()=>{

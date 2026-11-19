@@ -1,4 +1,4 @@
-import {MotionWorld,DT,SCENES,STATE_NAMES} from './world.js';
+import {MotionWorld,DT,SCENES,STATE_NAMES,SENSOR_NAMES} from './world.js';
 import {MotionRenderer} from './render.js';
 const $=id=>document.getElementById(id),canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
 let world,running=false,slow=false,accumulator=0,last=0,paintReadout=0;
@@ -6,7 +6,7 @@ function create(){
   const seed=Number($('seed').value);
   if(!Number.isInteger(seed)||seed<0||seed>4294967295){$('seed').setCustomValidity('请输入 0 到 4294967295 之间的整数');$('seed').reportValidity();return false;}
   $('seed').setCustomValidity('');
-  world=new MotionWorld({scene:document.querySelector('[data-scene][aria-pressed=true]').dataset.scene,seed,target:Number($('target').value),assist:$('assist').checked,repeat:$('repeat').checked});
+  world=new MotionWorld({scene:document.querySelector('[data-scene][aria-pressed=true]').dataset.scene,seed,target:Number($('target').value),sensors:Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,$(`sensor-${k}`).checked])),repeat:$('repeat').checked});
   accumulator=0;last=0;readout();renderer.draw(world);return true;
 }
 function setRunning(value){running=value;last=0;accumulator=0;$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
@@ -18,7 +18,11 @@ function readout(){
   $('contact').textContent=['fallen','recovering'].includes(world.state)?'手掌 / 躯干':world.state==='falling'?'支撑丢失':world.y>.05?'腾空':world.contacts.every(Boolean)?'双足支撑':world.contacts[0]?'左足支撑':world.contacts[1]?'右足支撑':'换步腾空';
   $('event').textContent=world.event;
   const o=world.observation,c=world.control;
-  $('observations').textContent=`观测距离 ${o.range.toFixed(1)} m · ${o.imu?'姿态反馈已接入':'姿态反馈关闭'} · ${o.contact?'足底反馈已接入':'足底反馈关闭'} ｜ 控制限速 ${c.target.toFixed(1)} m/s · 纠偏力矩 ${c.torque.toFixed(2)} · 落脚补偿 ${c.placement.toFixed(2)}${o.obstacle?` · 前方${o.obstacle.type==='beam'?'横梁':'矮栏'} ${o.obstacle.distance.toFixed(1)} m`:''}`;
+  $('reading-camera').textContent=o.camera?`可见 ${o.camera.range.toFixed(2)} m · ${o.camera.wet?'湿滑路面':'路面观测'}${Math.abs(o.camera.curve)>.08?' · 弯道':''}`:'已关闭 · 无视觉观测';
+  $('reading-lidar').textContent=o.lidar?(o.lidar.obstacle?`${o.lidar.obstacle.type==='beam'?'横梁':'矮栏'} ${o.lidar.obstacle.distance.toFixed(1)} m`:'量程 7.5 m · 未测到障碍'):'已关闭 · 无测距观测';
+  $('reading-imu').textContent=o.imu?`倾斜 ${(o.imu.tilt*180/Math.PI).toFixed(1)}° · 纠偏 ${c.torque.toFixed(2)}`:'已关闭 · 不作姿态纠偏';
+  $('reading-force').textContent=o.contact?`触地 ${o.contact.feet.every(Boolean)?'双足':o.contact.feet[0]?'左足':o.contact.feet[1]?'右足':'无'} · 滑移 ${o.contact.slip.toFixed(2)} · 补偿 ${c.placement.toFixed(2)}`:'已关闭 · 无足底补偿';
+  $('observations').textContent=`有效观测距离 ${o.range.toFixed(2)} m ｜ 控制限速 ${c.target.toFixed(1)} m/s · 纠偏力矩 ${c.torque.toFixed(2)} · 落脚补偿 ${c.placement.toFixed(2)}${o.obstacle?` · ${o.source}发现${o.obstacle.type==='beam'?'横梁':'矮栏'} ${o.obstacle.distance.toFixed(1)} m`:''}`;
 }
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
@@ -27,7 +31,15 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListene
 }));
 $('play').addEventListener('click',()=>setRunning(!running));$('reset').addEventListener('click',reset);
 $('slow').addEventListener('click',()=>{slow=!slow;$('slow').setAttribute('aria-pressed',String(slow));if(running)$('playState').textContent=slow?'慢速观察':'正在运行';});
-$('assist').addEventListener('change',()=>{world.assist=$('assist').checked;$('assistText').textContent=world.assist?'已开启':'已关闭';world.observation=world.observe();readout();renderer.draw(world);});
+function updateSensors(){
+  for(const key of Object.keys(SENSOR_NAMES)){world.sensors[key]=$(`sensor-${key}`).checked;$(`sensor-${key}`).closest('.sensor').classList.toggle('disabled',!world.sensors[key]);}
+  const count=Object.values(world.sensors).filter(Boolean).length;
+  $('assist').checked=count===4;$('assist').indeterminate=count>0&&count<4;$('assistText').textContent=count===4?'全部开启':count===0?'全部关闭':`已开启 ${count}/4`;
+  world.observation=world.observe();world.control=['running','unbalanced','stumbling'].includes(world.state)?world.decide(world.observation):world.control;
+  readout();renderer.draw(world);
+}
+$('assist').addEventListener('change',()=>{for(const k of Object.keys(SENSOR_NAMES))$(`sensor-${k}`).checked=$('assist').checked;updateSensors();});
+for(const key of Object.keys(SENSOR_NAMES))$(`sensor-${key}`).addEventListener('change',updateSensors);
 $('repeat').addEventListener('change',()=>{world.repeat=$('repeat').checked;});
 $('seed').addEventListener('input',()=>$('seed').setCustomValidity(''));$('seed').addEventListener('change',reset);
 $('target').addEventListener('input',()=>{$('targetValue').textContent=`${Number($('target').value).toFixed(1)} m/s`;});$('target').addEventListener('change',reset);
@@ -44,5 +56,5 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
-window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,control:{...world.control},observation:structuredClone(world.observation),history:structuredClone(world.history)})};
+window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),history:structuredClone(world.history)})};
 renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);
