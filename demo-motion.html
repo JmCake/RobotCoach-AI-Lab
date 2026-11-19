@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f0e7">
+  <title>人形机器人 · 跑道运动 Demo</title>
+  <link rel="icon" href="assets/robot.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/motion/demo.css">
+</head>
+<body>
+<main>
+  <header><a class="brand" href="demo-motion.html">RobotCoach<span>AI LAB</span></a><span class="prototype">独立动画实验</span></header>
+  <section class="intro"><div><h1>让机器人，跑得更稳。</h1><p>观察每一次落脚，以及失衡后努力找回平衡的瞬间。</p></div><span class="index" aria-hidden="true">01 — 06</span></section>
+  <nav class="scenes" aria-label="跑道环境">
+    <button type="button" data-scene="straight" aria-pressed="true"><span>01</span>正常直道</button>
+    <button type="button" data-scene="curve" aria-pressed="false"><span>02</span>急弯跑道</button>
+    <button type="button" data-scene="wet" aria-pressed="false"><span>03</span>湿滑路面</button>
+    <button type="button" data-scene="rough" aria-pressed="false"><span>04</span>凹凸路面</button>
+    <button type="button" data-scene="obstacles" aria-pressed="false"><span>05</span>障碍跑道</button>
+    <button type="button" data-scene="night" aria-pressed="false"><span>06</span>弱光跑道</button>
+  </nav>
+  <section class="stage" aria-label="机器人动画">
+    <div class="stage-top"><div><span class="live-dot"></span><strong id="sceneName">正常直道</strong><span id="sceneHint">交替落脚，自然摆臂</span></div><span id="playState">准备就绪</span></div>
+    <canvas id="motionCanvas" width="1200" height="640" role="img" aria-label="可动关节双足机器人与红色跑道。运动数据见下方。"></canvas>
+    <div class="stage-bottom"><span id="event" role="status">点击开始，观察机器人的完整步态。</span><span id="distance">0.0 m</span></div>
+  </section>
+  <div class="toolbar">
+    <div class="playback"><button type="button" id="play" class="primary">开始奔跑</button><button type="button" id="reset">重置</button><button type="button" id="slow" aria-pressed="false">慢放 ×0.35</button></div>
+    <label class="switch"><input type="checkbox" id="assist" checked><span class="switch-track" aria-hidden="true"></span><span>传感器辅助<strong id="assistText">已开启</strong></span></label>
+  </div>
+  <section class="readouts" aria-label="实时运动数据">
+    <div><span>运动状态</span><strong id="state">待机</strong></div><div><span>实际速度</span><strong id="speed">0.0 <small>m/s</small></strong></div><div><span>失衡角度</span><strong id="tilt">0.0<small>°</small></strong></div><div><span>足部接触</span><strong id="contact">双足支撑</strong></div><div><span>本轮摔倒</span><strong id="falls">0 <small>次</small></strong></div>
+  </section>
+  <details><summary>实验条件与控制观测</summary><div class="settings"><label>随机种子<input id="seed" type="number" min="0" max="4294967295" step="1" value="2026"></label><label>目标速度 <output id="targetValue">5.6 m/s</output><input id="target" type="range" min="2" max="8" step="0.2" value="5.6"></label><label class="repeat"><input type="checkbox" id="repeat" checked> 摔倒后起身，连续重试</label><p id="observations">启动后显示观测与实际控制输入。</p></div><p class="boundary">固定 120 Hz 的简化二维运动控制与关节动画。辅助使用模拟测距、姿态和足底反馈，不是摄像头像素识别、真实人形动力学或学习训练结果。相同参数与种子可复现；辅助不保证成功。切换环境、种子或速度会重新开始本轮。</p></details>
+  <footer><span>先看动作，再理解控制。</span><span>造型延续原项目 · <a href="THIRD_PARTY_NOTICES.md">素材与许可</a></span></footer>
+</main>
+<script type="module" src="assets/motion/demo.js"></script>
+</body>
+</html>
