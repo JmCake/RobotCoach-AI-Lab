@@ -2,6 +2,17 @@
 
 更新时间：2026-11-19（Asia/Shanghai）。本交接以功能提交 `1bea955684fff97e10f50b10ffd152d2b1678240` 为代码基线；本文是其后的文档更新。
 
+## GitHub Pages 发布补充（2026-11-19）
+
+用户随后明确授权直接使用 GitHub 部署，并要求便于后续更新。该授权取代本文下方历史记录中的“没有部署授权 / 不发布”边界；PR 仍不自动合并。
+
+- 分享首页：<https://jmcake.github.io/RobotCoach-AI-Lab/>，直接进入独立跑道；`demo-motion.html` 保留为同一 Demo 的明确入口。
+- 原课程另存为 `course.html`，源码和普通 `npm run build` 的首页保持不变。
+- `.github/workflows/pages.yml` 在推送 `codex/humanoid-motion-demo` 时自动测试并发布。工作流以后随 PR 合并到 `main` 后，推送 `main` 同样发布；不需要为了首次部署先合并。
+- GitHub Pages 使用 Actions 发布模式。`npm run build:motion` 生成上述入口，部署任务只上传 `dist/`，不会上传本机工作区、依赖或测试证据。
+- 修复非法种子后切换环境导致标题与实际世界不同步的问题：切换跑道前先验证种子，非法输入保持原跑道；新增浏览器回归覆盖拒绝切换和修正种子后正常切换。
+- 旧章节中的测试计数、未发布状态和本机预览均是发布前记录；发布后以最新工作流运行和线上验收为准。
+
 ## 1. 当前状态与边界
 
 - 仓库：[JmCake/RobotCoach-AI-Lab](https://github.com/JmCake/RobotCoach-AI-Lab)

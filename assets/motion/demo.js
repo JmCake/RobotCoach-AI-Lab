@@ -70,6 +70,7 @@ function readout(){
   updateSpeech();
 }
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
+  if(!$('seed').checkValidity()){$('seed').reportValidity();return;}
   document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
   const scene=button.dataset.scene;$('sceneName').textContent=SCENES[scene].name;$('sceneHint').textContent=SCENES[scene].hint;
   document.querySelector('.stage').classList.toggle('night',scene==='night');reset();

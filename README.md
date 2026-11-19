@@ -1,6 +1,6 @@
 # RobotCoach-AI-Lab
 
-**项目状态：V1.0 / V1.1 已合并 main；V2.0 综合升级已实现，提交 PR 供审查，未自动合并或发布生产站点。**
+**项目状态：V1.0 / V1.1 已合并 main；V2.0 综合升级与独立运动 Demo 提交 PR 供审查。运动 Demo 已配置 GitHub Pages 自动发布，PR 不自动合并。**
 
 本项目基于原作者 [PumpkinKiller04/RobotCoachAI](https://github.com/PumpkinKiller04/RobotCoachAI) 的课程与交互设计进行精简改造，目标是将《机器人总教练请就位》从复杂的导学单网站，改造成**打开即可体验、单页顺序推进、以机器人互动为核心**的教学网站。
 
@@ -20,6 +20,12 @@ npm run dev
 访问 **http://127.0.0.1:4180**，直接进入第一章。也可以在项目目录运行 `python -m http.server 4180`，再访问相同地址。请通过 HTTP 打开，不直接双击 HTML（浏览器对本地 ES 模块有限制）。手机访问时，可使用静态托管站点，或将 Python 服务的局域网地址用于同网设备。
 
 ## 独立人形运动 Demo
+
+线上分享地址：**[打开机器人跑道](https://jmcake.github.io/RobotCoach-AI-Lab/)**，也可访问 [`demo-motion.html`](https://jmcake.github.io/RobotCoach-AI-Lab/demo-motion.html)。原课程保留在 [`course.html`](https://jmcake.github.io/RobotCoach-AI-Lab/course.html)。
+
+推送到 `codex/humanoid-motion-demo` 会触发 `.github/workflows/pages.yml`：先执行单元测试、语法检查和运动 Demo 浏览器回归，再构建并发布到 GitHub Pages。测试失败不会发布。以后将此工作流随 PR 合并到 `main` 后，`main` 的推送也会自动发布。当前无需合并 PR 即可更新线上跑道。
+
+部署构建使用 `npm run build:motion`：生成完整静态 `dist/`，把跑道复制为首页，原课程首页另存为 `course.html`，保留独立入口与许可文件。普通 `npm run build` 和本地开发入口不变。浏览器无业务后端依赖；Pages 只是静态文件托管。
 
 本分支新增独立入口 **`http://127.0.0.1:4180/demo-motion.html`**，运行方式仍为 `npm run dev` 或 `python -m http.server 4180`。不接入原有课程导航，也不读写课程与训练数据。`npm run build` 会将此入口一起打包到 `dist/`。
 

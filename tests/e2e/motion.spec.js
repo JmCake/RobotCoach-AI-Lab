@@ -16,6 +16,21 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('an invalid seed cannot change the selected track or its title before the world resets',async({page})=>{
+  await page.reload();
+  await page.locator('details').last().locator('summary').click();
+  await page.locator('#seed').fill('-1');await page.locator('#seed').press('Tab');
+  await page.locator('[data-scene=night]').focus();await page.locator('[data-scene=night]').press('Enter');
+  expect((await snapshot(page)).scene).toBe('straight');
+  await expect(page.locator('#sceneName')).toHaveText('正常直道');
+  await expect(page.locator('[data-scene=straight]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.stage')).not.toHaveClass(/night/);
+  await page.locator('#seed').fill('2026');await page.locator('#seed').press('Tab');
+  await page.locator('[data-scene=night]').focus();await page.locator('[data-scene=night]').press('Enter');
+  expect((await snapshot(page)).scene).toBe('night');
+  await expect(page.locator('#sceneName')).toHaveText('弱光跑道');
+});
+
 test('rain with vision and foot feedback still needs IMU after slowing down',async({page})=>{
   await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=wet]').click();
   for(const key of ['camera','force'])await page.locator(`#sensor-${key}`).check();

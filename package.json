@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
+    "build:motion": "node scripts/build-motion.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "check": "node scripts/check.mjs",
