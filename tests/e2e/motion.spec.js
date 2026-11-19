@@ -29,7 +29,8 @@ test('night collision without IMU falls and locks failure; retry starts at zero 
   await page.clock.runFor(30000);expect((await snapshot(page)).time).toBe(failed.time);expect((await snapshot(page)).result.success).toBe(false);
   await page.locator('#sensor-lidar').check();await page.locator('#sensor-imu').check();expect((await snapshot(page)).result.success).toBe(false);
   await page.locator('#play').click();let s=await snapshot(page);expect(s.x).toBe(0);expect(s.result).toBeNull();expect(s.collisions).toBe(0);expect(s.finishX).toBe(40);
-  await page.clock.runFor(8000);s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.result.collisions).toBe(0);expect(s.falls).toBe(0);
+  expect(s.attempt).toBe(2);expect(s.previousResult.success).toBe(false);expect(s.previousResult.collisions).toBe(1);expect(s.totalCollisions).toBe(1);
+  await page.clock.runFor(8000);s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.result.collisions).toBe(0);expect(s.result.falls).toBe(0);expect(s.falls).toBe(1);
   await page.locator('#sensor-imu').uncheck();expect((await snapshot(page)).result).toBeNull();await expect(page.locator('#finishNotice')).toBeHidden();
 });
 

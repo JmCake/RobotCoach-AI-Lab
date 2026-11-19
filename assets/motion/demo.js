@@ -74,7 +74,13 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListene
   const scene=button.dataset.scene;$('sceneName').textContent=SCENES[scene].name;$('sceneHint').textContent=SCENES[scene].hint;
   document.querySelector('.stage').classList.toggle('night',scene==='night');reset();
 }));
-$('play').addEventListener('click',()=>{if(world.done){reset();setRunning(true);}else setRunning(!running);});$('reset').addEventListener('click',reset);
+$('play').addEventListener('click',()=>{
+  if(world.done){
+    if(!world.result.success){stopSpeech();world.restartAttempt();last=0;accumulator=0;readout();paint();}
+    else reset();
+    setRunning(true);
+  }else setRunning(!running);
+});$('reset').addEventListener('click',reset);
 $('nextScene').addEventListener('click',()=>{const order=Object.keys(SCENES),next=order[order.indexOf(world.scene)+1];if(next)document.querySelector(`[data-scene="${next}"]`).click();});
 $('teachingGuide').innerHTML=Object.entries(SCENES).map(([key,s])=>`<li><strong>${s.name}</strong><span>${s.recommended.map(k=>SENSOR_NAMES[k]).join(' + ')||'无需传感器'}</span><p>${s.focus}</p></li>`).join('');
 $('slow').addEventListener('click',()=>{slow=!slow;$('slow').setAttribute('aria-pressed',String(slow));if(running)$('playState').textContent=slow?'慢速观察':'正在运行';});
