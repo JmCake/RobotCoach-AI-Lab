@@ -23,6 +23,7 @@
   <section class="stage" aria-label="机器人动画">
     <div class="stage-top"><div><span class="live-dot"></span><strong id="sceneName">正常直道</strong><span id="sceneHint">交替落脚，自然摆臂</span></div><span id="playState">准备就绪</span></div>
     <canvas id="motionCanvas" width="1200" height="640" role="img" aria-label="可动关节双足机器人与红色跑道。运动数据见下方。"></canvas>
+    <aside id="robotSpeech" class="robot-speech" hidden aria-label="机器人摔倒自述"><span class="speech-label">机器人说</span><p id="fallMessage" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" id="voice" aria-pressed="true" hidden>语音提示：开</button></aside>
     <div class="stage-bottom"><span id="event" role="status">点击开始，观察机器人的完整步态。</span><span id="distance">0.0 m</span></div>
   </section>
   <div class="toolbar">

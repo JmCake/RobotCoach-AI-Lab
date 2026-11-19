@@ -1,6 +1,7 @@
 // Independent lightweight motion demo. No course state, trained policy or hidden success clips.
 // Reuses the project's deterministic random generator (MIT upstream adaptation).
 import {rng} from '../learning.js';
+import {explainFall} from './fall-feedback.js';
 export const DT=1/120;
 export const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export const mix=(a,b,t)=>a+(b-a)*t;
@@ -23,7 +24,7 @@ export class MotionWorld{
     this.random=rng(this.seed);this.time=0;this.x=0;this.speed=0;this.phase=0;this.y=0;this.vy=0;
     this.theta=0;this.omega=0;this.lateral=0;this.heading=0;this.turn=0;this.slip=0;this.crouch=0;
     this.state='running';this.age=0;this.falls=0;this.passed=0;this.peakTilt=0;this.cause='';this.event='交替落脚，保持节奏';
-    this.imbalance=0;this.lastImpact=0;this.collision=null;this.history=[];this.visualHistory=[];this.contacts=[true,true];
+    this.imbalance=0;this.lastImpact=0;this.collision=null;this.fallFeedback=null;this.history=[];this.visualHistory=[];this.contacts=[true,true];
     this.footX=[-.18,.18];this.footY=[0,0];this.footSlip=[0,0];this.previousPhase=[0,.5];
     this.contactHeight=[0,0];
     this.swings=[null,null];
@@ -70,7 +71,7 @@ export class MotionWorld{
   transition(state){if(this.state!==state){this.state=state;this.age=0;this.history.push({time:this.time,state,x:this.x});this.history=this.history.slice(-60);}}
   trip(cause,impulse,part=null){
     this.cause=cause;this.event=cause;this.omega+=impulse;this.imbalance+=.12;
-    if(part)this.collision={x:this.x,part,time:this.time};
+    if(part)this.collision={x:this.x,part,time:this.time,context:{sensors:{...this.sensors},observation:structuredClone(this.observation),control:{...this.control}}};
   }
   step(){
     this.time+=DT;this.age+=DT;this.lastImpact*=Math.exp(-DT*10);
@@ -139,7 +140,13 @@ export class MotionWorld{
       if(!o.passed&&this.x-.25>o.x+o.width){o.passed=true;if(!o.hit){this.passed++;this.event=o.type==='beam'?'已收身通过横梁':'已跨越矮栏，恢复步态';}}
     }
     this.imbalance=clamp(this.imbalance+DT*(Math.abs(this.theta)>.23?1:-1.7),0,2);
-    if(Math.abs(this.theta)>.78||this.imbalance>1.6){this.falls++;this.fallStart=this.theta;this.fallCrouch=this.crouch;this.fallHeight=this.y;this.fallFeet=this.footX.map((x,i)=>({x,h:this.footY[i]}));this.event=this.cause||'重心越过支撑范围';this.transition('falling');}
+    if(Math.abs(this.theta)>.78||this.imbalance>1.6){
+      this.falls++;this.fallStart=this.theta;this.fallCrouch=this.crouch;this.fallHeight=this.y;this.fallFeet=this.footX.map((x,i)=>({x,h:this.footY[i]}));
+      const context=/撞上|碰到/.test(this.cause)&&this.collision&&this.time-this.collision.time<2?this.collision.context:{sensors:{...this.sensors},observation:structuredClone(this.observation),control:{...this.control}};
+      const feedback={...context,cause:this.cause,scene:this.scene};
+      this.fallFeedback={id:this.falls,time:this.time,text:explainFall(feedback),...feedback};
+      this.event=this.cause||'重心越过支撑范围';this.transition('falling');
+    }
     else if(this.imbalance>.38||Math.abs(this.theta)>.4)this.transition('stumbling');
     else if(Math.abs(this.theta)>.13||Math.abs(this.lateral)>.45)this.transition('unbalanced');
     else {this.transition('running');if(this.y===0&&!c.duck&&this.time>1&&this.time%3<DT)this.event=this.assist?`已接入：${Object.keys(this.sensors).filter(k=>this.sensors[k]).map(k=>SENSOR_NAMES[k]).join('、')}`:'基础节奏运行 · 所有传感器已关闭';}
@@ -157,7 +164,7 @@ export class MotionWorld{
       if(this.repeat&&this.age>1.5){this.event='双手撑地，收腿起身';this.transition('recovering');}
     }else{
       this.speed=0;this.theta=Math.PI/2*(1-smooth(this.age/2));this.crouch=0;this.y=0;
-      if(this.age>2){this.theta=0;this.omega=0;this.imbalance=0;this.heading=0;this.slip=0;this.phase=0;this.contacts=[true,true];this.footX=[this.x-.12,this.x+.15];this.footY=this.footX.map(x=>this.height(x));this.swings=[null,null];this.event='重新站稳，继续尝试';this.transition('running');}
+      if(this.age>2){this.theta=0;this.omega=0;this.imbalance=0;this.heading=0;this.slip=0;this.phase=0;this.cause='';this.collision=null;this.contacts=[true,true];this.footX=[this.x-.12,this.x+.15];this.footY=this.footX.map(x=>this.height(x));this.swings=[null,null];this.event='重新站稳，继续尝试';this.transition('running');}
     }
     this.peakTilt=Math.max(this.peakTilt,Math.abs(this.theta));
   }

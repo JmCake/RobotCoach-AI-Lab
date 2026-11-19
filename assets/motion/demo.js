@@ -2,14 +2,40 @@ import {MotionWorld,DT,SCENES,STATE_NAMES,SENSOR_NAMES} from './world.js';
 import {MotionRenderer} from './render.js';
 const $=id=>document.getElementById(id),canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
 let world,running=false,slow=false,accumulator=0,last=0,paintReadout=0;
+let lastSpeech=0,localVoice=null,voiceOn=true;
+function stopSpeech(){window.speechSynthesis?.cancel();}
+function narrate(text){
+  if(!localVoice||!voiceOn)return;
+  const utterance=new SpeechSynthesisUtterance(text);utterance.voice=localVoice;utterance.lang=localVoice.lang;utterance.rate=.95;
+  stopSpeech();window.speechSynthesis.speak(utterance);
+}
+function findLocalVoice(){
+  localVoice=window.speechSynthesis?.getVoices().find(v=>v.localService&&/^zh(?:[-_]|$)/i.test(v.lang))??null;
+  $('voice').hidden=!localVoice;
+}
+function positionSpeech(){
+  const bubble=$('robotSpeech'),anchor=renderer.speechAnchor;if(bubble.hidden||!anchor)return;
+  const width=canvas.clientWidth,height=canvas.clientHeight,left=Math.max(12,Math.min(width-bubble.offsetWidth-12,anchor.x/renderer.width*width-40));
+  const top=Math.max(76,anchor.y/renderer.height*height-bubble.offsetHeight-24);
+  bubble.style.left=`${left}px`;bubble.style.top=`${top}px`;bubble.style.setProperty('--tip',`${Math.max(20,Math.min(bubble.offsetWidth-25,anchor.x/renderer.width*width-left))}px`);
+}
+function paint(){renderer.draw(world);positionSpeech();}
+function updateSpeech(){
+  const feedback=world.fallFeedback,bubble=$('robotSpeech');
+  bubble.hidden=!feedback||!(world.time-feedback.time<9||['falling','fallen','recovering'].includes(world.state));
+  if(!feedback)return;
+  if($('fallMessage').textContent!==feedback.text)$('fallMessage').textContent=feedback.text;
+  if(feedback.id!==lastSpeech){lastSpeech=feedback.id;if(running)narrate(feedback.text);}
+  positionSpeech();
+}
 function create(){
   const seed=Number($('seed').value);
   if(!Number.isInteger(seed)||seed<0||seed>4294967295){$('seed').setCustomValidity('请输入 0 到 4294967295 之间的整数');$('seed').reportValidity();return false;}
   $('seed').setCustomValidity('');
   world=new MotionWorld({scene:document.querySelector('[data-scene][aria-pressed=true]').dataset.scene,seed,target:Number($('target').value),sensors:Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,$(`sensor-${k}`).checked])),repeat:$('repeat').checked});
-  accumulator=0;last=0;readout();renderer.draw(world);return true;
+  accumulator=0;last=0;lastSpeech=0;stopSpeech();readout();paint();return true;
 }
-function setRunning(value){running=value;last=0;accumulator=0;$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
+function setRunning(value){running=value;if(!value)stopSpeech();last=0;accumulator=0;$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
 function reset(){setRunning(false);if(create()){$('play').textContent='开始奔跑';$('playState').textContent='准备就绪';$('event').textContent='点击开始，观察机器人的完整步态。';}}
 function readout(){
   $('state').textContent=world.time===0?'待机':STATE_NAMES[world.state];$('speed').innerHTML=`${world.speed.toFixed(1)} <small>m/s</small>`;
@@ -23,6 +49,7 @@ function readout(){
   $('reading-imu').textContent=o.imu?`倾斜 ${(o.imu.tilt*180/Math.PI).toFixed(1)}° · 纠偏 ${c.torque.toFixed(2)}`:'已关闭 · 不作姿态纠偏';
   $('reading-force').textContent=o.contact?`触地 ${o.contact.feet.every(Boolean)?'双足':o.contact.feet[0]?'左足':o.contact.feet[1]?'右足':'无'} · 滑移 ${o.contact.slip.toFixed(2)} · 补偿 ${c.placement.toFixed(2)}`:'已关闭 · 无足底补偿';
   $('observations').textContent=`有效观测距离 ${o.range.toFixed(2)} m ｜ 控制限速 ${c.target.toFixed(1)} m/s · 纠偏力矩 ${c.torque.toFixed(2)} · 落脚补偿 ${c.placement.toFixed(2)}${o.obstacle?` · ${o.source}发现${o.obstacle.type==='beam'?'横梁':'矮栏'} ${o.obstacle.distance.toFixed(1)} m`:''}`;
+  updateSpeech();
 }
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
@@ -36,25 +63,27 @@ function updateSensors(){
   const count=Object.values(world.sensors).filter(Boolean).length;
   $('assist').checked=count===4;$('assist').indeterminate=count>0&&count<4;$('assistText').textContent=count===4?'全部开启':count===0?'全部关闭':`已开启 ${count}/4`;
   world.observation=world.observe();world.control=['running','unbalanced','stumbling'].includes(world.state)?world.decide(world.observation):world.control;
-  readout();renderer.draw(world);
+  readout();paint();
 }
 $('assist').addEventListener('change',()=>{for(const k of Object.keys(SENSOR_NAMES))$(`sensor-${k}`).checked=$('assist').checked;updateSensors();});
 for(const key of Object.keys(SENSOR_NAMES))$(`sensor-${key}`).addEventListener('change',updateSensors);
+$('voice').addEventListener('click',()=>{voiceOn=!voiceOn;$('voice').setAttribute('aria-pressed',String(voiceOn));$('voice').textContent=`语音提示：${voiceOn?'开':'关'}`;if(!voiceOn)stopSpeech();else if(world.fallFeedback&&!$('robotSpeech').hidden)narrate(world.fallFeedback.text);});
+findLocalVoice();window.speechSynthesis?.addEventListener('voiceschanged',findLocalVoice);
 $('repeat').addEventListener('change',()=>{world.repeat=$('repeat').checked;});
 $('seed').addEventListener('input',()=>$('seed').setCustomValidity(''));$('seed').addEventListener('change',reset);
 $('target').addEventListener('input',()=>{$('targetValue').textContent=`${Number($('target').value).toFixed(1)} m/s`;});$('target').addEventListener('change',reset);
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)setRunning(false);});
 window.addEventListener('pagehide',()=>setRunning(false));
-new ResizeObserver(()=>{renderer.resize();if(world)renderer.draw(world);}).observe(canvas);
+new ResizeObserver(()=>{renderer.resize();if(world)paint();}).observe(canvas);
 function frame(now){
   if(running&&last){
     accumulator+=Math.min((now-last)/1000,.1)*(slow?.35:1);
     while(accumulator>=DT){world.step();accumulator-=DT;}
   }
-  last=now;renderer.draw(world);
+  last=now;paint();
   if(now-paintReadout>100){readout();paintReadout=now;}
   requestAnimationFrame(frame);
 }
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
-window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),history:structuredClone(world.history)})};
+window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,running,assist:world.assist,sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),history:structuredClone(world.history)})};
 renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);

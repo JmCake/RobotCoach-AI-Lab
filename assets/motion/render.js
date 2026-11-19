@@ -93,6 +93,7 @@ export class MotionRenderer{
   }
   robot(w){
     const c=this.ctx,pose=makePose(w),P=p=>this.project(p.x,p.h,p.z),ground=this.project(w.x,0,pose.hip.z);
+    this.speechAnchor=P(pose.head);
     this.ellipse(ground.x+12,ground.y+4,45+pose.fall*55,8,`rgba(47,48,35,${.22-clamp(w.y*.1,0,.12)})`);
     // Ranging arc and contact dots are actual enabled observations, never a success animation.
     if(w.observation.range>0){

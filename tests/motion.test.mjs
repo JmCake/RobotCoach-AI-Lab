@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MotionWorld,DT,SCENES} from '../assets/motion/world.js';
 import {makePose} from '../assets/motion/rig.js';
+import {explainFall} from '../assets/motion/fall-feedback.js';
 const run=(options,seconds=20)=>{const w=new MotionWorld({...options,repeat:false});for(let i=0;i<seconds/DT;i++)w.step();return w;};
 
 test('normal running alternates contacts, preserves planted feet and is deterministic',()=>{
@@ -74,6 +75,23 @@ test('four sensors independently remove their observation and the matching contr
   assert.equal(camera.observation.range,1.05);assert.equal(camera.observation.lidar,null);
   const lidar=new MotionWorld({scene:'night',sensors:{camera:false,lidar:true,imu:false,force:false}});
   lidar.x=10;assert.equal(lidar.observe().source,'激光测距');assert.equal(lidar.observe().camera,null);
+});
+
+test('fall clues describe actual cause and sensing gaps without naming the answer',()=>{
+  const wet=run({scene:'wet',assist:false});assert.ok(wet.fallFeedback.cause.includes('滑移'));assert.ok(wet.fallFeedback.text.includes('脚底'));
+  const clue=structuredClone(wet.fallFeedback);wet.assist=true;wet.step();assert.deepEqual(wet.fallFeedback,clue,'a later toggle must not rewrite why the fall happened');
+  const night=run({scene:'night',sensors:{camera:true,lidar:false,imu:false,force:false}});
+  assert.ok(night.fallFeedback.text.includes('太暗'));assert.equal(night.fallFeedback.sensors.camera,true);
+  assert.ok(run({scene:'rough',assist:false}).fallFeedback.text.includes('落点'));
+  assert.ok(run({scene:'curve',assist:false}).fallFeedback.text.includes('拐弯'));
+  assert.equal(new MotionWorld().fallFeedback,null);
+  const all={camera:true,lidar:true,imu:true,force:true};
+  const sensed=explainFall({cause:'足部滑移',sensors:all});assert.ok(sensed.includes('察觉'));assert.ok(!sensed.includes('没察觉'));
+  const posture=explainFall({cause:'足部滑移',sensors:{...all,imu:false}});assert.ok(posture.includes('歪了多少'));
+  const phrases=[clue.text,night.fallFeedback.text,sensed,posture,explainFall({cause:'头部碰到横梁',sensors:{camera:false,lidar:false}})];
+  for(const text of phrases)assert.doesNotMatch(text,/传感器|摄像头|激光|IMU|足底力觉|开启|安装|模块/);
+  // Repeated falls get separate episodes; prose generation must not consume physics randomness.
+  const repeat=new MotionWorld({scene:'wet',assist:false});for(let i=0;i<3600;i++)repeat.step();assert.ok(repeat.fallFeedback.id>=2);
 });
 
 test('all six environments and several seeds remain finite through repeated falls and recovery',()=>{

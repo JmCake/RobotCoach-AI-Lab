@@ -13,6 +13,37 @@ test.beforeEach(async({page})=>{
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
+test('fall speech follows the cause, stays readable, freezes at the event and resets',async({page})=>{
+  await page.setViewportSize({width:1280,height:1000});await expect(page.locator('#robotSpeech')).toBeHidden();
+  await page.locator('[data-scene=wet]').click();await page.locator('#assist').uncheck();await page.locator('#play').click();await page.clock.runFor(6100);
+  await expect(page.locator('#robotSpeech')).toBeVisible();await expect(page.locator('#fallMessage')).toContainText('脚底');
+  const text=await page.locator('#fallMessage').innerText();expect(text).not.toMatch(/摄像头|IMU|模块|开启/);
+  await page.locator('#assist').check();await expect(page.locator('#fallMessage')).toHaveText(text);
+  await page.screenshot({path:join(evidence,'motion-fall-clue.png'),fullPage:true});
+  await page.locator('#reset').click();await expect(page.locator('#robotSpeech')).toBeHidden();expect((await snapshot(page)).fallFeedback).toBeNull();
+  await page.setViewportSize({width:390,height:844});await page.locator('[data-scene=night]').click();
+  for(const key of ['lidar','imu','force'])await page.locator(`#sensor-${key}`).uncheck();
+  await page.locator('#play').click();await page.clock.runFor(4800);await expect(page.locator('#fallMessage')).toContainText('太暗');
+  const bubble=await page.locator('#robotSpeech').boundingBox(),stage=await page.locator('.stage').boundingBox();
+  expect(bubble.x).toBeGreaterThanOrEqual(stage.x);expect(bubble.x+bubble.width).toBeLessThanOrEqual(stage.x+stage.width);
+  expect(bubble.y).toBeGreaterThan(stage.y+50);expect(bubble.y+bubble.height).toBeLessThan(stage.y+stage.height);
+  await page.screenshot({path:join(evidence,'motion-fall-clue-mobile.png'),fullPage:true});
+});
+
+test('optional narration uses local Chinese voices once per fall and stops on pause',async({page})=>{
+  await page.addInitScript(()=>{
+    window.narrated=[];window.narrationSources=[];window.cancelCount=0;
+    window.SpeechSynthesisUtterance=function(text){this.text=text;};
+    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{getVoices:()=>[{lang:'zh-CN',localService:false},{lang:'en-US',localService:true},{lang:'zh-CN',localService:true}],addEventListener(){},speak(u){window.narrated.push(u.text);window.narrationSources.push(u.voice.localService&&/^zh/.test(u.voice.lang));},cancel(){window.cancelCount++;}}});
+  });
+  await page.reload();await page.locator('[data-scene=wet]').click();await page.locator('#assist').uncheck();await page.locator('#play').click();await page.clock.runFor(6200);
+  await expect(page.locator('#voice')).toBeVisible();expect(await page.evaluate(()=>window.narrated)).toHaveLength(1);
+  expect(await page.evaluate(()=>window.narrationSources)).toEqual([true]);
+  await page.clock.runFor(500);expect(await page.evaluate(()=>window.narrated)).toHaveLength(1);
+  const before=await page.evaluate(()=>window.cancelCount);await page.locator('#play').click();expect(await page.evaluate(()=>window.cancelCount)).toBeGreaterThan(before);
+  await page.locator('#voice').click();await expect(page.locator('#voice')).toHaveText('语音提示：关');
+});
+
 test('four named sensor switches show purpose, live readings and independent control effects',async({page})=>{
   await page.setViewportSize({width:1440,height:1200});
   for(const [key,name] of Object.entries({camera:'摄像头',lidar:'激光测距',imu:'姿态传感器 IMU',force:'足底力觉'})){
