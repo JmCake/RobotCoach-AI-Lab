@@ -10,8 +10,8 @@ export const DEFAULT_SPEED=6.4;
 export const COURSE_DISTANCE=40;
 export const SCENES={
   straight:{name:'正常直道',hint:'先观察基础步态',recommended:[],focus:'不加模块也能完成基础跑步'},
-  obstacles:{name:'障碍跑道',hint:'先发现，再跨越',recommended:['camera'],focus:'摄像头发现近处障碍；激光测距也可替代'},
-  night:{name:'弱光跑道',hint:'看不清时，怎样知道距离？',recommended:['camera','lidar'],focus:'在视觉基础上增加激光测距；测距可独立避障'},
+  obstacles:{name:'障碍跑道',hint:'先发现，再跨越',recommended:['camera','imu'],focus:'摄像头发现障碍，IMU 稳定起跳、落地和收身后的姿态；激光测距可替代摄像头'},
+  night:{name:'弱光跑道',hint:'看不清时，怎样知道距离？',recommended:['camera','lidar','imu'],focus:'弱光时增加激光测距，保留 IMU 稳定跨越和落地；测距可替代视觉避障'},
   curve:{name:'急弯跑道',hint:'看见方向，还要稳住身体',recommended:['camera','imu'],focus:'摄像头辨认弯道，IMU 纠正身体倾斜'},
   rough:{name:'凹凸路面',hint:'身体稳了，脚下呢？',recommended:['camera','imu','force'],focus:'IMU + 足底力觉配合：测身体姿态，也测落脚冲击；摄像头可保留'},
   wet:{name:'湿滑路面',hint:'提前放慢，留意脚下的变化',recommended:['camera','imu','force'],focus:'摄像头提前减速，足底力觉感知滑移，IMU 帮助站稳；更低速也可能靠视觉通过'}
