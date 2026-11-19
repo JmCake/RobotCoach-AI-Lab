@@ -12,15 +12,33 @@ test.beforeEach(async({page})=>{
   await page.clock.pauseAt(new Date('2026-11-19T00:00:02Z'));
   // Existing animation regression keeps its original speed; new course tests use the new defaults.
   await page.locator('#assist').check();await page.locator('#target').evaluate(el=>{el.value='5.6';el.dispatchEvent(new Event('change',{bubbles:true}));});
+  await page.locator('#repeat').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));});
 });
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
+
+test('night collision without IMU falls and locks failure; retry starts at zero and changing a passed setup clears its badge',async({page})=>{
+  await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=night]').click();
+  await page.locator('#sensor-camera').check();await page.locator('#sensor-force').check();
+  await expect(page.locator('#repeat')).not.toBeChecked();await page.locator('#play').click();await page.clock.runFor(7000);
+  const failed=await snapshot(page);expect(failed.collisions).toBeGreaterThan(0);expect(failed.falls).toBeGreaterThan(0);
+  expect(failed.result.success).toBe(false);expect(failed.running).toBe(false);expect(failed.attempt).toBe(1);expect(failed.finishX).toBe(40);
+  await expect(page.locator('#resultTitle')).toContainText('本轮失败');await expect(page.locator('#resultDetail')).toContainText('碰撞 1 次');
+  await expect(page.locator('#nextScene')).toBeHidden();await expect(page.locator('#fallMessage')).toContainText('太暗');
+  await page.screenshot({path:join(evidence,'motion-night-collision-failed.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,'motion-night-collision-failed-mobile.png'),fullPage:true});
+  await page.clock.runFor(30000);expect((await snapshot(page)).time).toBe(failed.time);expect((await snapshot(page)).result.success).toBe(false);
+  await page.locator('#sensor-lidar').check();await page.locator('#sensor-imu').check();expect((await snapshot(page)).result.success).toBe(false);
+  await page.locator('#play').click();let s=await snapshot(page);expect(s.x).toBe(0);expect(s.result).toBeNull();expect(s.collisions).toBe(0);expect(s.finishX).toBe(40);
+  await page.clock.runFor(8000);s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.result.collisions).toBe(0);expect(s.falls).toBe(0);
+  await page.locator('#sensor-imu').uncheck();expect((await snapshot(page)).result).toBeNull();await expect(page.locator('#finishNotice')).toBeHidden();
+});
 
 test('hurdle without IMU clears first, then falls on landing; identical impact with IMU finishes',async({page})=>{
   await page.setViewportSize({width:1280,height:1000});await page.reload();await page.locator('[data-scene=obstacles]').click();await page.locator('#sensor-camera').check();
   await page.locator('#play').click();await page.clock.runFor(3400);
   const off=await snapshot(page);expect(off.passed).toBeGreaterThan(0);expect(off.landings).toBe(1);expect(off.falls).toBe(0);expect(off.lastLanding.cleared).toBe(true);
-  await page.clock.runFor(1200);let s=await snapshot(page);expect(s.falls).toBe(1);expect(s.result).toBeNull();
-  await expect(page.locator('#fallMessage')).toContainText('我跳过去了');await expect(page.locator('#finishNotice')).toBeHidden();
+  await page.clock.runFor(1200);let s=await snapshot(page);expect(s.falls).toBe(1);expect(s.result.success).toBe(false);
+  await expect(page.locator('#fallMessage')).toContainText('我跳过去了');await expect(page.locator('#resultTitle')).toContainText('本轮失败');
   await page.locator('.stage').screenshot({path:join(evidence,'motion-obstacle-imu-off.png')});
   await page.setViewportSize({width:390,height:844});await page.locator('.stage').screenshot({path:join(evidence,'motion-obstacle-imu-off-mobile.png')});
   await page.setViewportSize({width:1280,height:1000});await page.locator('#reset').click();await page.locator('#sensor-imu').check();await page.locator('#play').click();await page.clock.runFor(3400);
@@ -51,7 +69,7 @@ test('rough ground visibly needs landing feedback at the default pace and the re
   await page.setViewportSize({width:390,height:844});await page.reload();await page.locator('[data-scene=rough]').click();
   for(const key of ['camera','imu'])await page.locator(`#sensor-${key}`).check();
   await page.locator('#play').click();await page.clock.runFor(4500);
-  let s=await snapshot(page);expect(s.falls).toBeGreaterThan(0);expect(s.result).toBeNull();await expect(page.locator('#fallMessage')).toContainText('落点');
+  let s=await snapshot(page);expect(s.falls).toBeGreaterThan(0);expect(s.result.success).toBe(false);await expect(page.locator('#fallMessage')).toContainText('落点');
   await page.locator('#reset').click();await page.locator('#sensor-force').check();await page.locator('#play').click();await page.clock.runFor(16000);
   s=await snapshot(page);expect(s.result.success).toBe(true);expect(s.falls).toBe(0);
   await expect(page.locator('#resultTitle')).toContainText('成功过线');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

@@ -23,14 +23,15 @@ export class MotionWorld{
   constructor({scene='straight',seed=2026,target=DEFAULT_SPEED,assist=true,sensors,repeat=true,distance=COURSE_DISTANCE}={}){
     this.scene=SCENES[scene]?scene:'straight';this.seed=seed>>>0;this.target=clamp(target,2,8);this.repeat=repeat;
     this.sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,sensors?.[k]??assist]));
-    this.courseDistance=distance;this.attemptStartX=0;this.finishX=distance;this.attemptStarted=0;this.attempt=1;this.result=null;this.finishFeedback=null;this.collisions=0;this.offTrack=false;
+    this.courseDistance=distance;this.attemptStartX=0;this.finishX=distance;this.attemptStarted=0;this.attempt=1;this.result=null;this.finishFeedback=null;this.collisions=0;this.totalCollisions=0;this.offTrack=false;
+    this.attemptStartFalls=0;this.previousResult=null;this.attemptResults=[];this.failureAt=null;
     this.random=rng(this.seed);this.time=0;this.x=0;this.speed=0;this.phase=0;this.y=0;this.vy=0;
     this.theta=0;this.omega=0;this.lateral=0;this.heading=0;this.turn=0;this.slip=0;this.crouch=0;this.compression=0;
     this.state='running';this.age=0;this.falls=0;this.passed=0;this.peakTilt=0;this.cause='';this.event='交替落脚，保持节奏';
     this.imbalance=0;this.lastImpact=0;this.collision=null;this.fallFeedback=null;this.history=[];this.visualHistory=[];this.contacts=[true,true];
     this.footX=[-.18,.18];this.footY=[0,0];this.footSlip=[0,0];this.previousPhase=[0,.5];
     this.contactHeight=[0,0];
-    this.jumpCount=0;this.landings=0;this.lastLanding=null;
+    this.jumpCount=0;this.landings=0;this.lastLanding=null;this.passedAtTakeoff=0;
     this.swings=[null,null];
     this.terrainPhase=this.random()*Math.PI*2;
     this.obstacles=Array.from({length:240},(_,i)=>({x:12+i*9+this.random()*1.4,type:i%3===1?'beam':'hurdle',width:.42,height:i%3===1?1.23:.48+this.random()*.1,hit:false,passed:false}));
@@ -42,7 +43,7 @@ export class MotionWorld{
   friction(x){return this.scene==='wet'&&x>7?.22+.045*Math.sin(x*1.9+this.terrainPhase):.88;}
   get hasObstacles(){return this.scene==='obstacles'||this.scene==='night';}
   get progress(){return Math.max(0,this.x-this.attemptStartX);}
-  get done(){return this.result!==null;}
+  get done(){return this.result!==null&&(this.result.success||this.state==='incomplete'||(this.state==='fallen'&&!this.repeat&&this.age>=1.5));}
   get assist(){return Object.values(this.sensors).some(Boolean);}
   set assist(value){for(const key of Object.keys(this.sensors))this.sensors[key]=value;}
   // A bounded synthetic sensor model, not pixel vision. Controllers only receive this snapshot.
@@ -75,15 +76,34 @@ export class MotionWorld{
     return {target,torque,steer,jump,duck,placement};
   }
   transition(state){if(this.state!==state){this.state=state;this.age=0;this.history.push({time:this.time,state,x:this.x});this.history=this.history.slice(-60);}}
+  recordFailure(reason){
+    if(this.result){
+      if(!this.result.success){this.result.collisions=this.collisions;this.result.falls=this.falls-this.attemptStartFalls;this.result.offTrack||=this.offTrack;}
+      return;
+    }
+    if(!Number.isFinite(this.courseDistance))return;
+    this.failureAt=this.time;
+    this.result={success:false,reason,distance:Math.min(this.courseDistance,this.progress),time:this.time-this.attemptStarted,collisions:this.collisions,falls:this.falls-this.attemptStartFalls,offTrack:this.offTrack,attempt:this.attempt,sensors:{...this.sensors}};
+  }
+  restartAttempt(){
+    const previous=this.result?structuredClone(this.result):{success:false,reason:this.cause,attempt:this.attempt,collisions:this.collisions,falls:this.falls-this.attemptStartFalls,distance:this.progress};
+    previous.falls=this.falls-this.attemptStartFalls;
+    const attempts=[...this.attemptResults,previous].slice(-20),falls=this.falls,totalCollisions=this.totalCollisions,attempt=this.attempt+1,history=this.history,feedback=this.fallFeedback;
+    const fresh=new MotionWorld({scene:this.scene,seed:this.seed,target:this.target,sensors:{...this.sensors},repeat:this.repeat,distance:this.courseDistance});
+    Object.assign(this,fresh,{falls,totalCollisions,attempt,attemptStartFalls:falls,previousResult:previous,attemptResults:attempts,history});
+    if(feedback)this.fallFeedback={...feedback,time:-6};
+    this.event=`已回到起点 · 第 ${attempt} 次尝试，上次未通过`;
+  }
   trip(cause,impulse,part=null){
     this.cause=cause;this.event=cause;this.omega+=impulse;this.imbalance+=.12;
-    if(part){this.collisions++;this.collision={x:this.x,part,time:this.time,context:{sensors:{...this.sensors},observation:structuredClone(this.observation),control:{...this.control}}};}
+    if(part){this.collisions++;this.totalCollisions++;this.collision={x:this.x,part,time:this.time,context:{sensors:{...this.sensors},observation:structuredClone(this.observation),control:{...this.control}}};this.recordFailure(cause);}
   }
   step(){
     this.time+=DT;this.age+=DT;this.lastImpact*=Math.exp(-DT*10);
+    if(this.result&&!this.result.success){this.result.collisions=this.collisions;this.result.falls=this.falls-this.attemptStartFalls;}
     this.compression*=Math.exp(-DT*2.8);
     if(['falling','fallen','recovering'].includes(this.state)){this.stepFall();this.observation=this.observe();return;}
-    this.observation=this.observe();this.control=this.decide(this.observation);if(this.done)this.control.target=0;const c=this.control;
+    this.observation=this.observe();this.control=this.decide(this.observation);if(this.result)this.control.target=0;const c=this.control;
     const mu=this.friction(this.x),oldSpeed=this.speed;
     this.speed+=clamp((c.target-this.speed)*2,-mu*9.81,3.2)*DT;
     this.x+=this.speed*DT;
@@ -95,7 +115,7 @@ export class MotionWorld{
     const phaseRate=(1.05+this.speed*.31)*(1+Math.min(.18,Math.abs(this.theta)*.2));
     this.phase+=phaseRate*DT;
     this.slip+=(Math.max(0,this.speed-3.0)*Math.max(0,.7-mu)*1.15-this.slip)*DT*5;
-    if(c.jump&&!this.done){
+    if(c.jump&&!this.result){
       this.vy=4.8;this.jumpCount++;this.passedAtTakeoff=this.passed;
       // A push-off behind the centre of mass carries forward angular momentum.
       // The same impulse applies to every sensor configuration; feedback must cancel it.
@@ -116,8 +136,8 @@ export class MotionWorld{
       }
       this.y=0;this.vy=0;
     }
-    this.crouch+=((c.duck&&!this.done?1:0)-this.crouch)*DT*13;
-    if(c.duck&&!this.done)this.event='测得前方横梁 · 屈膝收身';
+    this.crouch+=((c.duck&&!this.result?1:0)-this.crouch)*DT*13;
+    if(c.duck&&!this.result)this.event='测得前方横梁 · 屈膝收身';
     for(let i=0;i<2;i++){
       const p=(this.phase+i*.5)%1,stance=p<.56&&this.y<.04;
       const reach=.43+Math.min(.28,this.speed*.035);
@@ -154,7 +174,9 @@ export class MotionWorld{
     }
     if(this.done){
       if(this.speed<.15)for(let i=0;i<2;i++){this.footX[i]+=((this.x+(i?.15:-.12))-this.footX[i])*DT*12;this.footY[i]+=(this.height(this.footX[i])-this.footY[i])*DT*12;this.contacts[i]=true;}
-      this.theta*=Math.exp(-DT*5);this.omega=0;return;
+      this.theta*=Math.exp(-DT*5);this.omega=0;
+      if(!this.result.success&&this.repeat&&this.speed<.04&&this.age>3)this.restartAttempt();
+      return;
     }
     // Passive mechanical damping exists with or without sensing; sensors add feedback torque.
     const disturbance=tractionExcess*.24+this.slip*.68+Math.abs(this.lateral)*.13;
@@ -164,12 +186,16 @@ export class MotionWorld{
     if(this.slip>.8)this.cause='足部滑移 · 支撑点向前滑动';
     if(tractionExcess>1)this.cause='转弯侧向载荷超过可用抓地力';
     if(Math.abs(this.lateral)>1.5){this.omega+=DT*.9;this.cause='转向不足 · 偏离中间跑道';}
-    if(Math.abs(this.lateral)>3.2)this.offTrack=true;
+    if(Math.abs(this.lateral)>3.2){this.offTrack=true;this.recordFailure('偏离跑道边界');}
     if(this.compression>.24){this.cause='落脚高度差 · 膝踝缓冲不足';this.omega+=DT*6;}
     if(this.hasObstacles)for(const o of this.obstacles){
       if(!o.hit&&this.x+.22>o.x&&this.x-.22<o.x+o.width){
         const footBottom=this.y+.13,headTop=this.y+1.88-this.crouch*.77;
-        if(o.type==='hurdle'?footBottom<o.height:headTop>o.height){o.hit=true;this.speed*=.66;this.trip(o.type==='hurdle'?'小腿撞上矮栏':'头部碰到横梁',o.type==='hurdle'?2.8:2.1,o.type==='hurdle'?'小腿':'头部');}
+        if(o.type==='hurdle'?footBottom<o.height:headTop>o.height){
+          // Contact at a higher point has a longer tipping lever arm. All sensors see the same impact.
+          const impact=this.speed*(o.type==='beam'?.6:.5);o.hit=true;this.speed*=.66;
+          this.trip(o.type==='hurdle'?'小腿撞上矮栏':'头部碰到横梁',impact,o.type==='hurdle'?'小腿':'头部');
+        }
       }
       if(!o.passed&&this.x-.25>o.x+o.width){o.passed=true;if(!o.hit){this.passed++;this.event=o.type==='beam'?'已收身通过横梁':'已跨越矮栏，恢复步态';}}
     }
@@ -180,18 +206,23 @@ export class MotionWorld{
       const feedback={...context,cause:this.cause,scene:this.scene};
       this.fallFeedback={id:this.falls,time:this.time,text:explainFall(feedback),...feedback};
       this.event=this.cause||'重心越过支撑范围';this.transition('falling');
+      this.recordFailure(this.event);
     }
     else if(this.imbalance>.38||Math.abs(this.theta)>.4||this.compression>.19)this.transition('stumbling');
     else if(Math.abs(this.theta)>.13||Math.abs(this.lateral)>.45)this.transition('unbalanced');
     else {this.transition('running');if(this.y===0&&!c.duck&&this.time>1&&this.time%3<DT)this.event=this.assist?`已接入：${Object.keys(this.sensors).filter(k=>this.sensors[k]).map(k=>SENSOR_NAMES[k]).join('、')}`:'基础节奏运行 · 所有传感器已关闭';}
     this.accel=(this.speed-oldSpeed)/DT;
     // Same geometric finish and cleanliness criteria for every sensor configuration.
-    if(this.x>=this.finishX&&!['falling','fallen','recovering'].includes(this.state)){
-      const success=this.collisions===0&&!this.offTrack;
-      this.result={success,distance:this.courseDistance,time:this.time-this.attemptStarted,collisions:this.collisions,offTrack:this.offTrack,attempt:this.attempt,sensors:{...this.sensors}};
+    if(this.x>=this.finishX&&!this.result&&!['falling','fallen','recovering'].includes(this.state)){
+      const success=this.collisions===0&&!this.offTrack&&this.falls===this.attemptStartFalls;
+      this.result={success,distance:this.courseDistance,time:this.time-this.attemptStarted,collisions:this.collisions,falls:this.falls-this.attemptStartFalls,offTrack:this.offTrack,attempt:this.attempt,sensors:{...this.sensors}};
       this.finishFeedback={id:`finish-${this.attempt}`,time:this.time,text:success?'我跑过终点啦！这次顺利跑完了整段路。':this.offTrack?'我跑到线边了，可刚才偏出了跑道。这次还得再试试。':'我跑到终点了，可路上碰到了东西。这次还得再试试。'};
       this.event=success?`成功通过 ${this.courseDistance} m · 用时 ${this.result.time.toFixed(1)} 秒`:'已到终点，途中有碰撞或越界 · 请重试';
       this.transition(success?'finished':'incomplete');
+    }
+    if(this.result&&!this.result.success&&this.state!=='falling'&&this.time-this.failureAt>1.5){
+      this.finishFeedback={id:`failed-${this.attempt}`,time:this.time,text:this.collisions?'刚才碰到了东西，这一轮没能顺利跑完。':'刚才偏出了跑道，这一轮得重新试试。'};
+      this.event='本轮未通过 · 失败记录已保留，请回起点重试';this.transition('incomplete');
     }
   }
   stepFall(){
@@ -206,7 +237,7 @@ export class MotionWorld{
       if(this.repeat&&this.age>1.5){this.event='双手撑地，收腿起身';this.transition('recovering');}
     }else{
       this.speed=0;this.theta=Math.PI/2*(1-smooth(this.age/2));this.crouch=0;this.y=0;
-      if(this.age>2){this.theta=0;this.omega=0;this.imbalance=0;this.heading=0;this.slip=0;this.compression=0;this.phase=0;this.cause='';this.collision=null;this.collisions=0;this.offTrack=false;this.attempt++;this.attemptStartX=this.x;this.finishX=this.x+this.courseDistance;this.attemptStarted=this.time;this.contacts=[true,true];this.footX=[this.x-.12,this.x+.15];this.footY=this.footX.map(x=>this.height(x));this.swings=[null,null];this.event='重新站稳，开始新一段 40 m 挑战';this.transition('running');}
+      if(this.age>2)this.restartAttempt();
     }
     this.peakTilt=Math.max(this.peakTilt,Math.abs(this.theta));
   }

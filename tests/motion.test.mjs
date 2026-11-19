@@ -20,11 +20,11 @@ test('normal running alternates contacts, preserves planted feet and is determin
 });
 
 test('terrain forces produce continuous stumble, fall, hold and repeated attempts',()=>{
-  const w=createPhysicsWorld({scene:'wet',assist:false});let previous=makePose(w),maxStep=0;
+  const w=createPhysicsWorld({scene:'wet',assist:false});let previous=makePose(w),previousX=w.x,maxStep=0;
   for(let i=0;i<3600;i++){
     w.step();const pose=makePose(w);
-    for(let j=0;j<2;j++)for(const part of ['ankle','knee'])maxStep=Math.max(maxStep,Math.hypot(pose.legs[j][part].x-previous.legs[j][part].x,pose.legs[j][part].h-previous.legs[j][part].h));
-    previous=pose;
+    for(let j=0;j<2;j++)for(const part of ['ankle','knee'])maxStep=Math.max(maxStep,Math.hypot((pose.legs[j][part].x-w.x)-(previous.legs[j][part].x-previousX),pose.legs[j][part].h-previous.legs[j][part].h));
+    previous=pose;previousX=w.x;
   }
   const states=w.history.map(x=>x.state);
   for(const state of ['unbalanced','stumbling','falling','fallen','recovering'])assert.ok(states.includes(state),state);
@@ -152,4 +152,29 @@ test('a hurdle is cleared before uncontrolled landing pitch causes a fall; IMU c
   const rescue=new MotionWorld({scene:'obstacles',sensors:{camera:true,lidar:false,imu:false,force:false},repeat:false});
   while(!rescue.landings)rescue.step();rescue.sensors.imu=true;
   for(let i=0;i<3600&&!rescue.done&&!rescue.falls;i++)rescue.step();assert.equal(rescue.result?.success,true);
+});
+
+test('night impacts latch failure, head contact tips an uncontrolled runner, and crossing cannot erase a hit',()=>{
+  for(const seed of [1,7,17,42,2026])for(const mask of [0,1,2,3,8,9,10,11]){
+    const w=new MotionWorld({scene:'night',seed,sensors:{camera:!!(mask&1),lidar:!!(mask&2),imu:false,force:!!(mask&8)},repeat:false});
+    for(let i=0;i<3600&&!w.done;i++)w.step();
+    assert.equal(w.result?.success,false);assert.ok(w.falls>0);assert.equal(w.finishFeedback,null);assert.equal(w.finishX,40);
+    const result=structuredClone(w.result);for(let i=0;i<1200;i++)w.step();assert.equal(w.result.success,false);assert.equal(w.result.reason,result.reason);
+  }
+  const head=new MotionWorld({scene:'night',assist:false,repeat:false});head.x=20;head.speed=6.4;
+  for(let i=0;i<1200&&!head.done;i++)head.step();assert.ok(head.falls>0);assert.ok(head.result.reason.includes('头部'));assert.equal(head.result.success,false);
+  const near=new MotionWorld({scene:'night',sensors:{camera:false,lidar:false,imu:true,force:false},repeat:false});
+  near.x=39.8;near.speed=6.4;near.obstacles=[{x:40,type:'hurdle',width:.42,height:.58,hit:false,passed:false}];
+  near.step();assert.equal(near.result.success,false);assert.equal(near.result.collisions,1);
+  for(let i=0;i<1200;i++)near.step();assert.ok(near.x>40);assert.equal(near.result.success,false);assert.ok(!near.finishFeedback?.text.includes('跑过终点啦'));
+});
+
+test('automatic retries restart the same seed and finish while preserving failed attempts and collision totals',()=>{
+  const w=new MotionWorld({scene:'night',assist:false,repeat:true}),obstacles=w.obstacles.map(o=>o.x);
+  for(let i=0;i<3600&&w.attempt===1;i++)w.step();
+  assert.equal(w.attempt,2);assert.equal(w.x,0);assert.equal(w.finishX,40);assert.equal(w.collisions,0);
+  assert.equal(w.previousResult.success,false);assert.equal(w.previousResult.collisions,1);assert.equal(w.previousResult.falls,1);assert.equal(w.totalCollisions,1);
+  assert.deepEqual(w.obstacles.map(o=>o.x),obstacles);assert.ok(w.obstacles.every(o=>!o.hit));
+  for(let i=0;i<3600&&w.attempt===2;i++)w.step();assert.equal(w.attempt,3);assert.equal(w.attemptResults.length,2);assert.equal(w.totalCollisions,2);
+  assert.ok(w.attemptResults.every(r=>r.success===false&&r.collisions===1));assert.equal(w.finishX,40);
 });

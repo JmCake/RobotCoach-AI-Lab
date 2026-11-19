@@ -58,13 +58,14 @@ function readout(){
   $('reading-imu').textContent=o.imu?`倾斜 ${(o.imu.tilt*180/Math.PI).toFixed(1)}° · 纠偏 ${c.torque.toFixed(2)}`:'已关闭 · 不作姿态纠偏';
   $('reading-force').textContent=o.contact?`触地 ${o.contact.feet.every(Boolean)?'双足':o.contact.feet[0]?'左足':o.contact.feet[1]?'右足':'无'} · 滑移 ${o.contact.slip.toFixed(2)} · 补偿 ${c.placement.toFixed(2)}`:'已关闭 · 无足底补偿';
   $('observations').textContent=`有效观测距离 ${o.range.toFixed(2)} m ｜ 控制限速 ${c.target.toFixed(1)} m/s · 纠偏力矩 ${c.torque.toFixed(2)} · 落脚补偿 ${c.placement.toFixed(2)}${o.obstacle?` · ${o.source}发现${o.obstacle.type==='beam'?'横梁':'矮栏'} ${o.obstacle.distance.toFixed(1)} m`:''}`;
-  $('finishNotice').hidden=!world.done;
-  if(world.done){
-    $('finishNotice').classList.toggle('needs-retry',!world.result.success);
-    $('resultTitle').textContent=world.result.success?'挑战完成 · 成功过线':'本轮还需改进';
-    $('resultDetail').textContent=`第 ${world.attempt} 次尝试 · ${world.courseDistance} m · 用时 ${world.result.time.toFixed(1)} 秒 · 碰撞 ${world.result.collisions} 次${world.result.offTrack?' · 曾跑出跑道':''}`;
-    $('nextScene').hidden=!world.result.success||world.scene==='wet';
-    $('playState').textContent=world.result.success?'已过终点':'请重试';
+  const report=world.result??world.previousResult;
+  $('finishNotice').hidden=!report;
+  if(report){
+    $('finishNotice').classList.toggle('needs-retry',!report.success);
+    $('resultTitle').textContent=report.success?'挑战完成 · 成功过线':world.result?'本轮失败 · 请回起点重试':`上次未通过 · 正在第 ${world.attempt} 次尝试`;
+    $('resultDetail').textContent=`第 ${report.attempt} 次 · ${report.distance.toFixed(1)} / ${world.courseDistance} m · 碰撞 ${report.collisions} 次 · 摔倒 ${report.falls??0} 次${report.offTrack?' · 曾跑出跑道':''}`;
+    $('nextScene').hidden=!world.result?.success||world.scene==='wet';
+    if(world.result)$('playState').textContent=report.success?'已过终点':'本轮未通过';
   }
   updateSpeech();
 }
@@ -82,6 +83,8 @@ function updateSensors(){
   const count=Object.values(world.sensors).filter(Boolean).length;
   $('assist').checked=count===4;$('assist').indeterminate=count>0&&count<4;$('assistText').textContent=count===4?'全部开启':count===0?'全部关闭':`已开启 ${count}/4`;
   world.observation=world.observe();world.control=['running','unbalanced','stumbling'].includes(world.state)?world.decide(world.observation):world.control;
+  if(world.result)world.control.target=0;
+  if(world.result?.success){reset();return;}
   readout();paint();
 }
 $('assist').addEventListener('change',()=>{for(const k of Object.keys(SENSOR_NAMES))$(`sensor-${k}`).checked=$('assist').checked;updateSensors();});
@@ -98,12 +101,12 @@ function frame(now){
   if(running&&last){
     accumulator+=Math.min((now-last)/1000,.1)*(slow?.35:1);
     while(accumulator>=DT){world.step();accumulator-=DT;}
-    if(world.done&&world.speed<.04&&world.age>3){running=false;last=0;accumulator=0;$('play').textContent='再跑一次';readout();}
+    if(world.done&&((!world.result.success&&world.state==='fallen')||(world.speed<.04&&world.age>3))){running=false;last=0;accumulator=0;$('play').textContent=world.result.success?'再跑一次':'回起点重试';readout();}
   }
   last=now;paint();
   if(now-paintReadout>100){readout();paintReadout=now;}
   requestAnimationFrame(frame);
 }
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
-window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,passed:world.passed,jumpCount:world.jumpCount,landings:world.landings,lastLanding:structuredClone(world.lastLanding),running,assist:world.assist,compression:world.compression,attempt:world.attempt,progress:world.progress,finishX:world.finishX,result:structuredClone(world.result),sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),finishFeedback:structuredClone(world.finishFeedback),history:structuredClone(world.history)})};
+window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,collisions:world.collisions,totalCollisions:world.totalCollisions,previousResult:structuredClone(world.previousResult),attemptResults:structuredClone(world.attemptResults),repeat:world.repeat,passed:world.passed,jumpCount:world.jumpCount,landings:world.landings,lastLanding:structuredClone(world.lastLanding),running,assist:world.assist,compression:world.compression,attempt:world.attempt,progress:world.progress,finishX:world.finishX,result:structuredClone(world.result),sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),finishFeedback:structuredClone(world.finishFeedback),history:structuredClone(world.history)})};
 renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);
