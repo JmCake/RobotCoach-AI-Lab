@@ -17,11 +17,11 @@ test.beforeEach(async({page})=>{
 test.afterEach(async({page})=>expect(page._motionErrors).toEqual([]));
 
 test('book page four opens curve practice with sensor choices and returns to the book',async({page})=>{
- await page.goto('/index.html#trial');
+ await page.goto('/index.html#workshop');
  const book=page.frameLocator('#experiment');
- await expect(book.locator('#motionLink')).toBeVisible();
  await book.locator('[data-sensor=camera]').click();
  await book.locator('[data-sensor=imu]').click();
+ await page.getByRole('button',{name:'下一页'}).click();
  await book.locator('#motionLink').click();
  await expect(page).toHaveURL(/demo-motion\.html\?from=book/);
  const trial=await snapshot(page);
@@ -31,7 +31,7 @@ test('book page four opens curve practice with sensor choices and returns to the
  await page.locator('#sensor-camera').check();
  await page.locator('#backToBook').click();
  await expect(page).toHaveURL(/index\.html#trial$/);
- await expect(page.frameLocator('#experiment').locator('[data-sensor=camera]')).toHaveAttribute('aria-pressed','true');
+ await expect(page.frameLocator('#experiment').locator('#installed')).toHaveText('本次使用：摄像头、姿态传感器 IMU');
 });
 
 

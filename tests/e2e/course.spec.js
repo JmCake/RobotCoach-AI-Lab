@@ -29,19 +29,112 @@ for(const mobile of [false,true])test(`${mobile?'mobile touch':'desktop'}: all e
  await page.getByRole('button',{name:'三 · AI闭环'}).click();await expect(page).toHaveURL(/#loop$/);
  expect(errors).toEqual([]);expect(external).toEqual([]);
 });
-test('diagnosis completes and can be rerun after restoring result',async({page})=>{
- await page.goto('/#diagnosis');const f=frame(page);await f.getByRole('button',{name:'开始试跑'}).click();await expect(f.getByText('试跑结束：进入弯道时偏离了跑道')).toBeVisible({timeout:20000});await page.reload();await expect(frame(page).getByText('上次试跑：弯道偏离，可重新观察')).toBeVisible();await frame(page).getByRole('button',{name:'开始试跑'}).click();await expect(frame(page).getByRole('button',{name:'试跑中...'})).toBeDisabled();
+test('diagnosis locks the physical result, finishes falling and restores the score',async({page})=>{
+ await page.clock.install();
+ await page.goto('/#diagnosis');const f=frame(page);
+ await expect(f.locator('#baselineResult')).toContainText('尚未测试');
+ await f.locator('#play').click();await page.clock.runFor(5650);
+ await expect(f.locator('#baselineResult')).toContainText('未通过 · 偏离跑道边界 · 24.2 / 40 m');
+ const lockedDistance=await f.locator('#distance').textContent();
+ await expect(f.locator('#play')).toHaveText('暂停');
+ await page.clock.runFor(3300);
+ await expect(f.locator('#motionState')).toHaveAttribute('data-state','fallen');
+ await expect(f.locator('#distance')).toHaveText(lockedDistance);
+ await expect(f.locator('#baselineResult')).toContainText('摔倒 1 次');
+ await page.screenshot({path:`${evidence}/chapter1-desktop-initial.png`,fullPage:true});
+ const stored=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).chapter1BaselineRun);
+ const first=await stored();
+ await page.reload();
+ await expect(f.locator('#baselineResult')).toHaveAttribute('data-outcome','failed');
+ await f.locator('#play').click();await page.clock.runFor(9000);
+ await expect(f.locator('#play')).toHaveText('重新试跑');
+ expect(await stored()).toEqual(first);
 });
 test('discover all four sensors repeatedly, install by drag and tap, compare runs',async({page})=>{
+ await page.clock.install();
  await page.goto('/#discovery');const f=frame(page);for(const name of ['发现视觉摄像头','发现激光雷达','发现姿态传感器','发现足底力觉传感器'])await f.getByRole('button',{name}).click();await expect(f.getByText('已认识 4 / 4 种感官')).toBeVisible();await f.getByRole('button',{name:'发现视觉摄像头'}).click();await expect(f.getByRole('status')).toContainText('视觉摄像头');
  await page.getByRole('button',{name:'下一页'}).click();const install=frame(page);
  await install.locator('[data-sensor="lidar"]').dragTo(install.locator('#dropzone'));
  await expect(install.locator('[data-sensor="lidar"]')).toHaveAttribute('aria-pressed','true');
  await install.locator('[data-sensor="imu"]').click();await install.locator('[data-sensor="force"]').click();
  await page.reload();await expect(frame(page).locator('[data-sensor="force"]')).toHaveAttribute('aria-pressed','true');
- await page.getByRole('button',{name:'下一页'}).click();const trial=frame(page);await trial.getByRole('button',{name:'开始试跑'}).click();await expect(trial.getByRole('status')).toContainText('完成一圈',{timeout:18000});
- await trial.getByRole('button',{name:'恢复初代机'}).click();await trial.getByRole('button',{name:'重新试跑'}).click();await expect(trial.getByRole('status')).toContainText('弯道偏离');
- await page.screenshot({path:`${evidence}/sensor-comparison.png`,fullPage:true});
+ await page.getByRole('button',{name:'下一页'}).click();const trial=frame(page);
+ await expect(trial.locator('#studentResult')).toContainText('尚未测试');
+ await expect(trial.locator('#installed')).toContainText('姿态传感器 IMU');
+ await trial.locator('#play').click();await page.clock.runFor(12000);
+ await expect(trial.locator('#studentResult')).toContainText('已过终点 · 40.0 / 40 m');
+ await trial.getByRole('button',{name:'初代机对照'}).click();
+ await expect(trial.locator('#installed')).toHaveText('本次使用：摄像头');
+ await trial.locator('#play').click();await page.clock.runFor(9000);
+ const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')));
+ const {chapter1BaselineRun:baseline,chapter1StudentRun:student,sensors}=await saved();
+ expect(sensors).toEqual({camera:true,lidar:true,imu:true,force:true});
+ expect(baseline.conditions).toEqual(student.conditions);
+ expect(baseline.conditions).toEqual({scene:'curve',seed:2026,distance:40,target:6.4,controller:'motion-rule-v1'});
+ expect(baseline.result).toMatchObject({success:false,offTrack:true,falls:1,sensors:{camera:true,lidar:false,imu:false,force:false}});
+ expect(student.result).toMatchObject({success:true,distance:40,sensors});
+ await trial.getByRole('button',{name:'我的配置'}).click();
+ await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
+ await page.screenshot({path:`${evidence}/chapter1-desktop-comparison.png`,fullPage:true});
+ await page.reload();
+ await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
+ // Page 1 uses the initial camera-only snapshot after the student has installed all four modules.
+ await page.getByRole('button',{name:'一 · 感知与选拔'}).click();
+ await expect(trial.locator('#installed')).toHaveText('本次使用：摄像头');
+ expect((await saved()).sensors).toEqual(sensors);
+ expect((await saved()).chapter1StudentRun).toEqual(student);
+ await page.goBack();
+ await page.getByRole('button',{name:'上一页'}).click();
+ await install.locator('[data-sensor="imu"]').click();
+ await install.locator('[data-sensor="imu"]').click();
+ await page.getByRole('button',{name:'下一页'}).click();
+ await expect(trial.locator('#studentResult')).toContainText('尚未测试');
+ await expect(trial.locator('#baselineResult')).toHaveAttribute('data-outcome','failed');
+ expect((await saved()).chapter1StudentRun).toBeNull();
+});
+test('chapter one touch layout, hiding pause and repeated page removal',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const page=await context.newPage();const errors=[];
+ page.on('pageerror',error=>errors.push(error.message));
+ await page.clock.install();
+ await page.goto(baseURL+'/#workshop');
+ const f=frame(page);
+ await f.locator('[data-sensor=imu]').tap();
+ await page.getByRole('button',{name:'下一页'}).tap();
+ const noOverflow=()=>f.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth);
+ expect(await noOverflow()).toBe(true);
+ await f.locator('#play').tap();await page.clock.runFor(1200);
+ const distance=await f.locator('#distance').textContent();
+ expect(distance).not.toBe('0.0 / 40 m');
+ // Exercise the book's actual visibility bridge without relying on OS focus in headless Chromium.
+ await page.evaluate(()=>{
+   Object.defineProperty(document,'hidden',{value:true,configurable:true});
+   document.dispatchEvent(new Event('visibilitychange'));
+ });
+ await expect(f.locator('#play')).toHaveText('继续试跑');
+ await page.clock.runFor(12000);
+ await expect(f.locator('#distance')).toHaveText(distance);
+ await page.evaluate(()=>{
+   delete document.hidden;
+   document.dispatchEvent(new Event('visibilitychange'));
+ });
+ for(let i=0;i<2;i++){
+  await f.locator('#play').tap();await page.clock.runFor(700);
+  const child=page.frames().find(frame=>frame.url().includes('humanoid-trial.html'));
+  await page.getByRole('button',{name:'上一页'}).tap();
+  expect(child.isDetached()).toBe(true);
+  await page.getByRole('button',{name:'下一页'}).tap();
+  await expect(f.locator('#play')).toHaveText('开始试跑');
+  await expect(f.locator('#distance')).toHaveText('0.0 / 40 m');
+ }
+ await page.setViewportSize({width:320,height:740});
+ expect(await noOverflow()).toBe(true);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await f.locator('#play').tap();await page.clock.runFor(12000);
+ await expect(f.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
+ await page.screenshot({path:`${evidence}/chapter1-narrow.png`,fullPage:true});
+ expect(errors).toEqual([]);
+ await context.close();
 });
 test('manual keyboard and phone controls use live physics, retry, preserve score',async({page})=>{
  await page.goto('/#manual');const f=frame(page);const greenTop=()=>f.locator('#game').evaluate(c=>{const {data}=c.getContext('2d').getImageData(40,0,100,235);for(let y=0;y<235;y++)for(let x=0;x<100;x++){const i=(y*100+x)*4;if(data[i]<50&&data[i+1]>180&&data[i+2]<80)return y;}return 235;});const standing=await greenTop();await f.getByRole('button',{name:'开始',exact:true}).click();await f.locator('#game').press('ArrowUp');await expect.poll(greenTop).toBeLessThan(standing-10);await expect.poll(()=>page.frames().find(x=>x.url().includes('runner')).evaluate(()=>document.getElementById('score').textContent)).not.toBe('0');await f.getByRole('button',{name:'暂停',exact:true}).click();
@@ -81,7 +174,7 @@ test('leaving training destroys the frame and stops updates; hidden document pau
  await page.goto('/#training');const f=frame(page);await f.getByRole('button',{name:'开始',exact:true}).click();await expect.poll(async()=>Number(await f.locator('#updates').textContent())).toBeGreaterThan(1);await page.evaluate(()=>document.getElementById('experiment').contentWindow.postMessage({type:'robotcoach:visibility',hidden:true},location.origin));await expect(f.getByRole('button',{name:'继续',exact:true})).toBeVisible();const paused=await f.locator('#updates').textContent();await page.waitForTimeout(300);await expect(f.locator('#updates')).toHaveText(paused);await f.getByRole('button',{name:'继续',exact:true}).click();await page.getByRole('button',{name:'三 · AI闭环'}).click();const before=await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'));await page.waitForTimeout(800);expect(await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'))).toBe(before);expect(page.frames().filter(f=>f.url().includes('runner.html'))).toHaveLength(0);
 });
 test('iframe changes survive parent navigation without an intervening refresh',async({page})=>{
- await page.goto('/#discovery');await frame(page).getByRole('button',{name:'发现激光雷达'}).click();await page.getByRole('button',{name:'下一页'}).click();for(const type of ['lidar','imu','force'])await frame(page).locator(`[data-sensor="${type}"]`).click();await page.getByRole('button',{name:'下一页'}).click();for(const type of ['lidar','imu','force'])await expect(frame(page).locator(`[data-sensor="${type}"]`)).toHaveAttribute('aria-pressed','true');await page.reload();await expect(frame(page).locator('[data-sensor="lidar"]')).toHaveAttribute('aria-pressed','true');expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).discovered)).toContain('lidar');
+ await page.goto('/#discovery');await frame(page).getByRole('button',{name:'发现激光雷达'}).click();await page.getByRole('button',{name:'下一页'}).click();for(const type of ['lidar','imu','force'])await frame(page).locator(`[data-sensor="${type}"]`).click();await page.getByRole('button',{name:'下一页'}).click();await expect(frame(page).locator('#installed')).toContainText('激光测距、姿态传感器 IMU、足底力觉');await page.reload();await expect(frame(page).locator('#installed')).toContainText('激光测距');expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).discovered)).toContain('lidar');
 });
 test('phone touch controls operate sensors, jump, assembly and node switches',async({browser})=>{
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});const page=await context.newPage();await page.goto(baseURL+'/#workshop');await frame(page).locator('[data-sensor="imu"]').tap();await expect(frame(page).locator('[data-sensor="imu"]')).toHaveAttribute('aria-pressed','true');await page.goto(baseURL+'/#manual');await frame(page).getByRole('button',{name:'开始',exact:true}).tap();await frame(page).getByRole('button',{name:'↑ 跳跃'}).tap();await frame(page).getByRole('button',{name:'↓ 下蹲'}).tap();await expect(frame(page).getByRole('button',{name:'↓ 下蹲'})).toHaveAttribute('aria-pressed','true');await page.getByRole('button',{name:'三 · AI闭环'}).tap();for(const type of ['sense','decision','action']){await frame(page).locator(`[data-module="${type}"]`).tap();await frame(page).locator(`[data-target="${type}"]`).tap();}await expect(frame(page).getByRole('button',{name:'运行',exact:true})).toBeEnabled();await page.getByRole('button',{name:'下一页'}).tap();await frame(page).getByRole('button',{name:'关闭感知',exact:true}).tap();await expect(frame(page).getByRole('button',{name:'恢复感知',exact:true})).toBeVisible();await context.close();
