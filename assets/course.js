@@ -5,14 +5,15 @@ const pages=[
  ['workshop','给机器人装上新感官','把模块拖到机器人身上，或直接点选安装。不同感官提供不同信息，按你的想法组合。','selection.html'],
  ['trial','同一条弯道，这次会怎样？','用刚才安装的感官再跑一次。对照初代机，看看改变感官后，距离和用时有什么变化。','humanoid-trial.html'],
  ['imitation','照着做，能一直做对吗？','行为克隆从人的示范中学习动作。先观察模仿，再改变障碍位置，看看仅仅复读动作的局限。','imitation.html'],
- ['manual','这一次，你来操控','空格或 ↑ 跳跃，↓ 下蹲。也可以直接点按钮。跨过地面障碍，遇到横梁保持低姿态。','runner.html?mode=manual'],
- ['training','让机器人自己试错','每次动作后更新 Q 表：跨过障碍获得奖励，碰撞受到惩罚。失败后重新尝试，经验留在本机。','runner.html?mode=train'],
- ['showcase','把学到的策略跑给你看','展示只读取已有 Q 表，不再探索或训练。观察当前策略的真实表现；没有训练也可以先试一局。','runner.html?mode=showcase'],
+ ['manual','这一次，你来操控','跨过矮栏，从横梁下方通过。试着掌握跳跃和下蹲的时机。','motion-learning.html?mode=manual'],
+ ['training','让机器人自己试错','让机器人尝试不同的动作，观察越障和失败怎样改变它下一轮的选择。','motion-learning.html?mode=train'],
+ ['showcase','学过以后，真的更好了吗？','冻结训练前后的策略，让它们各跑相同的 20 条留出短道，比较实际成绩。','motion-learning.html?mode=showcase'],
  ['loop','把一次行动，连成一个闭环','拖动三个模块，运行后把「行动」接回「感知」。手机和键盘也可先选模块、再选位置。','loop.html'],
  ['fault','拿掉一个环节，会发生什么？','关闭一个节点或反馈回路，再运行。观察信息在哪一步中断，然后恢复它。','fault.html'],
  ['design','综合挑战：让方案真正跑起来','选感官、训练策略，在复杂环境里实际运行并比较成绩；图形化方案设计与总结仍可展开使用。','design.html']
 ];
 const state=load(),host=document.getElementById('page');
+const legacyRunner=new URLSearchParams(location.search).get('runner')==='legacy';
 let current=-1;
 function fromHash(){const id=location.hash.slice(1);return pages.findIndex(x=>x[0]===id);}
 function render(index,focus=false){
@@ -27,10 +28,16 @@ function render(index,focus=false){
   host.replaceChildren();host.style.animation='none';void host.offsetWidth;host.style.animation='';
   const eyebrow=document.createElement('p');eyebrow.className='eyebrow';eyebrow.textContent=['第一章 · 感知与选拔','第二章 · 学习与训练','第三章 · AI闭环'][index<4?0:index<8?1:2];
   const h=document.createElement('h1');h.id='pageTitle';h.textContent=title;h.tabIndex=-1;
-  const p=document.createElement('p');p.className='lead';p.textContent=lead;
+  const legacy=legacyRunner&&index>=5&&index<=7;
+  const p=document.createElement('p');p.className='lead';p.textContent=legacy?'使用旧版 Runner 和本机保留的训练记录。':lead;
   host.append(eyebrow,h,p);
   if(index===0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const intro=document.createElement('iframe');intro.src='experiments/parkour.html';intro.className='parkour';intro.title='机器人自动跑酷开场';intro.tabIndex=-1;intro.setAttribute('aria-hidden','true');host.append(intro);}
-  const frame=document.createElement('iframe');frame.src='experiments/'+src;frame.className='experiment';frame.title=title;frame.id='experiment';host.append(frame);
+  const frame=document.createElement('iframe');frame.src='experiments/'+(legacy?src.replace('motion-learning.html','runner.html'):src);frame.className='experiment';frame.title=title;frame.id='experiment';host.append(frame);
+  if(legacy){
+    const link=document.createElement('a'),url=new URL(location.href);
+    url.searchParams.delete('runner');url.hash=id;
+    link.href=url;link.textContent='返回人形短道实验';host.append(link);
+  }
   document.getElementById('prev').disabled=index===0;
   document.getElementById('next').disabled=index===pages.length-1;
   document.getElementById('pageNumber').textContent=`${String(index+1).padStart(2,'0')} / ${pages.length}`;

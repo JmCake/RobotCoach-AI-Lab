@@ -9,7 +9,7 @@ test.beforeEach(async({page})=>{const list=[];errors.set(page,list);page.on('pag
 test.afterEach(async({page})=>expect(errors.get(page)).toEqual([]));
 
 test('paired browser test preserves Q, reports actual failures and survives reload',async({page})=>{
- await page.goto('/#training');const f=frame(page);
+ await page.goto('/?runner=legacy#training');const f=frame(page);
  await f.getByRole('button',{name:'开始',exact:true}).click();await f.getByLabel('训练速度').selectOption('32');
  await expect.poll(async()=>Number(await f.locator('#attempts').textContent())).toBeGreaterThan(15);
  await f.getByRole('button',{name:'暂停',exact:true}).click();const before=await saved(page);
@@ -23,13 +23,13 @@ test('paired browser test preserves Q, reports actual failures and survives relo
 });
 
 test('untrained comparison honestly reports no improvement and showcase cannot write training',async({page})=>{
- await page.goto('/#showcase');const f=frame(page);const before=await saved(page);
+ await page.goto('/?runner=legacy#showcase');const f=frame(page);const before=await saved(page);
  await f.locator('#compare').click();await expect(f.locator('#comparisonTable')).toBeVisible();await expect(f.locator('#comparisonStatus')).toContainText('未测到平均跨障碍提升');
  await expect(f.locator('#comparisonRows tr').last()).toContainText('0%');expect(await saved(page)).toEqual(before);
 });
 
 test('comparison cancels on request, reset and course hiding without stale results',async({page})=>{
- await page.goto('/#training');const f=frame(page);
+ await page.goto('/?runner=legacy#training');const f=frame(page);
  // Empty-policy evaluation can finish while Playwright waits for scroll stability.
  // Dispatch both real button clicks in one browser turn so cancellation is guaranteed
  // to occur before completion, regardless of display refresh rate or machine speed.
@@ -41,7 +41,7 @@ test('comparison cancels on request, reset and course hiding without stale resul
 });
 
 test('V1.0 progress becomes an immutable actual baseline and retains old history',async({page})=>{
- await page.goto('/#training');
+ await page.goto('/?runner=legacy#training');
  const legacy={q:{'17,none,0,0,0,5':[.5,.2,.1]},attempts:9,updates:37,best:42,history:[{attempt:9,score:42,passed:1,reward:3.2,reason:'撞上地面障碍'}]};
  await page.evaluate(data=>localStorage.setItem('robotcoach:q:v1',JSON.stringify(data)),legacy);await page.reload();const f=frame(page);
  await expect(f.locator('#updates')).toHaveText('37');await f.locator('#start').click();await expect.poll(async()=>Number(await f.locator('#updates').textContent())).toBeGreaterThan(40);await f.locator('#start').click();
@@ -50,8 +50,8 @@ test('V1.0 progress becomes an immutable actual baseline and retains old history
 });
 
 test('a reset in another training tab stops old updates from resurrecting a Q table',async({page,context})=>{
- await page.goto('/#training');await frame(page).locator('#start').click();await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThan(3);
- const other=await context.newPage();await other.goto('/#training');await frame(other).locator('#reset').click();
+ await page.goto('/?runner=legacy#training');await frame(page).locator('#start').click();await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThan(3);
+ const other=await context.newPage();await other.goto('/?runner=legacy#training');await frame(other).locator('#reset').click();
  await expect(frame(page).locator('#updates')).toHaveText('0');await expect(frame(page).locator('#feedback')).toContainText('另一标签页');await expect(frame(page).locator('#start')).toHaveText('继续');
  await page.waitForTimeout(2200);expect((await saved(page)).q).toEqual({});expect((await saved(page)).updates).toBe(0);
 });
@@ -67,15 +67,15 @@ test('phone native touch drag installs a sensor; cancelled drag and the next tap
 
 test('320px training comparison and touch jump stay usable without page overflow',async({browser,baseURL})=>{
  const context=await browser.newContext({baseURL,viewport:{width:320,height:740},isMobile:true,hasTouch:true});const page=await context.newPage();
- await page.goto('/#manual');const f=frame(page);await f.locator('#start').tap();
+ await page.goto('/?runner=legacy#manual');const f=frame(page);await f.locator('#start').tap();
  const top=()=>f.locator('#game').evaluate(c=>{const {data}=c.getContext('2d').getImageData(40,0,100,235);for(let y=0;y<235;y++)for(let x=0;x<100;x++){const i=(y*100+x)*4;if(data[i]<50&&data[i+1]>180&&data[i+2]<80)return y;}return 235;});
  const standing=await top();await f.locator('#jump').tap();await expect.poll(top,{timeout:1000}).toBeLessThan(standing-10);await f.locator('#duck').tap();await expect(f.locator('#duck')).toHaveAttribute('aria-pressed','true');await f.locator('#duck').tap();await expect(f.locator('#duck')).toHaveAttribute('aria-pressed','false');
- await page.goto('/#training');await frame(page).locator('#compare').tap();await expect(frame(page).locator('#comparisonTable')).toBeVisible();await frame(page).getByText('奖励规则与真实更新记录',{exact:true}).tap();
+ await page.goto('/?runner=legacy#training');await frame(page).locator('#compare').tap();await expect(frame(page).locator('#comparisonTable')).toBeVisible();await frame(page).getByText('奖励规则与真实更新记录',{exact:true}).tap();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(await frame(page).locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await context.close();
 });
 
 test('32x training keeps browser frames responsive and hidden training stops',async({page})=>{
- await page.goto('/#training');const f=frame(page);await f.getByLabel('训练速度').selectOption('32');
+ await page.goto('/?runner=legacy#training');const f=frame(page);await f.getByLabel('训练速度').selectOption('32');
  await f.locator('#start').click();
  const perf=await f.locator('body').evaluate(()=>new Promise(resolve=>{const deltas=[];let last=performance.now();function tick(now){deltas.push(now-last);last=now;if(deltas.length<100)requestAnimationFrame(tick);else {const sorted=deltas.slice(5).sort((a,b)=>a-b);resolve({samples:sorted.length,median:sorted[Math.floor(sorted.length*.5)],p95:sorted[Math.floor(sorted.length*.95)],max:Math.max(...sorted)});}}requestAnimationFrame(tick);}));
  expect(perf.samples).toBe(95);expect(perf.p95).toBeLessThan(500);await f.locator('#start').click();const updates=Number(await f.locator('#updates').textContent());expect(updates).toBeGreaterThan(100);

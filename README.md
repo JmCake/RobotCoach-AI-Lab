@@ -11,7 +11,7 @@
 需要 Node.js 18 或以上版本。生产页面没有第三方运行依赖，也没有后台服务。
 
 ```bash
-git clone --branch codex/ch1-humanoid-integration https://github.com/JmCake/RobotCoach-AI-Lab.git
+git clone --branch codex/ch2-motion-learning https://github.com/JmCake/RobotCoach-AI-Lab.git
 cd RobotCoach-AI-Lab
 npm run dev
 ```
@@ -23,6 +23,14 @@ npm run dev
 从书本第 1 页用初代机试跑，第 3 页选择传感器，再到第 4 页用自己的配置试跑。两页共用人形机器人模型和播放控制，条件固定为急弯、40 m、目标速度 6.4 m/s、种子 2026。第 4 页可切换到初代机重跑，并查看两份真实成绩。更改安装配置会清除学生配置的旧成绩。翻页后，未完成的试跑从起点重来。
 
 本地可直接打开 `http://127.0.0.1:4180/#diagnosis` 或 `http://127.0.0.1:4180/#trial`。在第 4 页打开独立 Demo 后，点击「返回书本第4页」会一并带回在 Demo 中调整的传感器。
+
+## 第二章人形短道
+
+从 `/#manual` 手动跨过矮栏、从横梁下通过，去 `/#training` 进行 Q-learning，再在 `/#showcase` 比较同一批留出赛道的训练前后成绩。动作每 0.1 秒更新一次。策略选择前进、跳跃或下蹲，速度、姿态和落脚由规则控制。短道固定启用四种模拟传感器。
+
+训练每批 300 轮，沿用同一份人形 Q 表继续学习。翻页或刷新会保留已经发生的更新和完成轮次，未完成的赛道回到起点。第 8 页的实验条件里也可打开旧版 Runner，用原有本机记录继续练习。
+
+运行 `node scripts/evaluate-motion-learning.mjs <JSON输出路径>` 可复现三组各 300 轮独立训练及每组 20 对冻结测试。训练赛道种子为 101–130，验证为 1001–1020，最终测试为 9001–9020。脚本记录逐轮实测、失败原因及模型指纹，并核对评估期间 Q 表没有变动。三组完赛数均由 0/20 提升至 20/20，平均越障数均由 0 提升至 3。[逐轮结果](docs/motion-learning-rounds.csv)
 
 ## 独立人形运动 Demo
 

@@ -18,22 +18,22 @@ test('navigating away before the periodic save preserves the latest actual Q upd
    return addDocument.call(this,type,listener,options);
   };
  });
- await page.goto('/#training');
+ await page.goto('/?runner=legacy#training');
  await frame(page).getByRole('button',{name:'开始',exact:true}).click();
  await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThan(3);
  const updates=Number(await frame(page).locator('#updates').textContent());
  await page.getByRole('button',{name:'三 · AI闭环'}).click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:q:v1')));
  expect(saved?.updates||0).toBeGreaterThanOrEqual(updates);
- await page.goto('/#training');
+ await page.goto('/?runner=legacy#training');
  await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThanOrEqual(updates);
 });
 
 for(const mode of ['manual','showcase'])test(`${mode} tab cannot overwrite a newer training session`,async({page,context})=>{
- await page.goto('/#'+mode);
+ await page.goto('/?runner=legacy#'+mode);
  await expect(frame(page).locator('#feedback')).not.toBeEmpty();
  const training=await context.newPage();
- await training.goto('/#training');
+ await training.goto('/?runner=legacy#training');
  await frame(training).getByRole('button',{name:'开始',exact:true}).click();
  await frame(training).getByLabel('训练速度').selectOption('8');
  await expect.poll(async()=>Number(await frame(training).locator('#updates').textContent())).toBeGreaterThan(100);
@@ -47,7 +47,7 @@ for(const mode of ['manual','showcase'])test(`${mode} tab cannot overwrite a new
 });
 
 test('arrow controls remain effective after focus moves to a manual action button',async({page})=>{
- await page.goto('/#manual');const f=frame(page);
+ await page.goto('/?runner=legacy#manual');const f=frame(page);
  const greenTop=()=>f.locator('#game').evaluate(c=>{const {data}=c.getContext('2d').getImageData(40,0,100,235);for(let y=0;y<235;y++)for(let x=0;x<100;x++){const i=(y*100+x)*4;if(data[i]<50&&data[i+1]>180&&data[i+2]<80)return y;}return 235;});
  await expect(f.locator('#feedback')).not.toBeEmpty();const standing=await greenTop();
  await f.getByRole('button',{name:'开始',exact:true}).click();

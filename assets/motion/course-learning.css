@@ -1,0 +1,18 @@
+.lab-controls, .lab-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 12px 0; }
+.lab-controls button { touch-action: manipulation; }
+.lab-controls [hidden] { display: none; }
+.lab-metrics { color: #e2ecff; font-size: 14px; font-variant-numeric: tabular-nums; }
+.lab-metrics > span:not(:empty) { border-radius: 5px; background: #263046; padding: 4px 9px; }
+.lab-details { margin: 12px 0 4px; border: 1px solid #3e4a63; border-radius: 7px; padding: 8px 12px; }
+.lab-details summary { cursor: pointer; padding: 4px 0; }
+.lab-details button { margin-top: 10px; }
+.lab-table-scroll { overflow-x: auto; }
+body a { color: #9be9c9; }
+#feedback { margin: 10px 0; }
+#sensed, #comparisonStatus { margin: 8px 0; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { border-bottom: 1px solid #46536b; padding: 6px 8px; }
+.policy-select { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 12px; }
+.policy-select select { min-height: 44px; background: #293347; border: 1px solid #566278; color: #f2f6ff; border-radius: 7px; padding: 6px 10px; }
+.rounds { padding-inline-start: 24px; }
+.rounds li { margin-bottom: 8px; font-size: 14px; }
