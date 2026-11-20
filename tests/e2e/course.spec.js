@@ -107,16 +107,16 @@ test('chapter one touch layout, hiding pause and repeated page removal',async({b
  const noOverflow=()=>f.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth);
  expect(await noOverflow()).toBe(true);
  await f.locator('#play').tap();await page.clock.runFor(1200);
- const distance=await f.locator('#distance').textContent();
- expect(distance).not.toBe('0.0 / 40 m');
+ await expect(f.locator('#distance')).not.toHaveText('0.0 / 40 m');
  // Exercise the book's actual visibility bridge without relying on OS focus in headless Chromium.
  await page.evaluate(()=>{
    Object.defineProperty(document,'hidden',{value:true,configurable:true});
    document.dispatchEvent(new Event('visibilitychange'));
  });
  await expect(f.locator('#play')).toHaveText('继续试跑');
+ const pausedDistance=await f.locator('#distance').textContent();
  await page.clock.runFor(12000);
- await expect(f.locator('#distance')).toHaveText(distance);
+ await expect(f.locator('#distance')).toHaveText(pausedDistance);
  await page.evaluate(()=>{
    delete document.hidden;
    document.dispatchEvent(new Event('visibilitychange'));
