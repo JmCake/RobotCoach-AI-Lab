@@ -21,8 +21,8 @@ export const SENSOR_NAMES={camera:'摄像头',lidar:'激光测距',imu:'姿态�
 export const MOTION_ACTION=Object.freeze({forward:0,jump:1,duck:2});
 
 export class MotionWorld{
-  constructor({scene='straight',seed=2026,target=DEFAULT_SPEED,assist=true,sensors,repeat=true,distance=COURSE_DISTANCE}={}){
-    this.scene=SCENES[scene]?scene:'straight';this.seed=seed>>>0;this.target=clamp(target,2,8);this.repeat=repeat;
+  constructor({scene='straight',seed=2026,target=DEFAULT_SPEED,assist=true,sensors,repeat=true,distance=COURSE_DISTANCE,track=null}={}){
+    this.singleScene=SCENES[scene]?scene:'straight';this.track=track;this.seed=seed>>>0;this.target=clamp(target,2,8);this.repeat=repeat;
     this.sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,sensors?.[k]??assist]));
     this.courseDistance=distance;this.attemptStartX=0;this.finishX=distance;this.attemptStarted=0;this.attempt=1;this.result=null;this.finishFeedback=null;this.collisions=0;this.totalCollisions=0;this.offTrack=false;
     this.attemptStartFalls=0;this.previousResult=null;this.attemptResults=[];this.failureAt=null;
@@ -35,28 +35,40 @@ export class MotionWorld{
     this.jumpCount=0;this.landings=0;this.lastLanding=null;this.passedAtTakeoff=0;
     this.swings=[null,null];
     this.terrainPhase=this.random()*Math.PI*2;
-    this.obstacles=Array.from({length:240},(_,i)=>({x:12+i*9+this.random()*1.4,type:i%3===1?'beam':'hurdle',width:.42,height:i%3===1?1.23:.48+this.random()*.1,hit:false,passed:false}));
+    this.obstacles=track?track.definition.obstacles.map(obstacle=>({...obstacle,hit:false,passed:false})):
+      Array.from({length:240},(_,i)=>({x:12+i*9+this.random()*1.4,type:i%3===1?'beam':'hurdle',width:.42,height:i%3===1?1.23:.48+this.random()*.1,hit:false,passed:false}));
     this.observation=this.observe();this.control={target:0,torque:0,steer:0,jump:false,duck:false,placement:0};
   }
-  center(x){return this.scene==='curve'?3.8*Math.sin(Math.max(0,x-7)*.24)**2:0;}
-  curvature(x){return this.scene==='curve'&&x>7?.30*Math.sin((x-7)*.48):0;}
-  height(x){return this.scene==='rough'?(.105*Math.sin(x*3.7+this.terrainPhase)+.045*Math.sin(x*8.1))*smooth((x-5)/3):0;}
-  friction(x){return this.scene==='wet'&&x>7?.22+.045*Math.sin(x*1.9+this.terrainPhase):.88;}
-  get hasObstacles(){return this.scene==='obstacles'||this.scene==='night';}
+  get scene(){return this.track?.segmentAt(this.x).id??this.singleScene;}
+  center(x){return this.track?.center(x)??(this.scene==='curve'?3.8*Math.sin(Math.max(0,x-7)*.24)**2:0);}
+  curvature(x){return this.track?.curvature(x)??(this.scene==='curve'&&x>7?.30*Math.sin((x-7)*.48):0);}
+  height(x){return this.track?.height(x)??(this.scene==='rough'?(.105*Math.sin(x*3.7+this.terrainPhase)+.045*Math.sin(x*8.1))*smooth((x-5)/3):0);}
+  friction(x){return this.track?.friction(x)??(this.scene==='wet'&&x>7?.22+.045*Math.sin(x*1.9+this.terrainPhase):.88);}
+  lightAt(x){return this.track?.lightAt(x)??(this.scene==='night'?0:1);}
+  get hasObstacles(){return this.track!==null||this.scene==='obstacles'||this.scene==='night';}
+  supportFriction(){
+    const feet=this.footX.filter((_,i)=>this.contacts[i]);
+    if(!feet.length)return this.friction(this.x);
+    return feet.reduce((sum,x)=>sum+this.friction(x),0)/feet.length;
+  }
   get progress(){return Math.max(0,this.x-this.attemptStartX);}
   get done(){return this.result!==null&&(this.result.success||this.state==='incomplete'||(this.state==='fallen'&&!this.repeat&&this.age>=1.5));}
   get assist(){return Object.values(this.sensors).some(Boolean);}
   set assist(value){for(const key of Object.keys(this.sensors))this.sensors[key]=value;}
   // A bounded synthetic sensor model, not pixel vision. Controllers only receive this snapshot.
   observe(){
-    const s=this.sensors,visualRange=this.scene==='night'?1.05:4.3,range=s.lidar?7.5:s.camera?visualRange:0;
+    const s=this.sensors,light=this.lightAt(this.x);
+    const visualRange=light===0?1.05:light===1?4.3:mix(1.05,4.3,light);
+    const range=s.lidar?7.5:s.camera?visualRange:0;
     const obstacle=this.hasObstacles?this.obstacles.find(o=>o.x+o.width>this.x-.3&&o.x-this.x<range):null;
     const reading=obstacle?{distance:obstacle.x-this.x,type:obstacle.type,height:obstacle.height}:null;
-    this.visualHistory.push({time:this.time,reading:s.camera&&reading&&reading.distance<visualRange?reading:null});
+    const targetRange=this.track&&obstacle?mix(1.05,4.3,this.lightAt(obstacle.x)):visualRange;
+    this.visualHistory.push({time:this.time,reading:s.camera&&reading&&reading.distance<Math.min(visualRange,targetRange)?reading:null});
     this.visualHistory=this.visualHistory.filter(s=>s.time>=this.time-.35);
-    const delay=this.scene==='night'?.2:.06;
+    const delay=light===0?.2:light===1?.06:mix(.2,.06,light);
     const delayed=this.visualHistory.findLast(s=>s.time<=this.time-delay)?.reading||null;
-    const camera=s.camera?{range:visualRange,obstacle:delayed,curve:this.curvature(this.x+(this.scene==='night'?.3:2)),offset:this.lateral,wet:this.friction(this.x+(this.scene==='night'?.3:2))<.4}:null;
+    const previewX=this.x+(light===0?.3:light===1?2:mix(.3,2,light));
+    const camera=s.camera?{range:visualRange,obstacle:delayed,curve:this.curvature(previewX),offset:this.lateral,wet:this.friction(previewX)<.4}:null;
     const lidar=s.lidar?{range:7.5,obstacle:reading}:null;
     const detected=lidar?.obstacle??camera?.obstacle??null;
     return {range,visualRange:s.camera?visualRange:0,camera,lidar,obstacle:detected,source:lidar?.obstacle?'激光测距':camera?.obstacle?'摄像头':null,
@@ -94,7 +106,7 @@ export class MotionWorld{
     const previous=this.result?structuredClone(this.result):{success:false,reason:this.cause,attempt:this.attempt,collisions:this.collisions,falls:this.falls-this.attemptStartFalls,distance:this.progress};
     previous.falls=this.falls-this.attemptStartFalls;
     const attempts=[...this.attemptResults,previous].slice(-20),falls=this.falls,totalCollisions=this.totalCollisions,attempt=this.attempt+1,history=this.history,feedback=this.fallFeedback;
-    const fresh=new MotionWorld({scene:this.scene,seed:this.seed,target:this.target,sensors:{...this.sensors},repeat:this.repeat,distance:this.courseDistance});
+    const fresh=new MotionWorld({scene:this.singleScene,seed:this.seed,target:this.target,sensors:{...this.sensors},repeat:this.repeat,distance:this.courseDistance,track:this.track});
     Object.assign(this,fresh,{falls,totalCollisions,attempt,attemptStartFalls:falls,previousResult:previous,attemptResults:attempts,history});
     if(feedback)this.fallFeedback={...feedback,time:-6};
     this.event=`已回到起点 · 第 ${attempt} 次尝试，上次未通过`;
@@ -109,7 +121,7 @@ export class MotionWorld{
     this.compression*=Math.exp(-DT*2.8);
     if(['falling','fallen','recovering'].includes(this.state)){this.stepFall();this.observation=this.observe();return;}
     this.observation=this.observe();this.control=this.decide(this.observation,action);if(this.result)this.control.target=0;const c=this.control;
-    const mu=this.friction(this.x),oldSpeed=this.speed;
+    const mu=this.track?this.supportFriction():this.friction(this.x),oldSpeed=this.speed;
     this.speed+=clamp((c.target-this.speed)*2,-mu*9.81,3.2)*DT;
     this.x+=this.speed*DT;
     this.turn+=(c.steer-this.turn)*Math.min(1,DT*mu*10);

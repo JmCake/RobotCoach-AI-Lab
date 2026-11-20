@@ -45,12 +45,40 @@ export function observationState({obstacle,speed,support}) {
     support===null?'unknown':Number(support)].join(',');
 }
 
-export function ruleAction({obstacle,speed,support}) {
+export const RULE_ACTION_PARAMETERS=Object.freeze({
+  jumpMinimum:.2,jumpTime:.43,jumpLead:.32,duckMinimum:-.72,duckTime:.6,duckLead:.7,
+});
+
+export function ruleAction({obstacle,speed,support},parameters=RULE_ACTION_PARAMETERS) {
   if(!obstacle||speed===null)return forward;
   const {type,distance}=obstacle;
-  if(type==='hurdle'&&support&&distance>.2&&distance<speed*.43+.32)return jump;
-  if(type==='beam'&&distance>-.72&&distance<speed*.6+.7)return duck;
+  const p=parameters;
+  if(type==='hurdle'&&support&&distance>p.jumpMinimum&&distance<speed*p.jumpTime+p.jumpLead)return jump;
+  if(type==='beam'&&distance>p.duckMinimum&&distance<speed*p.duckTime+p.duckLead)return duck;
   return forward;
+}
+
+export class MotionActionClock {
+  remaining=0;
+  action=forward;
+  rejected=false;
+  observation=null;
+
+  tick(world,choose){
+    const first=this.remaining===0;
+    const jumps=world.jumpCount;
+    if(first){
+      this.observation=policyObservation(world.observation,world.time);
+      this.action=choose(this.observation);
+      if(!Number.isInteger(this.action)||!ACTION_NAMES[this.action])throw new RangeError('Invalid motion action');
+      this.remaining=DECISION_STEPS;
+    }
+    // A jump intent pulses once. A duck intent is held across the decision.
+    world.step(this.action===jump&&!first?forward:this.action);
+    if(first)this.rejected=this.action===jump&&world.jumpCount===jumps;
+    this.remaining--;
+    return first;
+  }
 }
 
 export class ShortCourse {
@@ -59,15 +87,15 @@ export class ShortCourse {
     // Keep the generated layout and its random stream, and exclude objects that
     // cannot participate in this finite course.
     this.world.obstacles=this.world.obstacles.filter(obstacle=>obstacle.x<CONDITIONS.distance);
-    this.remaining=0;
+    this.actions=new MotionActionClock();
     this.rewards={pass:0,finish:0,failure:0,action:0};
     this.score=null;
     this.last=null;
-    this.action=forward;
-    this.rejected=false;
   }
 
   get finished(){return this.world.result!==null;}
+  get action(){return this.actions.action;}
+  get rejected(){return this.actions.rejected;}
 
   observe(){
     return policyObservation(this.world.observation,this.world.time);
@@ -76,21 +104,10 @@ export class ShortCourse {
   tick(choose){
     if(this.finished)return null;
     const world=this.world;
-    const first=this.remaining===0;
-    const jumps=world.jumpCount;
-    if(first){
-      this.observation=this.observe();
-      this.action=choose(this.observation);
-      if(!Number.isInteger(this.action)||!ACTION_NAMES[this.action])throw new RangeError('Invalid motion action');
-      this.remaining=DECISION_STEPS;
-      this.startPassed=world.passed;
-    }
-    // A jump intent pulses once. A duck intent is held across the decision.
-    world.step(this.action===jump&&!first?forward:this.action);
-    if(first)this.rejected=this.action===jump&&world.jumpCount===jumps;
+    const passed=world.passed;
+    if(this.actions.tick(world,choose))this.startPassed=passed;
     if(world.time>=20&&!world.result)world.recordFailure('超过试跑时限');
-    this.remaining--;
-    if(this.remaining&&!this.finished)return null;
+    if(this.actions.remaining&&!this.finished)return null;
 
     const rewards={
       pass:(world.passed-this.startPassed)*REWARD.pass,
@@ -108,7 +125,7 @@ export class ShortCourse {
       };
     }
     return this.last={
-      observation:this.observation,next:this.observe(),action:this.action,rejected:this.rejected,
+      observation:this.actions.observation,next:this.observe(),action:this.action,rejected:this.rejected,
       reward:Object.values(rewards).reduce((sum,value)=>sum+value,0),terminal:this.finished,
     };
   }

@@ -1,5 +1,9 @@
 import {DT} from './world.js';
 
+export function motionSettled(world){
+  return world.done&&(world.state==='fallen'||(world.speed<.04&&world.age>3));
+}
+
 // Advance the same fixed-step clock in the standalone Demo and in the book.
 export function createMotionPlayback({world,draw,settled,rate=()=>1,step=simulation=>simulation.step()}) {
   let frame=null,last=null,accumulator=0;
@@ -20,7 +24,7 @@ export function createMotionPlayback({world,draw,settled,rate=()=>1,step=simulat
       }
     }
     last=now;
-    const done=simulation.done&&(simulation.state==='fallen'||(simulation.speed<.04&&simulation.age>3));
+    const done=motionSettled(simulation);
     frame=done?null:requestAnimationFrame(tick);
     draw(now);
     if(done){
