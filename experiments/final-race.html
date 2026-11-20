@@ -44,12 +44,12 @@
       <ol class="race-segments" id="segments" aria-label="六个连续赛段"></ol>
       <div class="course-track race-stage">
         <canvas id="motionCanvas" aria-label="红色跑道上的双足人形机器人"></canvas>
+        <div class="broadcast-head"><strong id="segment"></strong><span id="raceTime"></span></div>
+        <p class="broadcast-call" id="liveCall" hidden></p>
         <div id="countdown" class="countdown" hidden></div>
       </div>
       <div class="race-telemetry" aria-label="比赛实况">
-        <strong id="segment"></strong>
         <span id="distance"></span>
-        <span id="raceTime"></span>
         <span id="speed"></span>
         <span id="bend" hidden></span>
       </div>
@@ -60,8 +60,10 @@
         <p id="replayStatus" class="replay-status"></p>
         <button id="closeReplay" type="button">关闭回放</button>
       </header>
-      <div class="course-track">
+      <div class="course-track race-stage">
         <canvas id="replayCanvas" aria-label="按本场记录重绘的机器人和赛道"></canvas>
+        <div class="broadcast-head"><strong id="replaySegment"></strong><span>回放</span></div>
+        <p class="broadcast-call" id="replayCall" hidden></p>
       </div>
       <div class="replay-controls">
         <div class="race-toolbar">

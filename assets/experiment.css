@@ -26,3 +26,12 @@ body:has(#designActivity[open]) #challenge{display:none}
 @media (min-width: 800px) {
   .sensor-install-layout { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
 }
+
+body { font-family: "Barlow","Microsoft YaHei",system-ui,sans-serif; }
+button.primary { background: #d3f56f; color: #183024; border-color: #d3f56f; font-weight: 750; }
+button.primary:hover { background: #e5ff9a; }
+button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #ffd88a; outline-offset: 2px; }
+.workshop-controls, .workshop-readout { font-size: 15px; }
+.workshop-stage { background: #e6ebe0; border: 1px solid #879a8b; }
+.sensor-install-layout .sensor-card[aria-pressed="true"] { border-color: #d1eb8a; background: #25473b; }
+.sensor-install-layout .sensor-card[aria-pressed="true"] b { color: #e2f9a7; }

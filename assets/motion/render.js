@@ -2,7 +2,14 @@ import {makePose,ROBOT_COLORS as C} from './rig.js';
 import {clamp,mix,smooth} from './world.js';
 const TAU=Math.PI*2;
 export class MotionRenderer{
-  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.width=1200;this.height=610;this.dpr=1;}
+  constructor(canvas){
+    this.canvas=canvas;this.ctx=canvas.getContext('2d');this.width=1200;this.height=610;this.dpr=1;
+    this.grandstand=new Image();
+    this.grandstand.onload=()=>{
+      if(this.lastWorld&&canvas.isConnected&&canvas.clientWidth)this.draw(this.lastWorld);
+    };
+    this.grandstand.src=new URL('./grandstand.webp',import.meta.url).href;
+  }
   resize(){
     const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
     const mobile=r.width<650,w=mobile?720:1200;
@@ -17,6 +24,7 @@ export class MotionRenderer{
   ellipse(x,y,rx,ry,fill){const c=this.ctx;c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);c.fillStyle=fill;c.fill();}
   round(x,y,w,h,r,fill,stroke=null){const c=this.ctx;c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke();}}
   draw(w){
+    this.lastWorld=w;
     const c=this.ctx,W=this.width,H=this.height,night=!w.track&&w.scene==='night',mobile=W<800;
     this.scale=mobile?145:113;this.anchor=mobile?240:390;this.camera=w.x;this.ground=mobile?H*.65:H*.68;
     if(w.scene==='curve'){
@@ -29,6 +37,7 @@ export class MotionRenderer{
     this.background(w,night);
     this.track(w,night);
     this.finishLine(w,night);
+    if(Number.isFinite(this.referenceDistance))this.referenceLine(w,this.referenceDistance);
     // Back obstacles, robot, then near uprights preserve depth cues.
     if(w.hasObstacles)for(const o of w.obstacles)if(o.x>w.x-4&&o.x<w.x+13)this.obstacle(w,o,false,night);
     if(w.track){
@@ -50,12 +59,25 @@ export class MotionRenderer{
       light.addColorStop(0,'#07111d00');light.addColorStop(.65,'#07111d4d');light.addColorStop(1,'#07111db5');c.fillStyle=light;c.fillRect(0,0,W,H);
       c.fillStyle='#bed3da';c.font='11px system-ui';c.fillText(w.sensors.camera?'摄像头视距 1.05 m':'摄像头已关闭',28,H-74);
     }
-    c.font='11px system-ui';c.fillStyle=night?'#9fb3bb':'#608379';c.fillText('双足关节运动 / 简化动力学',26,85);
     this.scaleBar(night);
   }
   background(w,night){
     const c=this.ctx,W=this.width,H=this.height;
-    // Muted sports ground, local geometry only; no external textures or fonts.
+    if(this.grandstand.complete&&this.grandstand.naturalWidth){
+      const horizon=H*.51;
+      const turf=c.createLinearGradient(0,horizon,0,H);
+      turf.addColorStop(0,'#61867d');turf.addColorStop(.5,'#467768');turf.addColorStop(1,'#2e5b50');
+      c.fillStyle=turf;c.fillRect(0,horizon,W,H-horizon);
+      const image=this.grandstand,scale=Math.max(W*1.10/image.naturalWidth,horizon/image.naturalHeight);
+      const width=image.naturalWidth*scale,height=image.naturalHeight*scale;
+      const left=-(width-W)*(.3+.27*Math.sin(w.x/65));
+      c.save();c.beginPath();c.rect(0,0,W,horizon);c.clip();
+      c.drawImage(image,left,(horizon-height)*.64,width,height);
+      if(night){c.fillStyle='#101733a6';c.fillRect(0,0,W,horizon);}
+      c.restore();
+      return;
+    }
+    // Local geometry also works while the illustration is loading.
     c.fillStyle=night?'#354a47':'#b8cdb5';c.fillRect(0,H*.36,W,H*.64);
     this.path([{x:0,y:H*.36},{x:W*.22,y:H*.28},{x:W*.47,y:H*.37},{x:W*.7,y:H*.31},{x:W,y:H*.36},{x:W,y:H*.43},{x:0,y:H*.43}],night?'#283c3c':'#c3d6c4');
     const offset=(w.x*7)%140;
@@ -86,15 +108,38 @@ export class MotionRenderer{
     }
     const label=this.project(x,h+2.18,center-3.7);c.fillStyle=night?'#e8d9b9':'#486455';c.font='bold 13px system-ui';c.fillText(`终点 · ${w.courseDistance} m`,label.x-30,label.y);
   }
+  referenceLine(w,x){
+    if(x<w.x-5||x>w.x+12||x>=w.finishX)return;
+    const c=this.ctx,h=w.height(x),z=w.center(x);
+    const far=this.project(x,h,z-3.5),near=this.project(x,h,z+3.5);
+    c.save();
+    c.setLineDash([7,5]);
+    this.line(far,near,'#fff4c7',3);
+    c.setLineDash([]);
+    this.line(far,{x:far.x,y:far.y-29},'#fff4c7',2);
+    c.font='bold 16px system-ui';
+    const label=`初代机 · ${x.toFixed(1)} m`,width=c.measureText(label).width+16;
+    this.round(far.x-2,far.y-48,width,24,3,'#27372d');
+    c.fillStyle='#ffe4ac';c.fillText(label,far.x+6,far.y-31);
+    c.restore();
+  }
   track(w,night){
     const c=this.ctx,left=w.x-8,right=w.x+16,points=[];
     for(let x=left;x<=right;x+=.18)points.push(this.project(x,w.height(x),w.center(x)-3.6));
     for(let x=right;x>=left;x-=.18)points.push(this.project(x,w.height(x),w.center(x)+3.6));
-    this.path(points,night?'#804b45':'#bd6555');
+    const surface=c.createLinearGradient(0,this.ground-100,0,this.ground+110);
+    surface.addColorStop(0,night?'#703e48':'#a94842');
+    surface.addColorStop(.55,night?'#875055':'#c9604a');
+    surface.addColorStop(1,night?'#74464e':'#9b463a');
+    this.path(points,surface);
     for(let lane=-3;lane<=3;lane+=1.5){const ps=[];for(let x=left;x<right;x+=.15)ps.push(this.project(x,w.height(x)+.005,w.center(x)+lane));this.path(ps,null,night?'#bc9080':'#f4cbb0',lane===-3||lane===3?2:1.5);}
     for(let n=Math.floor(left/5);n<right/5;n++){
       const x=n*5,p=this.project(x,w.height(x),w.center(x)+3.1),q=this.project(x,w.height(x),w.center(x)+3.5);
       this.line(p,q,night?'#a27f72':'#e5b49a',2);c.save();c.translate(q.x+5,q.y-6);c.fillStyle=night?'#bc9684':'#eac5ab';c.font='10px ui-monospace,monospace';c.fillText(`${n*5}m`,0,0);c.restore();
+    }
+    if(left<=0&&right>=0){
+      const h=w.height(0),z=w.center(0);
+      this.line(this.project(0,h,z-3.6),this.project(0,h,z+3.6),'#fff1ca',4);
     }
     for(let n=Math.floor(left/2);n<=right/2;n++){
       const x=n*2+.3*Math.sin(n+w.terrainPhase);

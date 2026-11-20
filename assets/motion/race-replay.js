@@ -1,6 +1,7 @@
 import {MotionRenderer} from './render.js';
 import {raceFrameView} from './race-record.js';
 import {DT,STATE_NAMES} from './world.js';
+import {showRaceCall} from './race-call.js';
 
 const seconds=tick=>`${(tick*DT).toFixed(3)} 秒`;
 
@@ -37,6 +38,8 @@ export function createRaceReplay(panel,events,visible) {
     time.textContent=`${seconds(tick)} / ${seconds(record.presentation.tick)}`;
     const {score}=record;
     const segment=frame.track.segmentAt(frame.x).name;
+    find('replaySegment').textContent=segment;
+    showRaceCall(find('replayCall'),record,tick);
     let result='';
     if(tick>=score.tick){
       if(score.outcome==='aborted')result='已退出 · 记录结束 · ';

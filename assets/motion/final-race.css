@@ -54,6 +54,15 @@ h1 { font-size: clamp(22px,4vw,36px); margin-block: 8px 18px; }
 .race-legacy { padding-block: 0; }
 .race-legacy summary { font-size: 14px; }
 .race-legacy a { display: inline-block; margin-top: 6px; }
+.broadcast-head, .broadcast-call { position: absolute; z-index: 1; pointer-events: none; left: 12px; }
+.broadcast-head { display: inline-flex; align-items: stretch; top: 12px; color: #f9f8ec; background: #142d25f5; border-radius: 4px; overflow: hidden; font-variant-numeric: tabular-nums; }
+.broadcast-head strong { color: #182c24; background: #d3f56f; padding: 5px 10px; }
+.broadcast-head span { padding: 5px 9px; }
+.broadcast-call { bottom: 11px; max-width: calc(100% - 24px); margin: 0; padding: 5px 12px; border-left: 4px solid #d3f56f; background: #152923ef; color: #fff7e9; font-size: clamp(16px,2vw,30px); font-weight: 850; }
+.broadcast-call[data-tone="failed"], .broadcast-call[data-tone="collision"] { border-color: #ff9f77; }
+.countdown { z-index: 2; }
+.race-segments li { background: linear-gradient(to right,#9ad399 var(--covered,0%),#37453e var(--covered,0%)) bottom/100% 4px no-repeat, #233a32; padding-bottom: 8px; color: #e0e7dd; }
+.race-segments [aria-current="step"] { background: linear-gradient(to right,#527556 var(--covered,0%),transparent var(--covered,0%)) bottom/100% 4px no-repeat, #d3f56f; color: #183126; font-weight: 800; }
 @media (min-width: 944px) {
   .race-layout { grid-template-rows: auto 1fr; gap: 8px 14px; }
   .race-layout > :is(#liveRace,#raceReplay) { grid-area: 1 / 1 / span 2; }

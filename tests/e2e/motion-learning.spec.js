@@ -63,6 +63,17 @@ test('a real training batch saves Q updates and page eight compares two read-onl
   expect(report.before.runs.map(x=>x.seed)).toEqual(report.after.runs.map(x=>x.seed));
   expect(report.seeds).toEqual(Array.from({length:20},(_,i)=>9001+i));
   expect(report.before.successes).toBe(0);
+  const pairs=f.locator('#trackPairs button');
+  await expect(pairs).toHaveCount(report.seeds.length);
+  expect(await f.locator('#trackPairs .cleared').count()).toBe(report.before.successes+report.after.successes);
+  await pairs.last().click();
+  await expect(f.locator('#pairReading')).toContainText(`种子 ${report.seeds.at(-1)}`);
+  await expect(f.locator('#beforeTotal')).toHaveText(`${report.before.successes} / 20`);
+  await expect(f.locator('#afterTotal')).toHaveText(`${report.after.successes} / 20`);
+  await f.getByRole('button',{name:'看跑道'}).click();
+  await expect(f.locator('#motionCanvas')).toBeVisible();
+  await f.getByRole('button',{name:'看同场对照'}).click();
+  await expect(f.locator('#motionCanvas')).toBeHidden();
   expect(report.after.meanPassed).toBeGreaterThan(report.before.meanPassed);
   expect(await stored(page)).toBe(trained);
   await page.screenshot({path:join(evidence,'chapter2-desktop-frozen.png'),fullPage:true});

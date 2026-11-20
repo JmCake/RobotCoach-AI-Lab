@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#8b5a2b">
+  <meta name="theme-color" content="#16382e">
   <meta name="description" content="机器人总教练请就位：感知、学习与AI闭环的三章互动课程。无需账号，打开即学。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🤖%3C/text%3E%3C/svg%3E">
   <title>机器人总教练请就位 · V2.0</title>
@@ -11,13 +11,20 @@
 </head>
 <body>
   <main class="book-container">
-    <header class="book-header"><a href="#diagnosis" class="brand">🤖 机器人总教练请就位</a><span class="edition">互动课程 · V2.0</span></header>
+    <header class="book-header">
+      <a href="#diagnosis" class="brand"><i class="lane-mark" aria-hidden="true"></i>机器人总教练请就位</a>
+      <button id="openContents" type="button" aria-haspopup="dialog">课堂目录</button>
+    </header>
     <div class="book-navigation">
       <nav class="chapters" aria-label="章节"><button data-chapter="diagnosis">一 · 感知与选拔</button><button data-chapter="imitation">二 · 学习与训练</button><button data-chapter="loop">三 · AI闭环</button></nav>
       <nav class="page-nav" aria-label="翻页"><button id="prev">← 上一页</button><span id="pageNumber" aria-live="polite"></span><button id="next">下一页 →</button></nav>
     </div>
     <section id="page" class="book-content" aria-labelledby="pageTitle"></section>
   </main>
+  <dialog id="contents" aria-labelledby="contentsTitle">
+    <header><h2 id="contentsTitle">课堂目录</h2><button type="button" id="closeContents" autofocus>关闭</button></header>
+    <nav id="lessonList" aria-label="九页课堂"></nav>
+  </dialog>
   <footer class="credit">课程与交互改编自 <a href="https://github.com/PumpkinKiller04/RobotCoachAI" target="_blank" rel="noopener">PumpkinKiller04 / RobotCoachAI</a> · <a href="THIRD_PARTY_NOTICES.md">来源与许可</a></footer>
   <script type="module" src="assets/course.js"></script>
 </body>

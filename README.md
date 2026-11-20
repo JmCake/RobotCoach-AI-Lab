@@ -1,6 +1,6 @@
 # RobotCoach-AI-Lab
 
-**项目状态：V1.0 / V1.1 已合并 main；V2.0 综合升级与独立运动 Demo 提交 PR 供审查。运动 Demo 已配置 GitHub Pages 自动发布，PR 不自动合并。**
+九页翻书课堂的存档版本已通过 [PR #11](https://github.com/JmCake/RobotCoach-AI-Lab/pull/11) 合入 main。
 
 本项目基于原作者 [PumpkinKiller04/RobotCoachAI](https://github.com/PumpkinKiller04/RobotCoachAI) 的课程与交互设计进行精简改造，目标是将《机器人总教练请就位》从复杂的导学单网站，改造成**打开即可体验、单页顺序推进、以机器人互动为核心**的教学网站。
 
@@ -11,7 +11,7 @@
 需要 Node.js 18 或以上版本。生产页面没有第三方运行依赖，也没有后台服务。
 
 ```bash
-git clone --branch codex/continuous-final-race https://github.com/JmCake/RobotCoach-AI-Lab.git
+git clone --branch codex/classroom-race-day https://github.com/JmCake/RobotCoach-AI-Lab.git
 cd RobotCoach-AI-Lab
 npm run dev
 ```
@@ -19,6 +19,8 @@ npm run dev
 访问 **http://127.0.0.1:4180**，直接进入第一章。也可以在项目目录运行 `python -m http.server 4180`，再访问相同地址。请通过 HTTP 打开，不直接双击 HTML（浏览器对本地 ES 模块有限制）。手机访问时，可使用静态托管站点，或将 Python 服务的局域网地址用于同网设备。
 
 ## 第一章急弯对照
+
+课堂展示可从 `/#diagnosis` 开始。请同学举手选择「能完赛」或「会失误」，再点「开始试跑」。第 3 页会把初代机实际停下的位置标在同一条跑道上。要切换到其他实验，打开右上角「课堂目录」即可。
 
 从第 1 页用初代机试跑，第 2 页点击位置认识感官，并安装或卸下模块。机器人会显示实际安装的硬件。第 3 页用自己的配置试跑，与初代机共用急弯、40 m、目标速度 6.4 m/s、种子 2026，可切换配置和查看两份真实成绩。更改安装配置会清除学生配置的旧成绩。翻页后，未完成的试跑从起点重来。
 
