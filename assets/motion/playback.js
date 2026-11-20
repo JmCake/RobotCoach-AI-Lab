@@ -1,7 +1,7 @@
 import {DT} from './world.js';
 
 // Advance the same fixed-step clock in the standalone Demo and in the book.
-export function createMotionPlayback({world,draw,settled,rate=()=>1}) {
+export function createMotionPlayback({world,draw,settled,rate=()=>1,step=simulation=>simulation.step()}) {
   let frame=null,last=null,accumulator=0;
 
   function pause() {
@@ -15,7 +15,7 @@ export function createMotionPlayback({world,draw,settled,rate=()=>1}) {
     if(last!==null){
       accumulator+=Math.min((now-last)/1000,.1)*rate();
       while(accumulator>=DT){
-        simulation.step();
+        step(simulation);
         accumulator-=DT;
       }
     }

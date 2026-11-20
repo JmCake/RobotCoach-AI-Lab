@@ -18,6 +18,7 @@ export const SCENES={
 };
 export const STATE_NAMES={running:'稳定奔跑',unbalanced:'正在纠偏',stumbling:'连续踉跄',falling:'正在摔倒',fallen:'倒地停留',recovering:'撑地起身',finished:'已过终点',incomplete:'本轮待改进'};
 export const SENSOR_NAMES={camera:'摄像头',lidar:'激光测距',imu:'姿态传感器 IMU',force:'足底力觉'};
+export const MOTION_ACTION=Object.freeze({forward:0,jump:1,duck:2});
 
 export class MotionWorld{
   constructor({scene='straight',seed=2026,target=DEFAULT_SPEED,assist=true,sensors,repeat=true,distance=COURSE_DISTANCE}={}){
@@ -64,15 +65,19 @@ export class MotionWorld{
       surface:camera?(camera.wet?.24:.88):null,curve:camera?.curve??0,offset:camera?.offset??0,
       grounded:this.y<=0,jumpHeight:this.y};
   }
-  decide(o){
+  decide(o,action){
     let target=this.target,torque=0,placement=0;
     if(o.surface!==null)target=Math.min(target,Math.sqrt(o.surface*9.81/Math.max(.035,Math.abs(o.curve)))*.8,o.surface<.4?2.65:9);
     if(o.contact){target=Math.min(target,Math.max(2.3,this.target-o.contact.roughness*15-o.contact.slip*1.4));placement=clamp(o.contact.roughness*2+Math.abs(o.imu?.tilt??0)*.7,0,.6);}
     if(o.imu)torque=-19*o.imu.tilt-7*o.imu.rate;
     const steer=clamp(o.curve*this.speed-(o.imu?2.8:1.1)*o.offset-(o.imu&&o.camera?4.5*o.imu.heading:0),-2.5,2.5);
     const obs=o.obstacle;
-    const jump=!!(obs&&obs.type==='hurdle'&&obs.distance<this.speed*.43+.32&&obs.distance>.2&&o.grounded);
-    const duck=!!(obs&&obs.type==='beam'&&obs.distance<this.speed*.6+.7&&obs.distance>-.7);
+    const jump=o.grounded&&(action===undefined
+      ? !!(obs&&obs.type==='hurdle'&&obs.distance<this.speed*.43+.32&&obs.distance>.2)
+      : action===MOTION_ACTION.jump);
+    const duck=action===undefined
+      ? !!(obs&&obs.type==='beam'&&obs.distance<this.speed*.6+.7&&obs.distance>-.7)
+      : action===MOTION_ACTION.duck;
     return {target,torque,steer,jump,duck,placement};
   }
   transition(state){if(this.state!==state){this.state=state;this.age=0;this.history.push({time:this.time,state,x:this.x});this.history=this.history.slice(-60);}}
@@ -98,12 +103,12 @@ export class MotionWorld{
     this.cause=cause;this.event=cause;this.omega+=impulse;this.imbalance+=.12;
     if(part){this.collisions++;this.totalCollisions++;this.collision={x:this.x,part,time:this.time,context:{sensors:{...this.sensors},observation:structuredClone(this.observation),control:{...this.control}}};this.recordFailure(cause);}
   }
-  step(){
+  step(action){
     this.time+=DT;this.age+=DT;this.lastImpact*=Math.exp(-DT*10);
     if(this.result&&!this.result.success){this.result.collisions=this.collisions;this.result.falls=this.falls-this.attemptStartFalls;}
     this.compression*=Math.exp(-DT*2.8);
     if(['falling','fallen','recovering'].includes(this.state)){this.stepFall();this.observation=this.observe();return;}
-    this.observation=this.observe();this.control=this.decide(this.observation);if(this.result)this.control.target=0;const c=this.control;
+    this.observation=this.observe();this.control=this.decide(this.observation,action);if(this.result)this.control.target=0;const c=this.control;
     const mu=this.friction(this.x),oldSpeed=this.speed;
     this.speed+=clamp((c.target-this.speed)*2,-mu*9.81,3.2)*DT;
     this.x+=this.speed*DT;
@@ -122,7 +127,7 @@ export class MotionWorld{
       // A push-off behind the centre of mass carries forward angular momentum.
       // The same impulse applies to every sensor configuration; feedback must cancel it.
       this.omega+=this.speed*this.vy*.045;
-      this.event='测得前方矮栏 · 起跳跨越';
+      this.event=action===undefined?'测得前方矮栏 · 起跳跨越':'执行跳跃 · 离地';
     }
     this.vy-=12*DT;this.y+=this.vy*DT;
     if(this.y<0){
@@ -139,7 +144,7 @@ export class MotionWorld{
       this.y=0;this.vy=0;
     }
     this.crouch+=((c.duck&&!this.result?1:0)-this.crouch)*DT*13;
-    if(c.duck&&!this.result)this.event='测得前方横梁 · 屈膝收身';
+    if(c.duck&&!this.result)this.event=action===undefined?'测得前方横梁 · 屈膝收身':'执行下蹲 · 屈膝收身';
     for(let i=0;i<2;i++){
       const p=(this.phase+i*.5)%1,stance=p<.56&&this.y<.04;
       const reach=.43+Math.min(.28,this.speed*.035);
