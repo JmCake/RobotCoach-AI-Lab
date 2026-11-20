@@ -33,8 +33,14 @@ test('diagnosis locks the physical result, finishes falling and restores the sco
  await page.clock.install();
  await page.goto('/#diagnosis');const f=frame(page);
  await expect(f.locator('#baselineResult')).toContainText('尚未测试');
+ await f.getByRole('button',{name:'会失误'}).click();
+ await expect(f.locator('#verdict')).toBeHidden();
  await f.locator('#play').click();await page.clock.runFor(5650);
  await expect(f.locator('#baselineResult')).toContainText('未通过 · 偏离跑道边界 · 24.2 / 40 m');
+ await expect(f.locator('#verdict')).toContainText('猜中了！跑到 24.2 米');
+ const savedAtVerdict=await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).chapter1BaselineRun);
+ expect(savedAtVerdict.result.distance.toFixed(1)).toBe('24.2');
+ await expect(f.getByRole('button',{name:'能完赛'})).toBeDisabled();
  const lockedDistance=await f.locator('#distance').textContent();
  await expect(f.locator('#play')).toHaveText('暂停');
  await page.clock.runFor(3300);
@@ -91,6 +97,9 @@ test('discover, visibly install and remove sensor parts, then compare runs',asyn
  await trial.getByRole('button',{name:'我的配置'}).click();
  await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
  await page.screenshot({path:`${evidence}/chapter1-desktop-comparison.png`,fullPage:true});
+ await expect(trial.locator('#distanceDelta')).toContainText('多跑了 15.8 米');
+ await expect(trial.locator('#baselineLane output')).toHaveText('24.2 m');
+ await expect(trial.locator('#studentLane output')).toHaveText('40.0 m');
  await page.reload();
  await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
  // Page 1 uses the initial camera-only snapshot after the student has installed all four modules.
@@ -106,6 +115,24 @@ test('discover, visibly install and remove sensor parts, then compare runs',asyn
  await expect(trial.locator('#studentResult')).toContainText('尚未测试');
  await expect(trial.locator('#baselineResult')).toHaveAttribute('data-outcome','failed');
  expect((await saved()).chapter1StudentRun).toBeNull();
+ await expect(trial.locator('#distanceDelta')).toBeHidden();
+});
+test('class contents pauses a live lesson and jumps directly to the final',async({page})=>{
+ await page.goto('/#diagnosis');
+ const f=frame(page);
+ await f.locator('#play').click();
+ await expect(f.locator('#distance')).not.toHaveText('0.0 / 40 m');
+ await page.getByRole('button',{name:'课堂目录'}).click();
+ const contents=page.getByRole('dialog');
+ await expect(contents.getByRole('link')).toHaveCount(9);
+ await expect(f.locator('#play')).toHaveText('继续试跑');
+ await page.keyboard.press('Escape');
+ await expect(contents).toBeHidden();
+ await expect(page.getByRole('button',{name:'课堂目录'})).toBeFocused();
+ await page.getByRole('button',{name:'课堂目录'}).click();
+ await contents.getByRole('link',{name:/终极挑战/}).click();
+ await expect(page).toHaveURL(/#design$/);
+ await expect(f.locator('#start')).toBeVisible();
 });
 test('chapter one touch layout, hiding pause and repeated page removal',async({browser})=>{
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});

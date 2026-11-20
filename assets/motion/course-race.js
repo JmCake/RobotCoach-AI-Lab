@@ -7,6 +7,7 @@ import {FinalRace,RACE_LEARNED,RACE_RULE,RACE_POLICY_NAMES,raceStrategy} from '.
 import {FinalTrack,RACE_SEED,RACE_TARGET,createFinalTrack} from './final-track.js';
 import {RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView} from './race-record.js';
 import {createRaceReplay} from './race-replay.js';
+import {showRaceCall} from './race-call.js';
 
 const RECORD_KEY='robotcoach:final-race:session:v1';
 const SUMMARY_KEY='robotcoach:final-race:last:v1';
@@ -130,7 +131,12 @@ function render(){
   text('speed',`${world.speed.toFixed(1)} m/s`);
   $('bend').hidden=segment.id!=='curve';
   if(segment.id==='curve')text('bend',`横移 ${world.lateral.toFixed(2)} m · 侧倾 ${(world.theta*180/Math.PI).toFixed(1)}°`);
-  steps.forEach((item,i)=>item.setAttribute('aria-current',segments[i].id===segment.id?'step':'false'));
+  steps.forEach((item,i)=>{
+    const leg=segments[i],fraction=Math.max(0,Math.min(1,(world.x-leg.start)/(leg.end-leg.start)));
+    item.setAttribute('aria-current',leg.id===segment.id?'step':'false');
+    item.style.setProperty('--covered',`${(fraction*100).toFixed(1)}%`);
+  });
+  showRaceCall($('liveCall'),race?.record??(savedWorld?lastRecord:null),race?.tick??lastRecord?.presentation.tick??0);
   $('countdown').hidden=!active||countdown<=0;
   if(countdown>0)text('countdown',counting?String(Math.ceil(countdown)):'已暂停');
   $('start').hidden=active;

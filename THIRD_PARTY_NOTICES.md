@@ -35,3 +35,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## 课堂看台插画
+
+赛道远景使用本项目通过内置 ImageGen 生成的[看台插画](assets/motion/grandstand.webp)。机器人、跑道、动作、成绩和回放由现有程序绘制。
+
+<details><summary>插画生成提示</summary>
+
+横向全景，机器人田径赛的侧视看台插画。黄昏的杏橙色天空渐变到靛蓝，远处现代开放式体育场、几何屋盖、两侧亮起的高杆灯、用小色点表现的观众，电影感运动海报的丝网印刷质感。水平构图，镜头正对远侧看台，整排观众席横贯全幅，底边为深色水平挡墙。供二维游戏叠加真实跑道和角色使用。画面只画远景，不画地面跑道、运动员、机器人、文字、数字、标志或界面。
+
+</details>

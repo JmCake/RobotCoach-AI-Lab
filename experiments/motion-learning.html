@@ -14,24 +14,32 @@
   <div class="course-motion-grid">
     <div class="course-track">
       <canvas id="motionCanvas" tabindex="0" aria-label="双足人形机器人越过矮栏与横梁"></canvas>
+      <section id="pairedTracks" aria-labelledby="pairedTitle" hidden>
+        <header><h2 id="pairedTitle">同场对照</h2></header>
+        <div class="pair-score"><span>训练前完赛<strong id="beforeTotal"></strong></span><b aria-hidden="true">→</b><span>训练后完赛<strong id="afterTotal"></strong></span></div>
+        <p class="pair-legend">每格一条赛道，上排训练前，下排训练后。✓ 完赛，× 未通过。</p>
+        <div id="trackPairs"></div>
+        <p id="pairReading" role="status"></p>
+        <div id="comparison" hidden>
+          <details class="lab-details">
+            <summary>逐轮成绩与失败原因</summary>
+            <table>
+              <thead><tr><th scope="col">留出赛道成绩</th><th scope="col">训练前</th><th scope="col">训练后</th></tr></thead>
+              <tbody id="comparisonRows"></tbody>
+            </table>
+            <ol id="rounds" class="rounds"></ol>
+          </details>
+        </div>
+      </section>
     </div>
     <div class="motion-side">
       <section id="frozen" hidden>
         <div class="lab-controls">
           <button id="compare" class="primary" type="button">比较训练前后 · 各 20 轮</button>
           <button id="cancelCompare" type="button" hidden>取消比较</button>
+          <button id="switchView" type="button" aria-controls="pairedTracks" hidden>看跑道</button>
         </div>
         <p id="comparisonStatus" class="muted" role="status"></p>
-        <div id="comparison" hidden>
-          <table>
-            <thead><tr><th scope="col">留出赛道成绩</th><th scope="col">训练前</th><th scope="col">训练后</th></tr></thead>
-            <tbody id="comparisonRows"></tbody>
-          </table>
-          <details class="lab-details">
-            <summary>逐轮成绩与失败原因</summary>
-            <ol id="rounds" class="rounds"></ol>
-          </details>
-        </div>
         <label class="policy-select">短道预览
           <select id="policy">
             <option value="after">训练后策略</option>

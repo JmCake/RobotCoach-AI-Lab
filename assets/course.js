@@ -1,6 +1,6 @@
 import {load,save,storageNotice} from './state.js';
 const pages=[
- ['diagnosis','初代机能跑过急弯吗？','初代机只装了摄像头。试跑一次，观察它在弯道里如何转向、保持平衡。','humanoid-trial.html?mode=baseline'],
+ ['diagnosis','初代机能跑过急弯吗？','只有一台摄像头，前面是 40 米急弯。举手猜一猜，再让机器人上场。','humanoid-trial.html?mode=baseline'],
  ['workshop','认识并安装机器人的感官','点击机器人身上的部位了解它的作用，再选择或拖入模块，看看机器人的外观怎样改变。','selection.html'],
  ['trial','同一条弯道，这次会怎样？','用刚才安装的感官再跑一次。对照初代机，看看改变感官后，距离和用时有什么变化。','humanoid-trial.html'],
  ['imitation','照着做，能一直做对吗？','行为克隆从人的示范中学习动作。先观察模仿，再改变障碍位置，看看仅仅复读动作的局限。','imitation.html'],
@@ -40,11 +40,6 @@ function render(index,focus=false){
   host.append(h,p);
   const activity=document.createElement('div');activity.className='book-activity';host.append(activity);
   const frame=document.createElement('iframe');frame.src='experiments/'+(legacy?src.replace('motion-learning.html','runner.html'):oldFinal?'design.html':src);frame.className='experiment';frame.title=title;frame.id='experiment';activity.append(frame);
-  if(index===0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    const intro=document.createElement('iframe');intro.src='experiments/parkour.html';intro.className='parkour';
-    intro.title='机器人自动跑酷开场';intro.tabIndex=-1;intro.setAttribute('aria-hidden','true');activity.append(intro);
-    activity.classList.add('with-parkour');
-  }
   if(legacy||oldFinal){
     const link=document.createElement('a'),url=new URL(location.href);
     url.searchParams.delete(legacy?'runner':'lab');url.hash=id;
@@ -53,6 +48,7 @@ function render(index,focus=false){
   document.getElementById('prev').disabled=index===0;
   document.getElementById('next').disabled=index===pages.length-1;
   document.getElementById('pageNumber').textContent=`${String(index+1).padStart(2,'0')} / ${pages.length}`;
+  for(const link of lessonList.querySelectorAll('a'))link.setAttribute('aria-current',link.hash==='#'+id?'page':'false');
   chapters.forEach(({link,start},i)=>{
     const end=chapters[i+1]?.start??pages.length;
     link.setAttribute('aria-current',index>=start&&index<end?'page':'false');
@@ -75,5 +71,24 @@ function openCurrent(focus=false){
 }
 window.addEventListener('hashchange',()=>openCurrent(true));
 window.addEventListener('message',e=>{const frame=document.getElementById('experiment');if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.type!=='robotcoach:height')return;const h=Number(e.data.height);if(Number.isFinite(h))frame.style.height=Math.max(280,Math.min(2400,h+2))+'px';});
-document.addEventListener('visibilitychange',()=>document.getElementById('experiment')?.contentWindow?.postMessage({type:'robotcoach:visibility',hidden:document.hidden},location.origin));
+const contents=document.getElementById('contents'),lessonList=document.getElementById('lessonList');
+function syncVisibility(){
+  document.getElementById('experiment')?.contentDocument?.dispatchEvent(
+    new CustomEvent('coursevisibility',{detail:document.hidden||contents.open}));
+}
+document.addEventListener('visibilitychange',syncVisibility);
+contents.addEventListener('close',syncVisibility);
+for(const [i,{link,start}] of chapters.entries()){
+  const group=document.createElement('section'),heading=document.createElement('h3');
+  heading.textContent=link.textContent;group.append(heading);
+  for(let j=start;j<(chapters[i+1]?.start??pages.length);j++){
+    const [id,title]=pages[j],a=document.createElement('a'),number=document.createElement('small');
+    a.href='#'+id;number.textContent=String(j+1).padStart(2,'0');a.append(number,title);
+    a.addEventListener('click',event=>{event.preventDefault();contents.close();go(j);});
+    group.append(a);
+  }
+  lessonList.append(group);
+}
+document.getElementById('openContents').onclick=()=>{contents.showModal();syncVisibility();};
+document.getElementById('closeContents').onclick=()=>contents.close();
 openCurrent();

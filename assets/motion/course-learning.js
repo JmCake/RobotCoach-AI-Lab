@@ -148,7 +148,7 @@ function toggleTraining(){
 function togglePreview(){
   if(playback.running){pausePreview();render();return;}
   if(!visible()||comparisonFrame!==null)return;
-  if(showcase)syncModel();
+  if(showcase){syncModel();setComparisonView(false);}
   if(settled)resetPreview();
   if(preview.world.time===0&&showcase)previewPolicy=selectedPolicy();
   status='';
@@ -194,10 +194,25 @@ function renderTraining(){
   }
 }
 
+function setComparisonView(show){
+  canvas.hidden=show;
+  $('pairedTracks').hidden=!show;
+  $('switchView').hidden=!report;
+  $('switchView').setAttribute('aria-expanded',String(show));
+  setText('switchView',show?'看跑道':'看同场对照');
+}
+$('switchView').onclick=()=>{
+  pausePreview();
+  setComparisonView($('pairedTracks').hidden);
+  render();
+};
 function showComparison(){
   $('comparison').hidden=!report;
+  setComparisonView(!!report);
   if(!report)return;
   const {before,after,updates}=report;
+  setText('beforeTotal',`${before.successes} / ${before.count}`);
+  setText('afterTotal',`${after.successes} / ${after.count}`);
   const tbody=$('comparisonRows');
   tbody.replaceChildren();
   for(const [label,metric] of [
@@ -209,12 +224,30 @@ function showComparison(){
   comparisonStatus=`冻结 ${updates} 次更新时的策略 · 相同 20 个种子 · ${improved?'至少一项成绩提高':'本次未测到成绩提高'}`;
   const rounds=$('rounds');
   rounds.replaceChildren();
+  const pairs=$('trackPairs');
+  pairs.replaceChildren();
   for(const [i,run] of before.runs.entries()){
     const afterRun=after.runs[i],item=document.createElement('li');
     const describe=x=>`${x.reason} · ${x.distance.toFixed(1)} m · 跨过 ${x.passed} 个`;
     item.textContent=`种子 ${run.seed}｜前：${describe(run)}｜后：${describe(afterRun)}`;
     rounds.append(item);
+    const button=document.createElement('button');
+    button.type='button';
+    button.setAttribute('aria-label',`第 ${i+1} 条赛道，种子 ${run.seed}`);
+    for(const attempt of [run,afterRun]){
+      const mark=document.createElement('span');
+      mark.className=attempt.success?'cleared':'missed';
+      mark.textContent=attempt.success?'✓':'×';
+      mark.setAttribute('aria-hidden','true');
+      button.append(mark);
+    }
+    button.onclick=()=>{
+      for(const cell of pairs.children)cell.setAttribute('aria-pressed',String(cell===button));
+      setText('pairReading',`种子 ${run.seed} · 训练前 ${run.distance.toFixed(1)} m（${run.reason}） · 训练后 ${afterRun.distance.toFixed(1)} m（${afterRun.reason}）`);
+    };
+    pairs.append(button);
   }
+  pairs.firstElementChild?.click();
 }
 
 function startComparison(){
@@ -224,6 +257,7 @@ function startComparison(){
   const model=trainer.snapshot(),stamp=modelStamp(model),work=compareFrozen(model);
   report=null;
   $('comparison').hidden=true;
+  setComparisonView(false);
   comparisonStatus='正在运行两份冻结策略。';
   function batch(){
     let step;

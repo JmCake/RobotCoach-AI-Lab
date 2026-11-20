@@ -41,6 +41,7 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   await page.clock.runFor(29500);
   await expect(f.locator('#status')).toHaveAttribute('data-state','finished');
   await expect(f.locator('#resultStatus')).toContainText('190.0 / 190 m · 40.9 秒 · 越障 6');
+  await expect(f.locator('#liveCall')).toHaveText('冲线 · 190.0 m');
   await page.screenshot({path:join(evidence,'final-race-desktop-finish.png'),fullPage:true});
   const download=page.waitForEvent('download');
   await f.locator('#download').click();
@@ -66,6 +67,7 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   const progress=f.locator('#replayProgress');
   const eventButtons=f.locator('#replayEvents button');
   await expect(progress).toHaveValue('0');
+  await expect(f.locator('#replayCall')).toBeHidden();
   await expect(f.locator('#motionCanvas')).toBeHidden();
   await expect(progress).toBeInViewport({ratio:1});
   for(const segment of actual.track.segments){
@@ -78,6 +80,7 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   await f.locator('.race-layout').screenshot({path:join(evidence,'final-replay-desktop.png')});
   await eventButtons.filter({hasText:'冲过终点'}).click();
   await expect(progress).toHaveValue(String(actual.score.tick));
+  await expect(f.locator('#replayCall')).toHaveText('冲线 · 190.0 m');
   await progress.focus();
   await progress.press('End');
   await expect(progress).toHaveValue(String(actual.presentation.tick));

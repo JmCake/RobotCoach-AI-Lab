@@ -17,7 +17,14 @@ const $=id=>document.getElementById(id);
 const canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
 const play=$('play'),feedback=$('runFeedback');
 const modes=document.querySelectorAll('[data-setup]');
-let mode=baselineOnly?'baseline':'student',world=null,settled=false,recorded=false;
+let mode=baselineOnly?'baseline':'student',world=null,settled=false,recorded=null;
+let prediction=null;
+const guesses=document.querySelectorAll('[data-guess]');
+const lanes=Object.fromEntries(['baseline','student'].map(setup=>{
+  const lane=$(setup+'Lane');
+  return [setup,{fill:lane.querySelector('b'),value:lane.querySelector('output')}];
+}));
+function setText(element,text){if(element.textContent!==text)element.textContent=text;}
 const playback=createMotionPlayback({
   world:()=>world,
   draw,
@@ -28,9 +35,12 @@ const playback=createMotionPlayback({
 });
 
 function saveCompletedRun() {
-  if(recorded||!world.done)return;
-  recorded=true;
-  const record={conditions,result:structuredClone(world.result),sensorRevision:mode==='student'?revision:undefined};
+  const result=world.result;
+  if(!result)return;
+  // Distance and time lock first. The fall can complete during the remaining animation.
+  if(recorded&&recorded.falls===result.falls&&recorded.collisions===result.collisions&&recorded.offTrack===result.offTrack)return;
+  recorded=structuredClone(result);
+  const record={conditions,result:recorded,sensorRevision:mode==='student'?revision:undefined};
   const patch=mode==='baseline'?{chapter1BaselineRun:record}:{chapter1StudentRun:record};
   records[mode]=record;
   storageNotice(save(patch));
@@ -54,6 +64,11 @@ function showResult(setup) {
   const text=`${name} · ${status}`;
   if(output.textContent!==text)output.textContent=text;
   output.dataset.outcome=result?(result.success?'passed':'failed'):'pending';
+  const measuring=setup===mode&&world.time>0;
+  const distance=result?.distance??(measuring?Math.min(conditions.distance,world.progress):null);
+  const lane=lanes[setup];
+  lane.fill.style.width=`${(distance??0)/conditions.distance*100}%`;
+  setText(lane.value,distance===null?'待测':`${distance.toFixed(1)} m`);
 }
 
 function readout() {
@@ -67,6 +82,22 @@ function readout() {
   if(text){feedback.textContent=text;feedback.hidden=false;}
   if(!baselineOnly)showResult('student');
   showResult('baseline');
+  if(baselineOnly){
+    for(const button of guesses)button.disabled=(playback.running||world.time>0)&&!settled;
+    if(prediction&&world.result){
+      const result=world.result,correct=(prediction==='pass')===result.success;
+      $('verdict').hidden=false;
+      setText($('verdict'),`${correct?'猜中了！':'结果揭晓：'}${result.success?'机器人冲过终点。':`跑到 ${result.distance.toFixed(1)} 米时，${result.reason}。`}`);
+    }
+  }else{
+    const other=mode==='student'?'baseline':'student';
+    const current=world.time>0?world.result:storedResult(mode),reference=storedResult(other);
+    const delta=$('distanceDelta');delta.hidden=!(current&&reference);
+    if(!delta.hidden){
+      const difference=Number(((current.distance-reference.distance)*(mode==='student'?1:-1)).toFixed(1));
+      setText(delta,difference===0?'两种配置跑出了相同距离。':`我的配置比初代机${difference>0?'多':'少'}跑了 ${Math.abs(difference).toFixed(1)} 米。`);
+    }
+  }
 }
 
 function draw() {
@@ -85,14 +116,25 @@ function reset() {
   playback.pause();
   world=new MotionWorld({...conditions,sensors:configs[mode],repeat:false});
   settled=false;
-  recorded=false;
+  recorded=null;
   feedback.hidden=true;
+  prediction=null;
+  $('verdict').hidden=true;
+  for(const button of guesses)button.setAttribute('aria-pressed','false');
   draw();
 }
 
 $('trialModes').hidden=$('studentResult').hidden=$('demoEntry').hidden=baselineOnly;
+$('prediction').hidden=!baselineOnly;
+$('studentLane').hidden=baselineOnly;
+for(const button of guesses)button.addEventListener('click',()=>{
+  if(settled)reset();
+  prediction=button.dataset.guess;
+  for(const choice of guesses)choice.setAttribute('aria-pressed',String(choice===button));
+});
 $('conditions').textContent=`${SCENES[conditions.scene].name} · ${conditions.distance} m · 目标速度 ${conditions.target} m/s · 种子 ${conditions.seed} · 规则控制`;
 function showSetup() {
+  renderer.referenceDistance=mode==='student'?storedResult('baseline')?.distance:null;
   for(const button of modes)button.setAttribute('aria-pressed',String(button.dataset.setup===mode));
   const enabled=keys.filter(key=>configs[mode][key]).map(key=>SENSOR_NAMES[key]);
   $('installed').textContent=`本次使用：${enabled.join('、')||'无传感器'}`;
