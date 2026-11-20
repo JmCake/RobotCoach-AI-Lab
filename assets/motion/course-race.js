@@ -5,9 +5,8 @@ import {createMotionPlayback} from './playback.js';
 import {MODEL_KEY} from './short-learning.js';
 import {FinalRace,RACE_LEARNED,RACE_RULE,RACE_POLICY_NAMES,raceStrategy} from './final-race.js';
 import {FinalTrack,RACE_SEED,RACE_TARGET,createFinalTrack} from './final-track.js';
-import {RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView,raceScoreText} from './race-record.js';
+import {RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView} from './race-record.js';
 import {createRaceReplay} from './race-replay.js';
-import {createRaceVideo} from './race-video.js';
 
 const RECORD_KEY='robotcoach:final-race:session:v1';
 const SUMMARY_KEY='robotcoach:final-race:last:v1';
@@ -23,6 +22,7 @@ const checks=keys.map(key=>{
   return input;
 });
 const selectedSensors=()=>Object.fromEntries(checks.map(input=>[input.name,input.checked]));
+const outcomeNames={finished:'成功完赛',failed:'本场未通过',aborted:'已退出 · 未完成'};
 let race=null,preview=null,countdown=0,countFrame=null,lastCountdownTime=null,parentHidden=false;
 let model=availableModel();
 let lastRecord=readSaved('sessionStorage',RECORD_KEY);
@@ -74,19 +74,21 @@ const steps=showWorld().track.definition.segments.map(segment=>{
 });
 const playback=createMotionPlayback({world:showWorld,step:()=>race.step(),draw:drawStage,settled:finish});
 const replay=createRaceReplay($('raceReplay'),visible);
-const video=createRaceVideo($('raceVideo'),visible);
 
 function closeReplay(){
   replay.close();
   $('openReplay').setAttribute('aria-expanded','false');
 }
 
+function summaryText(score,distance){
+  const reason=score.reason?` · ${score.reason}`:'';
+  return `${outcomeNames[score.outcome]}${reason} · ${score.distance.toFixed(1)} / ${distance} m · ${score.time.toFixed(1)} 秒 · 越障 ${score.passed}`;
+}
 function renderResult(){
   $('lastRace').hidden=!lastSummary;
-  video.setRecord(lastRecord);
   if(!lastSummary)return;
   const {score,distance,sensors,kind,updates,trackSeed,frames,presentation}=lastSummary;
-  text('resultStatus',raceScoreText(score,distance));
+  text('resultStatus',summaryText(score,distance));
   text('resultConfig',`${RACE_POLICY_NAMES[kind]}${updates===null?'':` · 冻结 ${updates} 次更新`} · ${sensorNames(sensors)} · 种子 ${trackSeed}`);
   $('download').hidden=!lastRecord;
   text('recordNote',lastRecord?
@@ -129,14 +131,13 @@ function render(){
   $('start').disabled=selection.value===''||(selection.value===RACE_LEARNED&&!model);
   $('retry').hidden=active||!lastRecord;
   $('openReplay').hidden=active||!lastRecord;
-  $('raceVideo').hidden=active;
   $('pause').hidden=$('exit').hidden=!active;
   text('pause',counting||playing?'暂停':countdown>0?'继续倒计时':'继续比赛');
   $('sensorSetup').disabled=selection.disabled=active;
   $('fullView').hidden=active||standalone;
   if(score){
     const motion=active?` · ${STATE_NAMES[world.state]}`:'';
-    text('status',raceScoreText(score,distance)+motion);
+    text('status',summaryText(score,distance)+motion);
   }else if(active){
     text('status',counting?'起跑倒计时':playing?`${RACE_POLICY_NAMES[race.strategy.kind]} · ${STATE_NAMES[world.state]}`:'比赛已暂停');
   }else text('status',selection.value?'准备起跑': '请先选择动作策略');
@@ -162,7 +163,6 @@ function count(now){
 }
 function startRace(strategy,sensors,seed){
   if(busy()||!visible()||!strategy)return;
-  video.cancel('已开始新比赛，视频导出结束。');
   closeReplay();
   savedWorld=null;
   for(const input of checks)input.checked=sensors[input.name];
@@ -269,12 +269,10 @@ document.addEventListener('coursevisibility',event=>{
   if(parentHidden)pauseWhenHidden();
 });
 function pauseWhenHidden(){
-  video.cancel('页面已隐藏，视频已清除。可重新导出。');
   replay.pause();
   if(busy())pause();
 }
 function leave(){
-  video.cancel('已离开比赛页，视频导出结束。');
   replay.pause();
   exit();
 }
