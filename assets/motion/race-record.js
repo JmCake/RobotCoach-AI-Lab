@@ -18,6 +18,12 @@ const pair=(value,test)=>Array.isArray(value)&&value.length===2&&value.every(tes
 const boolean=value=>typeof value==='boolean';
 const motionState=value=>typeof value==='string'&&Object.hasOwn(STATE_NAMES,value);
 const clock=value=>object(value)&&count(value.tick)&&value.time===value.tick*DT;
+const outcomeNames={finished:'成功完赛',failed:'本场未通过',aborted:'已退出 · 未完成'};
+
+export function raceScoreText(score,distance) {
+  const reason=score.reason?` · ${score.reason}`:'';
+  return `${outcomeNames[score.outcome]}${reason} · ${score.distance.toFixed(1)} / ${distance} m · ${score.time.toFixed(1)} 秒 · 越障 ${score.passed}`;
+}
 
 export function isRaceSensors(sensors) {
   return object(sensors)&&Object.keys(SENSOR_NAMES).every(key=>boolean(sensors[key]));

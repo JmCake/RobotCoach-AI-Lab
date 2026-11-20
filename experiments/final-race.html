@@ -61,6 +61,15 @@
       <button id="download" type="button" hidden>下载完整比赛记录</button>
     </div>
     <p id="recordNote" class="muted"></p>
+    <div id="raceVideo" class="race-video">
+      <div class="race-toolbar">
+        <button id="exportVideo" type="button" aria-describedby="videoStatus" disabled>导出比赛视频</button>
+        <button id="cancelVideo" type="button" hidden>取消导出</button>
+        <a id="downloadVideo" hidden>下载视频</a>
+      </div>
+      <progress id="videoProgress" aria-label="视频录制进度" max="1" hidden></progress>
+      <p id="videoStatus" class="muted" role="status"></p>
+    </div>
     <section id="raceReplay" class="race-replay" aria-labelledby="replayTitle" hidden>
       <header class="race-toolbar">
         <h3 id="replayTitle" tabindex="-1">本场比赛回放</h3>
