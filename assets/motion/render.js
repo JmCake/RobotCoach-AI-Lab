@@ -18,6 +18,11 @@ export class MotionRenderer{
   draw(w){
     const c=this.ctx,W=this.width,H=this.height,night=w.scene==='night',mobile=W<800;
     this.scale=mobile?145:113;this.anchor=mobile?240:390;this.camera=w.x;this.ground=mobile?H*.65:H*.68;
+    if(w.scene==='curve'){
+      // Leave room for the full fallen pose when the runner drifts toward the near edge.
+      const runnerGround=this.project(w.x,0,w.center(w.x)+w.lateral);
+      this.ground-=Math.max(0,runnerGround.y-(H-54));
+    }
     c.clearRect(0,0,W,H);
     const sky=c.createLinearGradient(0,0,0,H);sky.addColorStop(0,night?'#162431':'#deeeea');sky.addColorStop(1,night?'#34474b':'#b8cdb6');c.fillStyle=sky;c.fillRect(0,0,W,H);
     this.background(w,night);
