@@ -3,8 +3,10 @@ import {MotionWorld,SENSOR_NAMES,STATE_NAMES} from './world.js';
 import {MotionRenderer} from './render.js';
 import {createMotionPlayback} from './playback.js';
 import {MODEL_KEY} from './short-learning.js';
-import {FinalRace,RACE_LEARNED,RACE_RULE,RACE_POLICY_NAMES,RACE_RECORD_VERSION,raceStrategy} from './final-race.js';
+import {FinalRace,RACE_LEARNED,RACE_RULE,RACE_POLICY_NAMES,raceStrategy} from './final-race.js';
 import {FinalTrack,RACE_SEED,RACE_TARGET,createFinalTrack} from './final-track.js';
+import {RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView} from './race-record.js';
+import {createRaceReplay} from './race-replay.js';
 
 const RECORD_KEY='robotcoach:final-race:session:v1';
 const SUMMARY_KEY='robotcoach:final-race:last:v1';
@@ -20,21 +22,17 @@ const checks=keys.map(key=>{
   return input;
 });
 const selectedSensors=()=>Object.fromEntries(checks.map(input=>[input.name,input.checked]));
-const track=createFinalTrack();
-const preview=new MotionWorld({seed:RACE_SEED,track:new FinalTrack(track),sensors:selectedSensors(),
-  distance:track.distance,target:RACE_TARGET,repeat:false});
-const steps=track.segments.map(segment=>{
-  const item=document.createElement('li');
-  item.textContent=segment.name;$('segments').append(item);
-  return item;
-});
 const outcomeNames={finished:'成功完赛',failed:'本场未通过',aborted:'已退出 · 未完成'};
-let race=null,countdown=0,countFrame=null,lastCountdownTime=null,parentHidden=false;
+let race=null,preview=null,countdown=0,countFrame=null,lastCountdownTime=null,parentHidden=false;
 let model=availableModel();
 let lastRecord=readSaved('sessionStorage',RECORD_KEY);
-if(lastRecord?.version!==RACE_RECORD_VERSION||!lastRecord.presentation||!lastRecord.score)lastRecord=null;
+if(!isReplayableRace(lastRecord))lastRecord=null;
+let savedWorld=lastRecord?raceFrameView(lastRecord,lastRecord.presentation.tick):null;
 let lastSummary=lastRecord?summarize(lastRecord):readSaved('localStorage',SUMMARY_KEY);
-if(lastSummary?.version!==RACE_RECORD_VERSION||!Object.hasOwn(outcomeNames,lastSummary.score?.outcome))lastSummary=null;
+if(lastSummary?.version!==RACE_RECORD_VERSION||!isRaceScore(lastSummary.score)||!isRaceSensors(lastSummary.sensors)||
+  !Number.isFinite(lastSummary.distance)||![RACE_RULE,RACE_LEARNED].includes(lastSummary.kind)||
+  !Number.isSafeInteger(lastSummary.trackSeed)||
+  (lastSummary.updates!==null&&!Number.isSafeInteger(lastSummary.updates)))lastSummary=null;
 let recordSaved=lastRecord!==null,presented=null;
 
 function availableModel(){
@@ -60,8 +58,27 @@ function text(id,value){
 function sensorNames(config){return keys.filter(key=>config[key]).map(key=>SENSOR_NAMES[key]).join('、')||'无感官';}
 const busy=()=>race!==null&&!race.ended;
 const visible=()=>!document.hidden&&!parentHidden;
-const showWorld=()=>race?.world??preview;
+function previewWorld(){
+  if(!preview){
+    const track=createFinalTrack();
+    preview=new MotionWorld({seed:RACE_SEED,track:new FinalTrack(track),sensors:selectedSensors(),
+      distance:track.distance,target:RACE_TARGET,repeat:false});
+  }
+  return preview;
+}
+const showWorld=()=>race?.world??savedWorld??previewWorld();
+const steps=showWorld().track.definition.segments.map(segment=>{
+  const item=document.createElement('li');
+  item.textContent=segment.name;$('segments').append(item);
+  return item;
+});
 const playback=createMotionPlayback({world:showWorld,step:()=>race.step(),draw:drawStage,settled:finish});
+const replay=createRaceReplay($('raceReplay'),visible);
+
+function closeReplay(){
+  replay.close();
+  $('openReplay').setAttribute('aria-expanded','false');
+}
 
 function summaryText(score,distance){
   const reason=score.reason?` · ${score.reason}`:'';
@@ -76,7 +93,7 @@ function renderResult(){
   $('download').hidden=!lastRecord;
   text('recordNote',lastRecord?
     `${frames} 个物理帧 · ${presentation.status==='complete'?'记录至动作结束':'记录至退出时刻'}${recordSaved?' · 本标签页可下载':' · 请在离开此页前下载'}`:
-    '当前仅有成绩摘要。完整记录保留在原比赛标签页或已下载的文件中。');
+    '当前标签页没有可用的完整比赛记录，仅可查看成绩摘要。');
 }
 function renderPolicy(){
   const kind=busy()?race.strategy.kind:selection.value;
@@ -95,30 +112,32 @@ function renderPolicy(){
 }
 function render(){
   const world=showWorld(),segment=world.track.segmentAt(world.x);
+  const {distance,segments}=world.track.definition;
   const active=busy(),counting=countFrame!==null,playing=playback.running;
-  const score=race?.score;
+  const score=race?.score??(savedWorld?lastRecord.score:null);
   const state=active?(counting?'countdown':playing?(score?'showing':'running'):'paused'):(score?.outcome??'ready');
   $('status').dataset.state=state;
   $('status').dataset.outcome=score?.outcome??'pending';
   text('segment',segment.name);
-  text('distance',`位置 ${Math.min(world.progress,track.distance).toFixed(1)} / ${track.distance} m`);
+  text('distance',`位置 ${Math.min(world.progress??Math.max(0,world.x),distance).toFixed(1)} / ${distance} m`);
   text('raceTime',`${(score?.time??world.time).toFixed(1)} 秒`);
   text('speed',`${world.speed.toFixed(1)} m/s`);
   $('bend').hidden=segment.id!=='curve';
   if(segment.id==='curve')text('bend',`横移 ${world.lateral.toFixed(2)} m · 侧倾 ${(world.theta*180/Math.PI).toFixed(1)}°`);
-  steps.forEach((item,i)=>item.setAttribute('aria-current',track.segments[i].id===segment.id?'step':'false'));
+  steps.forEach((item,i)=>item.setAttribute('aria-current',segments[i].id===segment.id?'step':'false'));
   $('countdown').hidden=!active||countdown<=0;
   if(countdown>0)text('countdown',counting?String(Math.ceil(countdown)):'已暂停');
   $('start').hidden=active;
   $('start').disabled=selection.value===''||(selection.value===RACE_LEARNED&&!model);
   $('retry').hidden=active||!lastRecord;
+  $('openReplay').hidden=active||!lastRecord;
   $('pause').hidden=$('exit').hidden=!active;
   text('pause',counting||playing?'暂停':countdown>0?'继续倒计时':'继续比赛');
   $('sensorSetup').disabled=selection.disabled=active;
   $('fullView').hidden=active||standalone;
   if(score){
     const motion=active?` · ${STATE_NAMES[world.state]}`:'';
-    text('status',summaryText(score,track.distance)+motion);
+    text('status',summaryText(score,distance)+motion);
   }else if(active){
     text('status',counting?'起跑倒计时':playing?`${RACE_POLICY_NAMES[race.strategy.kind]} · ${STATE_NAMES[world.state]}`:'比赛已暂停');
   }else text('status',selection.value?'准备起跑': '请先选择动作策略');
@@ -144,6 +163,8 @@ function count(now){
 }
 function startRace(strategy,sensors,seed){
   if(busy()||!visible()||!strategy)return;
+  closeReplay();
+  savedWorld=null;
   for(const input of checks)input.checked=sensors[input.name];
   selection.value=strategy.kind;
   race=new FinalRace({strategy,sensors,seed});
@@ -178,8 +199,11 @@ function exit(){
 function changeSetup(){
   if(busy())return;
   race=null;
-  preview.sensors=selectedSensors();
-  preview.observation=preview.observe();
+  savedWorld=null;
+  if(preview){
+    preview.sensors=selectedSensors();
+    preview.observation=preview.observe();
+  }
   drawStage();
 }
 
@@ -198,7 +222,7 @@ const trainingLink=new URL(book);trainingLink.hash='training';
 $('goTraining').href=trainingLink;
 const legacy=new URL(book);legacy.searchParams.set('lab','v2');
 $('legacy').href=legacy;
-text('raceConditions',`连续 ${track.distance} m · 目标速度 ${RACE_TARGET} m/s · 种子 ${RACE_SEED}`);
+text('raceConditions',`连续 ${showWorld().courseDistance} m · 目标速度 ${RACE_TARGET} m/s · 种子 ${RACE_SEED}`);
 
 $('start').addEventListener('click',()=>{
   model=availableModel();
@@ -216,6 +240,15 @@ $('pause').addEventListener('click',()=>{
   render();
 });
 $('exit').addEventListener('click',exit);
+$('openReplay').addEventListener('click',()=>{
+  if(busy()||!lastRecord)return;
+  replay.open(lastRecord);
+  $('openReplay').setAttribute('aria-expanded','true');
+});
+$('closeReplay').addEventListener('click',()=>{
+  closeReplay();
+  $('openReplay').focus();
+});
 $('download').addEventListener('click',()=>{
   if(!lastRecord)return;
   const url=URL.createObjectURL(new Blob([JSON.stringify(lastRecord)],{type:'application/json'}));
@@ -233,11 +266,19 @@ window.addEventListener('storage',event=>{
 document.addEventListener('coursevisibility',event=>{
   if(typeof event.detail!=='boolean')return;
   parentHidden=event.detail;
-  if(parentHidden&&busy())pause();
+  if(parentHidden)pauseWhenHidden();
 });
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&busy())pause();});
-document.addEventListener('courseleave',exit);
-window.addEventListener('pagehide',exit);
+function pauseWhenHidden(){
+  replay.pause();
+  if(busy())pause();
+}
+function leave(){
+  replay.pause();
+  exit();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseWhenHidden();});
+document.addEventListener('courseleave',leave);
+window.addEventListener('pagehide',leave);
 renderer.resize();
 renderResult();
 drawStage();

@@ -54,6 +54,69 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   f=frame(page);
   await expect(f.locator('#download')).toBeVisible();
   await expect(f.locator('#resultStatus')).toContainText('成功完赛');
+  await f.locator('body').evaluate(async()=>{
+    const [{MotionWorld},{Learner}]=await Promise.all([import('../assets/motion/world.js'),import('../assets/learning.js')]);
+    const forbidden=()=>{throw new Error('Replay attempted to run the simulation or policy');};
+    MotionWorld.prototype.step=MotionWorld.prototype.observe=Learner.prototype.choose=forbidden;
+  });
+  await f.locator('#openReplay').click();
+  const progress=f.locator('#replayProgress');
+  const eventButtons=f.locator('#replayEvents button');
+  await expect(progress).toHaveValue('0');
+  for(const segment of actual.track.segments){
+    const event=actual.events.find(event=>event.type==='segment'&&event.segment===segment.id);
+    await eventButtons.filter({hasText:segment.name}).click();
+    await expect(progress).toHaveValue(String(event.tick));
+    await expect(f.locator('#replayStatus')).toContainText(segment.name);
+  }
+  await eventButtons.filter({hasText:'急弯控制'}).click();
+  await f.locator('#lastRace').screenshot({path:join(evidence,'final-replay-desktop.png')});
+  await eventButtons.filter({hasText:'冲过终点'}).click();
+  await expect(progress).toHaveValue(String(actual.score.tick));
+  await progress.focus();
+  await progress.press('End');
+  await expect(progress).toHaveValue(String(actual.presentation.tick));
+  const play=f.locator('#replayPlay');
+  await expect(play).toHaveText('从头播放');
+  await play.click();
+  await page.clock.runFor(750);
+  await play.click();
+  const normal=Number(await progress.inputValue());
+  expect(normal).toBeGreaterThan(75);
+  await progress.press('Home');
+  await f.locator('#replaySpeed').selectOption('0.5');
+  await play.click();
+  await page.clock.runFor(750);
+  await play.click();
+  const slow=Number(await progress.inputValue());
+  expect(slow).toBeGreaterThan(30);
+  expect(slow).toBeLessThan(normal*.7);
+  await page.clock.runFor(1000);
+  await expect(progress).toHaveValue(String(slow));
+  await play.click();
+  await page.evaluate(()=>document.getElementById('experiment').contentWindow.postMessage(
+    {type:'robotcoach:visibility',hidden:true},location.origin));
+  await expect(play).toHaveText('播放回放');
+  const hiddenTick=await progress.inputValue();
+  await page.clock.runFor(1000);
+  await expect(progress).toHaveValue(hiddenTick);
+  await f.locator('#closeReplay').click();
+  await expect(f.locator('#raceReplay')).toBeHidden();
+  const replayDownload=page.waitForEvent('download');
+  await f.locator('#download').click();
+  expect(await readFile(await (await replayDownload).path(),'utf8')).toBe(JSON.stringify(actual));
+  expect(await record(page)).toEqual(actual);
+  await page.evaluate(()=>{
+    const key='robotcoach:final-race:session:v1';
+    const record=JSON.parse(sessionStorage.getItem(key));
+    record.frames.pop();
+    sessionStorage.setItem(key,JSON.stringify(record));
+  });
+  await page.reload();
+  await expect(f.locator('#openReplay')).toBeHidden();
+  await expect(f.locator('#download')).toBeHidden();
+  await expect(f.locator('#resultStatus')).toContainText('成功完赛');
+  await expect(f.locator('#recordNote')).toContainText('仅可查看成绩摘要');
   expect(errors).toEqual([]);
 });
 
@@ -88,6 +151,19 @@ test('320px pause, failure presentation, frozen retry and exit keep honest recor
   await page.screenshot({path:join(evidence,'final-race-narrow-failure.png'),fullPage:true});
   const first=await record(page);
   expect(first.presentation.displayState).toBe('fallen');
+  await f.locator('#openReplay').tap();
+  await f.locator('#replayEvents button').filter({hasText:'成绩锁定'}).tap();
+  await expect(f.locator('#replayProgress')).toHaveValue(String(first.score.tick));
+  await expect(f.locator('#replayStatus')).toContainText('成绩锁定');
+  await expect(f.locator('#replayStatus')).not.toContainText('已过终点');
+  await f.locator('#replayEvents button').filter({hasText:'倒地停留'}).tap();
+  await expect(f.locator('#replayStatus')).toContainText('倒地停留');
+  await f.locator('#replayPlay').tap();
+  await page.clock.runFor(3500);
+  await expect(f.locator('#replayProgress')).toHaveValue(String(first.presentation.tick));
+  expect(await f.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await f.locator('#lastRace').screenshot({path:join(evidence,'final-replay-narrow.png')});
+  await expect(f.locator('#resultStatus')).toContainText('26.8 / 190 m · 5.2 秒');
   await f.locator('input[name=imu]').check();
   await expect(f.locator('#status')).toHaveAttribute('data-outcome','pending');
   expect(await record(page)).toEqual(first);
@@ -104,6 +180,12 @@ test('320px pause, failure presentation, frozen retry and exit keep honest recor
   expect(aborted.score.outcome).toBe('aborted');
   expect(aborted.score.reason).toBeNull();
   expect(aborted.presentation.status).toBe('interrupted');
+  await page.goto('/#design');
+  await f.locator('#openReplay').tap();
+  await f.locator('#replayEvents button').filter({hasText:'退出比赛'}).tap();
+  await expect(f.locator('#replayProgress')).toHaveValue(String(aborted.presentation.tick));
+  await expect(f.locator('#replayStatus')).toContainText('已退出 · 记录结束');
+  await expect(f.locator('#replayEvents button').filter({hasText:'冲过终点'})).toHaveCount(0);
   await context.close();
 });
 

@@ -34,7 +34,6 @@
     <button id="start" class="primary" type="button">开始比赛</button>
     <button id="pause" class="primary" type="button" hidden>暂停</button>
     <button id="exit" type="button" hidden>退出本场</button>
-    <button id="retry" type="button" hidden>同条件重试</button>
   </div>
   <p id="status" class="feedback race-status" role="status"></p>
   <section class="race-setup">
@@ -56,8 +55,40 @@
     <h2 id="resultTitle">最近一场成绩</h2>
     <p id="resultStatus"></p>
     <p class="muted" id="resultConfig"></p>
-    <button id="download" type="button" hidden>下载完整比赛记录</button>
+    <div class="race-toolbar">
+      <button id="openReplay" class="primary" type="button" aria-controls="raceReplay" aria-expanded="false" hidden>回看比赛</button>
+      <button id="retry" type="button" hidden>同条件重试</button>
+      <button id="download" type="button" hidden>下载完整比赛记录</button>
+    </div>
     <p id="recordNote" class="muted"></p>
+    <section id="raceReplay" class="race-replay" aria-labelledby="replayTitle" hidden>
+      <header class="race-toolbar">
+        <h3 id="replayTitle" tabindex="-1">本场比赛回放</h3>
+        <button id="closeReplay" type="button">关闭回放</button>
+      </header>
+      <div class="course-track">
+        <canvas id="replayCanvas" aria-label="按本场记录重绘的机器人和赛道"></canvas>
+      </div>
+      <p id="replayStatus" class="replay-status"></p>
+      <div class="race-toolbar">
+        <button id="replayPlay" class="primary" type="button">播放回放</button>
+        <label for="replaySpeed">播放速度</label>
+        <select id="replaySpeed">
+          <option value="1">正常 · 1×</option>
+          <option value="0.5">慢动作 · 0.5×</option>
+        </select>
+      </div>
+      <div class="replay-timeline">
+        <label for="replayProgress">回放进度</label>
+        <span id="replayTime"></span>
+        <div class="replay-scrubber">
+          <input id="replayProgress" type="range" min="0" step="1" value="0">
+          <span id="replayScoreMark" aria-hidden="true" hidden></span>
+        </div>
+      </div>
+      <h4>关键事件</h4>
+      <ul class="replay-events" id="replayEvents"></ul>
+    </section>
   </section>
   <details class="race-legacy">
     <summary>原 V2 综合实验与课程总结</summary>

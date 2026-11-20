@@ -5,7 +5,7 @@ import {FinalTrack,createFinalTrack} from '../assets/motion/final-track.js';
 import {FinalRace,RACE_LEARNED,RACE_RULE,raceStrategy} from '../assets/motion/final-race.js';
 import {CONDITIONS,DECISION_STEPS} from '../assets/motion/short-course.js';
 import {createModel} from '../assets/motion/short-learning.js';
-import {raceFrameView} from '../assets/motion/race-record.js';
+import {isReplayableRace,raceFrameView} from '../assets/motion/race-record.js';
 import {makePose} from '../assets/motion/rig.js';
 
 const sensors=CONDITIONS.sensors;
@@ -65,6 +65,7 @@ test('a rule race goes through six segments with one pose, clock and action cade
   assert.ok(sensedAcross);
   assert.ok(record.presentation.tick>record.score.tick);
   assert.equal(record.frames.length,record.presentation.tick+1);
+  assert.ok(isReplayableRace(JSON.parse(JSON.stringify(record))));
   const end=raceFrameView(record,record.presentation.tick);
   const difference=Math.abs(makePose(end).hip.h-makePose(world).hip.h);
   assert.ok(difference<.00001);
@@ -76,6 +77,7 @@ test('an actual collision latches its score before the fall and a retry is deter
   const camera={camera:true,lidar:false,imu:false,force:false};
   const {record}=run({sensors:camera,strategy:rule});
   const {score,presentation}=record;
+  assert.ok(isReplayableRace(JSON.parse(JSON.stringify(record))));
   assert.equal(score.outcome,'failed');
   assert.equal(score.reason,'小腿撞上矮栏');
   assert.equal(score.collisions,1);
@@ -114,4 +116,26 @@ test('a compatible frozen policy has no hidden rule fallback and exit does not i
   assert.equal(stopped.record.presentation.status,'interrupted');
   stopped.step();
   assert.equal(stopped.record.frames.length,32);
+  assert.ok(isReplayableRace(JSON.parse(JSON.stringify(stopped.record))));
+});
+
+test('the replay rejects incompatible and damaged records before opening them',()=>{
+  const race=new FinalRace({sensors,strategy:rule});
+  race.step();
+  race.exit();
+  const record=race.record;
+  const damage=[
+    copy=>copy.version++,
+    copy=>copy.track.rough=null,
+    copy=>copy.frameFields.reverse(),
+    copy=>copy.frames.pop(),
+    copy=>copy.frames[1][0]=2,
+    copy=>copy.frames[0][copy.frameFields.indexOf('footX')]=[0,null],
+    copy=>copy.events[0]={type:'segment',tick:100,time:100*DT,segment:'wet'},
+  ];
+  for(const corrupt of damage){
+    const copy=structuredClone(record);
+    corrupt(copy);
+    assert.equal(isReplayableRace(copy),false,corrupt.toString());
+  }
 });

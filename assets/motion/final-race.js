@@ -3,9 +3,9 @@ import {motionSettled} from './playback.js';
 import {CONDITIONS,DECISION_STEPS,MotionActionClock,RULE_ACTION_PARAMETERS,ruleAction} from './short-course.js';
 import {MotionTrainer,freezePolicy,readModel} from './short-learning.js';
 import {RACE_SEED,RACE_TARGET,FinalTrack,createFinalTrack} from './final-track.js';
-import {FRAME_FIELDS,captureRaceFrame} from './race-record.js';
+import {FRAME_FIELDS,RACE_RECORD_VERSION,captureRaceFrame} from './race-record.js';
 
-export const RACE_RECORD_VERSION=1;
+export {RACE_RECORD_VERSION};
 export const RACE_RULE='rule';
 export const RACE_LEARNED='learned';
 export const RACE_POLICY_NAMES=Object.freeze({rule:'规则参考',learned:'我的学习策略'});
