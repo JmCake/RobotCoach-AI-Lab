@@ -7,13 +7,33 @@ const names={rule:'规则控制',clone:'行为克隆',q:'Q-learning'};
 function read(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d?.version!==VERSION)return {};for(const k of ['q','clone','config','training'])if(!d[k]||typeof d[k]!=='object')d[k]={};d.results=Array.isArray(d.results)?d.results.filter(r=>r&&ENVIRONMENTS[r.environment]&&names[r.policy]&&['successRate','collisions','meanPassed','completion'].every(k=>Number.isFinite(r[k]))):[];return d;}catch{return {};}}
 let saved=read(),q=new ChallengeLearner(saved.q),clone=new ClonePolicy(saved.clone),records=Array.isArray(saved.records)?saved.records.slice(0,6000):[];
 let config={...load().sensors,...saved.config},world=new ChallengeWorld(),running=false,job=null,raf=0,last=0,acc=0,revision=0,lastAction=0;
+let raceFrame=null;
 let results=Array.isArray(saved.results)?saved.results:[],lastRun=saved.lastRun||null,training=saved.training||{};
 // Only V2 writes this key. Legacy course progress and V1 Q tables are untouched.
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({version:VERSION,q:q.snapshot(),clone:clone.snapshot(),records,config,environment:$('environment').value,policy:$('policy').value,seed:Number($('challengeSeed').value),training,results,lastRun}));}catch{storageNotice(false);}}
 function feedback(t){$('challengeFeedback').textContent=t;}
-function controls(){for(const id of ['challengeRun','challengeCompare','cloneTrain','qTrain','environment','policy','challengeSeed','challengeReset'])$(id).disabled=running||!!job;for(const b of $('challengeSensors').querySelectorAll('button'))b.disabled=running||!!job;$('challengeStop').disabled=!running&&!job;}
+function controls(){
+ const busy=running||!!job,paused=!!raceFrame&&!running;
+ for(const id of ['challengeRun','challengeCompare','cloneTrain','qTrain','environment','policy','challengeSeed','challengeReset'])$(id).disabled=busy;
+ for(const b of $('challengeSensors').querySelectorAll('button'))b.disabled=busy;
+ $('challengeRun').textContent=paused?'从头重跑':'运行挑战';
+ $('challengeStop').textContent=paused?'继续挑战':'暂停';
+ $('challengeStop').disabled=!busy&&!paused;
+}
+function resetPreview(){
+ raceFrame=null;
+ world=new ChallengeWorld(Number($('challengeSeed').value)||9001,$('environment').value);
+ lastAction=0;
+ controls();
+ paint();
+}
+function settingsChanged(){
+ if(raceFrame)feedback('设置已更改，点击「运行挑战」从起点开始。');
+ resetPreview();
+ persist();
+}
 function sensorUI(){
- $('challengeSensors').replaceChildren();for(const [id,s] of Object.entries(sensors)){const b=document.createElement('button');b.dataset.challengeSensor=id;b.setAttribute('aria-pressed',!!config[id]);b.textContent=`${s.icon} ${s.name}`;b.onclick=()=>{config[id]=!config[id];results=[];sensorUI();renderResults();persist();paint();};$('challengeSensors').append(b);}controls();
+ $('challengeSensors').replaceChildren();for(const [id,s] of Object.entries(sensors)){const b=document.createElement('button');b.dataset.challengeSensor=id;b.setAttribute('aria-pressed',!!config[id]);b.textContent=`${s.icon} ${s.name}`;b.onclick=()=>{config[id]=!config[id];results=[];sensorUI();renderResults();settingsChanged();};$('challengeSensors').append(b);}controls();
 }
 function stats(){
  $('challengeScore').textContent=`跨过 ${world.passed} 个 · ${Math.floor(world.ticks*100/CHALLENGE_FRAMES)}%`;
@@ -41,7 +61,7 @@ function paint(){
  }
  const o=observe(world,config),f=fuse(o);$('sensorReadout').textContent=`视觉 ${o.camera?(o.camera.type||'视距内无目标'):'关闭'} · 测距 ${o.lidar?`${o.lidar.low??'—'} / ${o.lidar.high??'—'}`:'关闭'} · IMU ${o.imu?`高度 ${o.imu.height}，速度 ${o.imu.speed}`:'关闭'} · 足底 ${o.force?(o.force.contact?`触地，载荷 ${o.force.load}`:'腾空'):'关闭'} → ${f.source}；距目标 ${f.distance??'—'}`;stats();
 }
-function stop(message){revision++;running=false;job=null;cancelAnimationFrame(raf);controls();persist();if(message)feedback(message);}
+function stop(message){revision++;running=false;raceFrame=null;job=null;cancelAnimationFrame(raf);controls();persist();if(message)feedback(message);}
 function policies(){return {rule:rulePolicy,clone:o=>clone.choose(o),q:o=>q.choose(observationState(o))};}
 function renderResults(){
  $('challengeRows').replaceChildren();$('challengeResults').hidden=!results.length;
@@ -57,17 +77,40 @@ function runJob(iterator,onComplete,label){
  }
  raf=requestAnimationFrame(batch);
 }
+function startRaceClock(){
+ last=performance.now();
+ running=true;
+ controls();
+ raf=requestAnimationFrame(raceFrame);
+}
+function pause(){
+ if(running){
+  cancelAnimationFrame(raf);
+  running=false;
+  controls();
+  feedback('挑战已暂停，可继续本轮或从头重跑。');
+ }else if(job){
+  stop('实验已暂停，已完成的训练更新与示范已保留。');
+ }
+}
 $('challengeRun').onclick=()=>{
  const policy=$('policy').value;if(policy==='clone'&&!clone.tree)return feedback('请先采集示范并训练模仿，当前模型尚未训练。');
  const seed=Number($('challengeSeed').value);if(!Number.isInteger(seed)||seed<1||seed>4294967295)return feedback('赛道种子请输入 1–4294967295 的整数。');
- stop();world=new ChallengeWorld(seed,$('environment').value);running=true;controls();last=performance.now();acc=0;
+ stop();world=new ChallengeWorld(seed,$('environment').value);acc=0;lastAction=0;paint();
  const choose=policies()[policy],runConfig={...config};feedback(`正在使用${names[policy]}；冻结运行不更新模型。`);
  function tick(now){if(!running)return;acc+=Math.min(now-last,100);last=now;while(acc>=1000/15&&!world.done){lastAction=choose(observe(world,runConfig));world.step(lastAction);acc-=1000/15;}paint();
   if(world.done){lastRun={environment:world.environment,policy,sensors:runConfig,seed,success:world.success,passed:world.passed,ticks:world.ticks,reason:world.reason};stop(`${world.success?'已冲过终点':world.reason}；跨过 ${world.passed} 个，完成 ${(world.ticks*100/CHALLENGE_FRAMES).toFixed(1)}%。当前策略未更新，可换配置后复跑同一种子。`);return;}
   raf=requestAnimationFrame(tick);
- }raf=requestAnimationFrame(tick);
+ }
+ raceFrame=tick;
+ startRaceClock();
 };
-$('challengeStop').onclick=()=>{stop('已暂停，已完成的训练更新与示范保留。挑战可按相同种子重新运行。');stats();};
+$('challengeStop').onclick=()=>{
+ if(raceFrame&&!running){
+  startRaceClock();
+  feedback('已继续本轮挑战。');
+ }else pause();
+};
 $('cloneTrain').onclick=()=>{
  records=[];clone=new ClonePolicy();results=[];renderResults();training.cloneSensors={...config};let count=0;
  const source=demonstrations({...config},TRAIN_SEEDS,(w,action)=>{world=w;lastAction=action;});function* collect(){for(const r of source){if(count++%3===0&&records.length<6000)records.push(r);yield {decisions:count};}}
@@ -82,10 +125,9 @@ $('challengeReset').onclick=()=>{stop();q=new ChallengeLearner();clone=new Clone
 $('challengeExport').onclick=()=>{
  const data={version:VERSION,protocol:{trainSeeds:TRAIN_SEEDS,testSeeds:TEST_SEEDS_V2,actions:['等待','跳跃','下蹲'],clone:'supervised decision tree',q:'independent tabular Q-learning'},training,observations:records,q:q.snapshot(),clone:clone.snapshot(),results,lastRun};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='robotcoach-v2-experiment.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
-for(const id of ['environment','policy','challengeSeed'])$(id).onchange=()=>{persist();if(id==='environment'){world=new ChallengeWorld(Number($('challengeSeed').value)||9001,$('environment').value);paint();}};
-function pause(){if(running||job){stop('已离开实验，运行与训练暂停；返回后可继续训练或重新运行挑战。');stats();}}
+for(const id of ['environment','policy','challengeSeed'])$(id).onchange=settingsChanged;
 document.getElementById('designActivity').addEventListener('toggle',e=>{if(e.target.open)pause();});
 document.addEventListener('coursevisibility',e=>{if(e.detail)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('pagehide',pause);
-window.addEventListener('storage',e=>{if(e.key!==KEY)return;revision++;running=false;job=null;cancelAnimationFrame(raf);saved=read();q=new ChallengeLearner(saved.q);clone=new ClonePolicy(saved.clone);records=Array.isArray(saved.records)?saved.records.slice(0,6000):[];training=saved.training||{};results=saved.results||[];lastRun=saved.lastRun||null;config={...ALL_SENSORS,...saved.config};sensorUI();renderResults();paint();feedback('另一标签页更新了 V2 数据，已同步并暂停。');});
+window.addEventListener('storage',e=>{if(e.key!==KEY)return;revision++;running=false;raceFrame=null;job=null;cancelAnimationFrame(raf);saved=read();q=new ChallengeLearner(saved.q);clone=new ClonePolicy(saved.clone);records=Array.isArray(saved.records)?saved.records.slice(0,6000):[];training=saved.training||{};results=saved.results||[];lastRun=saved.lastRun||null;config={...ALL_SENSORS,...saved.config};sensorUI();renderResults();resetPreview();feedback('另一标签页更新了 V2 数据，已同步并暂停。');});
 if(ENVIRONMENTS[saved.environment])$('environment').value=saved.environment;if(names[saved.policy])$('policy').value=saved.policy;if(Number.isInteger(saved.seed))$('challengeSeed').value=saved.seed;
 world=new ChallengeWorld(Number($('challengeSeed').value),$('environment').value);sensorUI();renderResults();paint();if(lastRun)feedback(`上次：${lastRun.reason}，跨过 ${lastRun.passed} 个；可用相同种子重新验证。`);
