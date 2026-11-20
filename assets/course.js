@@ -1,9 +1,9 @@
 import {load,save,storageNotice} from './state.js';
 const pages=[
- ['diagnosis','初代机，为什么跑出了弯道？','先看直道与弯道的区别。这是原版机制演示：一次视觉判断偏差，会怎样影响转向？','diagnosis.html'],
+ ['diagnosis','初代机能跑过急弯吗？','初代机只装了摄像头。试跑一次，观察它在弯道里如何转向、保持平衡。','humanoid-trial.html?mode=baseline'],
  ['discovery','找到机器人的四种感官','刚才缺少了哪些信息？点击机器人身上的感官，看看它们分别能知道什么。','discovery.html'],
- ['workshop','给机器人装上新感官','把模块拖到机器人身上，或直接点选安装。不同感官提供不同信息，按你的想法组合。','selection.html?mode=install'],
- ['trial','再跑一次，比较发生了什么','用刚才的配置试跑，再与初代机对照。这是传感器作用的教学演示，不是真实物理测试。','selection.html?mode=trial'],
+ ['workshop','给机器人装上新感官','把模块拖到机器人身上，或直接点选安装。不同感官提供不同信息，按你的想法组合。','selection.html'],
+ ['trial','同一条弯道，这次会怎样？','用刚才安装的感官再跑一次。对照初代机，看看改变感官后，距离和用时有什么变化。','humanoid-trial.html'],
  ['imitation','照着做，能一直做对吗？','行为克隆从人的示范中学习动作。先观察模仿，再改变障碍位置，看看仅仅复读动作的局限。','imitation.html'],
  ['manual','这一次，你来操控','空格或 ↑ 跳跃，↓ 下蹲。也可以直接点按钮。跨过地面障碍，遇到横梁保持低姿态。','runner.html?mode=manual'],
  ['training','让机器人自己试错','每次动作后更新 Q 表：跨过障碍获得奖励，碰撞受到惩罚。失败后重新尝试，经验留在本机。','runner.html?mode=train'],

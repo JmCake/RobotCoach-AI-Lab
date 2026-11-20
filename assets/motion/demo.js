@@ -1,8 +1,23 @@
-import {MotionWorld,DT,SCENES,STATE_NAMES,SENSOR_NAMES} from './world.js';
+import {MotionWorld,SCENES,STATE_NAMES,SENSOR_NAMES} from './world.js';
 import {MotionRenderer} from './render.js';
+import {createMotionPlayback} from './playback.js';
+import {save,storageNotice} from '../state.js';
 const $=id=>document.getElementById(id),canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
-let world,running=false,slow=false,accumulator=0,last=0,paintReadout=0;
+let world,running=false,slow=false,paintReadout=0;
 let lastSpeech=0,localVoice=null,voiceOn=true;
+const playback=createMotionPlayback({
+  world:()=>world,
+  rate:()=>slow?.35:1,
+  draw(now){
+    paint();
+    if(now-paintReadout>100){readout();paintReadout=now;}
+  },
+  settled(){
+    running=false;
+    $('play').textContent=world.result.success?'再跑一次':'回起点重试';
+    readout();
+  },
+});
 function stopSpeech(){window.speechSynthesis?.cancel();}
 function narrate(text){
   if(!localVoice||!voiceOn)return;
@@ -42,9 +57,9 @@ function create(){
   if(!Number.isInteger(seed)||seed<0||seed>4294967295){$('seed').setCustomValidity('请输入 0 到 4294967295 之间的整数');$('seed').reportValidity();return false;}
   $('seed').setCustomValidity('');
   world=new MotionWorld({scene:document.querySelector('[data-scene][aria-pressed=true]').dataset.scene,seed,target:Number($('target').value),sensors:Object.fromEntries(Object.keys(SENSOR_NAMES).map(k=>[k,$(`sensor-${k}`).checked])),repeat:$('repeat').checked});
-  accumulator=0;last=0;lastSpeech=0;stopSpeech();readout();paint();return true;
+  lastSpeech=0;stopSpeech();readout();paint();return true;
 }
-function setRunning(value){running=value;if(!value)stopSpeech();last=0;accumulator=0;$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
+function setRunning(value){running=value;if(value)playback.start();else{playback.pause();stopSpeech();}$('play').textContent=value?'暂停':'继续奔跑';$('playState').textContent=value?(slow?'慢速观察':'正在运行'):'已暂停';readout();}
 function reset(){setRunning(false);if(create()){$('play').textContent='开始奔跑';$('playState').textContent='准备就绪';$('event').textContent='试着完整跑过 40 m：不碰撞，不跑出跑道。';}}
 function readout(){
   $('state').textContent=world.time===0?'待机':STATE_NAMES[world.state];$('speed').innerHTML=`${world.speed.toFixed(1)} <small>m/s</small>`;
@@ -77,7 +92,7 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListene
 }));
 $('play').addEventListener('click',()=>{
   if(world.done){
-    if(!world.result.success){stopSpeech();world.restartAttempt();last=0;accumulator=0;readout();paint();}
+    if(!world.result.success){stopSpeech();world.restartAttempt();readout();paint();}
     else reset();
     setRunning(true);
   }else setRunning(!running);
@@ -104,25 +119,11 @@ $('target').addEventListener('input',()=>{$('targetValue').textContent=`${Number
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)setRunning(false);});
 window.addEventListener('pagehide',()=>setRunning(false));
 new ResizeObserver(()=>{renderer.resize();if(world)paint();}).observe(canvas);
-function frame(now){
-  if(running&&last){
-    accumulator+=Math.min((now-last)/1000,.1)*(slow?.35:1);
-    while(accumulator>=DT){world.step();accumulator-=DT;}
-    if(world.done&&((!world.result.success&&world.state==='fallen')||(world.speed<.04&&world.age>3))){running=false;last=0;accumulator=0;$('play').textContent=world.result.success?'再跑一次':'回起点重试';readout();}
-  }
-  last=now;paint();
-  if(now-paintReadout>100){readout();paintReadout=now;}
-  requestAnimationFrame(frame);
-}
 // Read-only diagnostic snapshot for tests and inspectable simulation evidence.
 window.motionDemo={snapshot:()=>({scene:world.scene,seed:world.seed,time:world.time,x:world.x,speed:world.speed,phase:world.phase,state:world.state,theta:world.theta,falls:world.falls,collisions:world.collisions,totalCollisions:world.totalCollisions,previousResult:structuredClone(world.previousResult),attemptResults:structuredClone(world.attemptResults),repeat:world.repeat,passed:world.passed,jumpCount:world.jumpCount,landings:world.landings,lastLanding:structuredClone(world.lastLanding),running,assist:world.assist,compression:world.compression,attempt:world.attempt,progress:world.progress,finishX:world.finishX,result:structuredClone(world.result),sensors:{...world.sensors},control:{...world.control},observation:structuredClone(world.observation),fallFeedback:structuredClone(world.fallFeedback),finishFeedback:structuredClone(world.finishFeedback),history:structuredClone(world.history)})};
 // Optional link from the book's page four. Standalone Demo keeps its own defaults.
 const entry=new URLSearchParams(location.search);
 const bookEntry=entry.get('from')==='book';
-const back=entry.get('back');
-const localBook=back==='course.html'||back==='index.html'?back:
-  location.hostname.endsWith('github.io')?'course.html':'index.html';
-$('backToBook').href=localBook+'#trial';
 if(bookEntry){
  const scene=entry.get('scene');
  if(Object.hasOwn(SCENES,scene)){
@@ -139,11 +140,7 @@ if(bookEntry){
 $('backToBook').addEventListener('click',()=>{
  if(!bookEntry)return;
  // Deliberately persist sensor choices only when returning to the book.
- try{
-  const saved=JSON.parse(localStorage.getItem('robotcoach:v1'));
-  if(saved?.version!==1)return;
-  saved.sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(key=>[key,$('sensor-'+key).checked]));
-  localStorage.setItem('robotcoach:v1',JSON.stringify(saved));
- }catch{/* The course can still be reopened when storage is disabled. */}
+ const sensors=Object.fromEntries(Object.keys(SENSOR_NAMES).map(key=>[key,$('sensor-'+key).checked]));
+ storageNotice(save({sensors}));
 });
-renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}requestAnimationFrame(frame);
+renderer.resize();create();if(matchMedia('(prefers-reduced-motion: reduce)').matches){slow=true;$('slow').setAttribute('aria-pressed','true');}
