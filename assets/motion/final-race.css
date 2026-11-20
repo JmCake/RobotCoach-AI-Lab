@@ -24,6 +24,20 @@ h1 { font-size: clamp(22px,4vw,36px); margin-block: 8px 18px; }
 .policy-setup select { min-height: 44px; background: #293347; border: 1px solid #566278; border-radius: 7px; padding: 6px 9px; color: #eef2ff; }
 .race-setup p, .race-result p { margin: 8px 0; }
 .race-result h2 { font-size: 17px; margin: 0; }
+.race-replay { border-top: 1px solid #394762; margin-top: 14px; }
+.race-replay header { justify-content: space-between; }
+.race-replay h3, .race-replay h4 { margin: 0; }
+.replay-status { font-variant-numeric: tabular-nums; }
+.replay-status[data-locked="true"] { color: #ffd394; }
+.replay-timeline { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 12px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.replay-scrubber { position: relative; flex: 0 0 100%; }
+.replay-scrubber input { display: block; width: 100%; margin: 0; padding: 0; accent-color: #7ad0aa; }
+#replayScoreMark { position: absolute; pointer-events: none; inset: 32px 8px auto; }
+#replayScoreMark::before { content: ''; position: absolute; left: var(--score-position); width: 3px; height: 7px; background: #ffd394; border-radius: 2px; transform: translateX(-50%); }
+.replay-events { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0 0; }
+.replay-events li { max-width: 100%; }
+.replay-events button { padding: 5px 9px; font-size: 14px; text-align: left; overflow-wrap: anywhere; }
+.replay-events [aria-current="time"] { border-color: #7ad0aa; background: #245b4f; }
 .race-legacy summary { cursor: pointer; }
 .race-legacy a { display: inline-block; margin-top: 6px; }
 @media (max-width: 590px) {
