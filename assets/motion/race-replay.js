@@ -21,11 +21,11 @@ function eventLabel(event,record) {
   }
 }
 
-export function createRaceReplay(panel,visible) {
+export function createRaceReplay(panel,events,visible) {
   const find=id=>panel.querySelector(`#${id}`);
   const canvas=find('replayCanvas'),renderer=new MotionRenderer(canvas);
   const play=find('replayPlay'),speed=find('replaySpeed'),progress=find('replayProgress');
-  const time=find('replayTime'),status=find('replayStatus'),events=find('replayEvents');
+  const time=find('replayTime'),status=find('replayStatus');
   const scoreMark=find('replayScoreMark');
   let record=null,buttons=[],tick=0,position=0,previousTime=null,request=null;
 
@@ -113,7 +113,10 @@ export function createRaceReplay(panel,visible) {
         const item=document.createElement('li'),button=document.createElement('button');
         button.type='button';
         button.dataset.tick=event.tick;
-        button.textContent=`${seconds(event.tick)} · ${label}`;
+        const time=document.createElement('span');
+        time.className='race-event-time';
+        time.textContent=seconds(event.tick);
+        button.append(time,label);
         button.addEventListener('click',()=>seek(event.tick));
         item.append(button);
         events.append(item);

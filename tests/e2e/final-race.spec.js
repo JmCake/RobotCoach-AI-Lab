@@ -14,16 +14,19 @@ test.beforeAll(()=>mkdir(evidence,{recursive:true}));
 test('page eleven runs all six segments with one clock and downloads the real finish',async({page})=>{
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
+  await page.setViewportSize({width:1366,height:768});
   await page.clock.install();
   await page.goto('/#workshop');
   await frame(page).locator('[data-sensor=imu]').click();
   await page.goto('/#design');
   let f=frame(page);
   await expect(page.getByRole('heading',{level:1})).toContainText('终极挑战');
-  await expect(page.getByText('11 / 11')).toBeVisible();
+  await expect(page.getByText('09 / 9')).toBeVisible();
   await expect(f.locator('input[name=imu]')).toBeChecked();
   await expect(f.locator('input[name=lidar]')).not.toBeChecked();
   await expect(f.locator('#start')).toBeDisabled();
+  await expect(f.locator('#start')).toBeInViewport({ratio:1});
+  await expect(page.getByRole('button',{name:'上一页'})).toBeInViewport({ratio:1});
   await allSensors(f);
   await f.locator('#policy').selectOption('rule');
   await f.locator('#start').click();
@@ -63,6 +66,8 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   const progress=f.locator('#replayProgress');
   const eventButtons=f.locator('#replayEvents button');
   await expect(progress).toHaveValue('0');
+  await expect(f.locator('#motionCanvas')).toBeHidden();
+  await expect(progress).toBeInViewport({ratio:1});
   for(const segment of actual.track.segments){
     const event=actual.events.find(event=>event.type==='segment'&&event.segment===segment.id);
     await eventButtons.filter({hasText:segment.name}).click();
@@ -70,7 +75,7 @@ test('page eleven runs all six segments with one clock and downloads the real fi
     await expect(f.locator('#replayStatus')).toContainText(segment.name);
   }
   await eventButtons.filter({hasText:'急弯控制'}).click();
-  await f.locator('#lastRace').screenshot({path:join(evidence,'final-replay-desktop.png')});
+  await f.locator('.race-layout').screenshot({path:join(evidence,'final-replay-desktop.png')});
   await eventButtons.filter({hasText:'冲过终点'}).click();
   await expect(progress).toHaveValue(String(actual.score.tick));
   await progress.focus();
@@ -102,6 +107,7 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   await expect(progress).toHaveValue(hiddenTick);
   await f.locator('#closeReplay').click();
   await expect(f.locator('#raceReplay')).toBeHidden();
+  await expect(f.locator('#motionCanvas')).toBeVisible();
   const replayDownload=page.waitForEvent('download');
   await f.locator('#download').click();
   expect(await readFile(await (await replayDownload).path(),'utf8')).toBe(JSON.stringify(actual));
@@ -126,6 +132,7 @@ test('320px pause, failure presentation, frozen retry and exit keep honest recor
   await page.clock.install();
   await page.goto('/#design');
   const f=frame(page);
+  await expect(f.locator('#start')).toBeInViewport({ratio:1});
   await f.locator('#policy').selectOption('rule');
   await f.locator('#start').tap();
   await page.clock.runFor(4700);
@@ -162,8 +169,9 @@ test('320px pause, failure presentation, frozen retry and exit keep honest recor
   await page.clock.runFor(3500);
   await expect(f.locator('#replayProgress')).toHaveValue(String(first.presentation.tick));
   expect(await f.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await f.locator('#lastRace').screenshot({path:join(evidence,'final-replay-narrow.png')});
+  await f.locator('.race-layout').screenshot({path:join(evidence,'final-replay-narrow.png')});
   await expect(f.locator('#resultStatus')).toContainText('26.8 / 190 m · 5.2 秒');
+  await f.locator('#closeReplay').tap();
   await f.locator('input[name=imu]').check();
   await expect(f.locator('#status')).toHaveAttribute('data-outcome','pending');
   expect(await record(page)).toEqual(first);
@@ -175,7 +183,7 @@ test('320px pause, failure presentation, frozen retry and exit keep honest recor
   await f.locator('#retry').tap();
   await page.clock.runFor(3800);
   await page.getByRole('button',{name:'上一页'}).tap();
-  await expect(page).toHaveURL(/#fault$/);
+  await expect(page).toHaveURL(/#loop$/);
   const aborted=await record(page);
   expect(aborted.score.outcome).toBe('aborted');
   expect(aborted.score.reason).toBeNull();
@@ -229,5 +237,5 @@ test('the full view and the legacy V2 experiment return to page eleven',async({p
   await expect(f.locator('#challengeRun')).toBeVisible();
   await page.getByRole('link',{name:'返回连续总决赛'}).click();
   await expect(f.locator('#motionCanvas')).toBeVisible();
-  await expect(page.getByText('11 / 11')).toBeVisible();
+  await expect(page.getByText('09 / 9')).toBeVisible();
 });

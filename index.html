@@ -7,158 +7,16 @@
   <meta name="description" content="机器人总教练请就位：感知、学习与AI闭环的三章互动课程。无需账号，打开即学。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🤖%3C/text%3E%3C/svg%3E">
   <title>机器人总教练请就位 · V2.0</title>
-  <link rel="stylesheet" href="assets/city.css">
   <link rel="stylesheet" href="assets/course.css">
 </head>
 <body>
-  <div id="world" aria-hidden="true">    <div class="top-road">
-        <div class="road-lines">
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-            <div class="road-line-segment"></div>
-        </div>
-    </div>
-
-    <!-- ===== 二、倒立城市（上半部分）===== -->
-    <!-- 整个区域通过 transform: scaleY(-1) 实现倒立 -->
-    <div class="inverted-world">
-        <div class="inverted-city-content">
-            <!-- ===== 左侧区域 ===== -->
-            <div class="inverted-building" style="left: 0.3%;"><div class="building-base building-red-brick" style="width:38px;height:62px;"></div></div>
-            <div class="inverted-building" style="left: 1.5%;"><div class="building-base building-white-tower" style="width:35px;height:110px;"></div></div>
-            <div class="inverted-tree" style="left: 3.2%;"><div class="tree-trunk" style="width:10px;height:28px;"></div><div class="tree-top tree-round"></div></div>
-            <div class="inverted-building" style="left: 4.5%;"><div class="building-base building-apartment" style="width:44px;height:88px;"></div></div>
-            <div class="inverted-building" style="left: 6%;"><div class="building-base building-office" style="width:40px;height:130px;"></div></div>
-            <div class="inverted-tree" style="left: 8%;"><div class="tree-trunk" style="width:12px;height:32px;"></div><div class="tree-top tree-cone"></div></div>
-            <div class="inverted-building" style="left: 9.5%;"><div class="building-base building-skyscraper" style="width:48px;height:145px;"></div></div>
-            <div class="inverted-building" style="left: 11.5%;"><div class="building-base building-industrial" style="width:36px;height:75px;"></div></div>
-            <div class="inverted-tree" style="left: 13.5%;"><div class="tree-trunk" style="width:14px;height:40px;"></div><div class="tree-top tree-palm"></div></div>
-            <div class="inverted-building" style="left: 15%;"><div class="building-base building-dark-tower" style="width:42px;height:155px;"></div></div>
-            <div class="inverted-building" style="left: 17%;"><div class="building-base building-stepped" style="width:50px;height:70px;"></div></div>
-            <div class="inverted-tree" style="left: 19.5%;"><div class="tree-trunk" style="width:10px;height:26px;"></div><div class="tree-top tree-round"></div></div>
-            <div class="inverted-building" style="left: 21%;"><div class="building-base building-apartment" style="width:46px;height:100px;"></div></div>
-
-            <!-- ===== 中间区域（书本背后 - 高楼密集区） ===== -->
-            <div class="inverted-building" style="left: 24%;"><div class="building-base building-skyscraper" style="width:52px;height:165px;"></div></div>
-            <div class="inverted-building" style="left: 26.5%;"><div class="building-base building-white-tower" style="width:38px;height:120px;"></div></div>
-            <div class="inverted-building" style="left: 29%;"><div class="building-base building-dark-tower" style="width:44px;height:175px;"></div></div>
-            <div class="inverted-building" style="left: 31.5%;"><div class="building-base building-office" style="width:48px;height:140px;"></div></div>
-            <div class="inverted-tree" style="left: 34%;"><div class="tree-trunk" style="width:14px;height:42px;"></div><div class="tree-top tree-cone"></div></div>
-            <div class="inverted-building" style="left: 36%;"><div class="building-base building-red-brick" style="width:40px;height:85px;"></div></div>
-            <div class="inverted-building" style="left: 38%;"><div class="building-base building-skyscraper" style="width:56px;height:180px;"></div></div>
-            <div class="inverted-building" style="left: 40.5%;"><div class="building-base building-industrial" style="width:42px;height:95px;"></div></div>
-            <div class="inverted-tree" style="left: 43%;"><div class="tree-trunk" style="width:12px;height:35px;"></div><div class="tree-top tree-palm"></div></div>
-            <div class="inverted-building" style="left: 45%;"><div class="building-base building-dark-tower" style="width:50px;height:170px;"></div></div>
-            <div class="inverted-building" style="left: 47.5%;"><div class="building-base building-apartment" style="width:44px;height:105px;"></div></div>
-            <div class="inverted-building" style="left: 49.5%;"><div class="building-base building-stepped" style="width:54px;height:78px;"></div></div>
-            <div class="inverted-tree" style="left: 52%;"><div class="tree-trunk" style="width:10px;height:30px;"></div><div class="tree-top tree-round"></div></div>
-            <div class="inverted-building" style="left: 54%;"><div class="building-base building-office" style="width:46px;height:150px;"></div></div>
-            <div class="inverted-building" style="left: 56.5%;"><div class="building-base building-white-tower" style="width:36px;height:125px;"></div></div>
-            <div class="inverted-building" style="left: 58.5%;"><div class="building-base building-skyscraper" style="width:50px;height:160px;"></div></div>
-
-            <!-- ===== 右侧区域 ===== -->
-            <div class="inverted-tree" style="left: 61%;"><div class="tree-trunk" style="width:12px;height:34px;"></div><div class="tree-top tree-cone"></div></div>
-            <div class="inverted-building" style="left: 63%;"><div class="building-base building-red-brick" style="width:42px;height:72px;"></div></div>
-            <div class="inverted-building" style="left: 65%;"><div class="building-base building-dark-tower" style="width:40px;height:148px;"></div></div>
-            <div class="inverted-building" style="left: 67%;"><div class="building-base building-cottage" style="width:48px;height:65px;"></div></div>
-            <div class="inverted-tree" style="left: 69.5%;"><div class="tree-trunk" style="width:14px;height:38px;"></div><div class="tree-top tree-palm"></div></div>
-            <div class="inverted-building" style="left: 71%;"><div class="building-base building-apartment" style="width:45px;height:90px;"></div></div>
-            <div class="inverted-building" style="left: 73%;"><div class="building-base building-industrial" style="width:38px;height:82px;"></div></div>
-            <div class="inverted-building" style="left: 75%;"><div class="building-base building-skyscraper" style="width:46px;height:155px;"></div></div>
-            <div class="inverted-tree" style="left: 77.5%;"><div class="tree-trunk" style="width:10px;height:28px;"></div><div class="tree-top tree-round"></div></div>
-            <div class="inverted-building" style="left: 79%;"><div class="building-base building-stepped" style="width:52px;height:75px;"></div></div>
-            <div class="inverted-building" style="left: 81%;"><div class="building-base building-office" style="width:42px;height:135px;"></div></div>
-            <div class="inverted-tree" style="left: 83.5%;"><div class="tree-trunk" style="width:12px;height:36px;"></div><div class="tree-top tree-cone"></div></div>
-            <div class="inverted-building" style="left: 85%;"><div class="building-base building-white-tower" style="width:40px;height:115px;"></div></div>
-            <div class="inverted-building" style="left: 87%;"><div class="building-base building-dark-tower" style="width:44px;height:162px;"></div></div>
-            <div class="inverted-tree" style="left: 89.5%;"><div class="tree-trunk" style="width:14px;height:42px;"></div><div class="tree-top tree-palm"></div></div>
-            <div class="inverted-building" style="left: 91%;"><div class="building-base building-red-brick" style="width:38px;height:68px;"></div></div>
-            <div class="inverted-building" style="left: 93%;"><div class="building-base building-skyscraper" style="width:50px;height:150px;"></div></div>
-            <div class="inverted-tree" style="left: 95.5%;"><div class="tree-trunk" style="width:10px;height:30px;"></div><div class="tree-top tree-round"></div></div>
-            <div class="inverted-building" style="left: 96.8%;"><div class="building-base building-apartment" style="width:42px;height:95px;"></div></div>
-            <div class="inverted-building" style="left: 98.5%;"><div class="building-base building-cottage" style="width:44px;height:60px;"></div></div>
-        </div>
-    </div>
-
-    <!-- ===== 三、跑道区域（下半部分，正常方向）===== -->
-    <div class="track-world">
-        <div class="running-track-bg"></div>
-        <div class="running-track">
-            <div class="track-divider"></div>
-            <div class="track-divider"></div>
-            <div class="track-divider"></div>
-
-            <span class="track-number track-1">1</span>
-            <span class="track-number track-2">2</span>
-            <span class="track-number track-3">3</span>
-
-            <!-- 跨栏 - 三条跑道各2个 -->
-            <div class="hurdle" style="left: 20%; top: 5%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-            <div class="hurdle" style="left: 55%; top: 5%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-            <div class="hurdle" style="left: 35%; top: 38%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-            <div class="hurdle" style="left: 70%; top: 38%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-            <div class="hurdle" style="left: 25%; top: 72%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-            <div class="hurdle" style="left: 60%; top: 72%;">
-                <div class="hurdle-frame">
-                    <div class="hurdle-bar"></div>
-                    <div class="hurdle-post left"></div>
-                    <div class="hurdle-post right"></div>
-                    <div class="hurdle-foot"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
   <main class="book-container">
     <header class="book-header"><a href="#diagnosis" class="brand">🤖 机器人总教练请就位</a><span class="edition">互动课程 · V2.0</span></header>
-    <nav class="chapters" aria-label="章节"><button data-chapter="0">一 · 感知与选拔</button><button data-chapter="4">二 · 学习与训练</button><button data-chapter="8">三 · AI闭环</button></nav>
+    <div class="book-navigation">
+      <nav class="chapters" aria-label="章节"><button data-chapter="diagnosis">一 · 感知与选拔</button><button data-chapter="imitation">二 · 学习与训练</button><button data-chapter="loop">三 · AI闭环</button></nav>
+      <nav class="page-nav" aria-label="翻页"><button id="prev">← 上一页</button><span id="pageNumber" aria-live="polite"></span><button id="next">下一页 →</button></nav>
+    </div>
     <section id="page" class="book-content" aria-labelledby="pageTitle"></section>
-    <footer class="page-nav"><button id="prev">← 上一页</button><span id="pageNumber" aria-live="polite"></span><button id="next">下一页 →</button></footer>
   </main>
   <footer class="credit">课程与交互改编自 <a href="https://github.com/PumpkinKiller04/RobotCoachAI" target="_blank" rel="noopener">PumpkinKiller04 / RobotCoachAI</a> · <a href="THIRD_PARTY_NOTICES.md">来源与许可</a></footer>
   <script type="module" src="assets/course.js"></script>

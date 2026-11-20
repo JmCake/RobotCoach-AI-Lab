@@ -5,7 +5,8 @@ export class MotionRenderer{
   constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.width=1200;this.height=610;this.dpr=1;}
   resize(){
     const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
-    const mobile=r.width<650,w=mobile?720:1200,h=mobile?760:610;
+    const mobile=r.width<650,w=mobile?720:1200;
+    const h=r.width>0&&r.height>0?r.height*w/r.width:(mobile?760:610);
     this.width=w;this.height=h;this.dpr=dpr;
     this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);
     this.ctx.setTransform(this.canvas.width/w,0,0,this.canvas.height/h,0,0);
@@ -152,7 +153,9 @@ export class MotionRenderer{
     const leg=(l,back)=>{
       limb(l.hip,l.knee,21,back);joint(l.knee,9,back);limb(l.knee,l.ankle,17,back);joint(l.ankle,7,back);
       const a=P(l.ankle),toe=P(l.toe);c.save();c.translate(a.x,a.y);c.rotate(l.contact?Math.atan2(toe.y-a.y,toe.x-a.x):-.22*Math.sin(l.phase*TAU));
-      this.round(-10,-5,36,14,5,back?'#647e88':C.edge);this.round(-7,-5,31,8,3,back?'#97adb3':C.shell);c.restore();
+      this.round(-10,-5,36,14,5,back?'#647e88':C.edge);this.round(-7,-5,31,8,3,back?'#97adb3':C.shell);
+      if(w.sensors.force)this.round(-7,6,30,6,2,'#59dba1','#13533d');
+      c.restore();
       if(l.contact&&w.sensors.force){this.ellipse(a.x+8,a.y+11,15,2.5,'#6bc9b5aa');}
       if(l.contact&&l.slip>.45){this.line({x:a.x-29,y:a.y+12},{x:a.x-8,y:a.y+12},'#e9dcbe',2);this.line({x:a.x-20,y:a.y+17},{x:a.x-5,y:a.y+17},'#e9dcbe90',1);}
     };
@@ -170,6 +173,18 @@ export class MotionRenderer{
       else{this.ellipse(-3+i*17,-80,4,5,C.eye);this.ellipse(-2+i*17,-81,1.3,1.7,'#e3fbff');}
     }
     this.line({x:1,y:-101},{x:1,y:-115},C.edge,3);this.ellipse(1,-117,4,4,'#dfb970');
+    if(w.sensors.camera){
+      this.round(21,-93,15,17,4,'#29bdf8','#123952');
+      this.ellipse(29,-85,3.8,3.8,'#d9f9ff');
+    }
+    if(w.sensors.lidar){
+      this.round(-23,-109,19,12,3,'#ad6df0','#3b2354');
+      this.ellipse(-13.5,-109,9,3,'#e0b9ff');
+    }
+    if(w.sensors.imu){
+      this.round(-9,-21,22,12,3,'#ffbe5c','#633b18');
+      this.line({x:-4,y:-15},{x:7,y:-15},'#fff4d7',2);
+    }
     c.restore();leg(pose.legs[1],false);arm(pose.arms[1],false);joint(pose.arms[1].shoulder,8);
     if(w.collision&&w.time-w.collision.time<1.0){
       const part=w.collision.part==='头部'?P(pose.head):P(pose.legs[1].knee),fade=1-(w.time-w.collision.time);

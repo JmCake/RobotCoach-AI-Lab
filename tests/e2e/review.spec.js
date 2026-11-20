@@ -56,13 +56,17 @@ test('arrow controls remain effective after focus moves to a manual action butto
 });
 
 test('disabled feedback cannot move the robot back to perception during the action stage',async({page})=>{
- await page.goto('/#fault');const f=frame(page);
+ await page.addInitScript(()=>{
+  if(window===top&&!localStorage.getItem('robotcoach:v1'))localStorage.setItem('robotcoach:v1',JSON.stringify({version:1,
+   loop:{linked:true,placed:{sense:'sense',decision:'decision',action:'action'}}}));
+ });
+ await page.goto('/#loop');const f=frame(page);
  await f.getByRole('button',{name:'关闭反馈回路',exact:true}).click();
- await f.getByRole('button',{name:'运 行'}).click();
+ await f.getByRole('button',{name:'运行闭环'}).click();
  await expect(f.getByRole('status')).toHaveText('信息正在通过：行动');
  await page.waitForTimeout(180);
- const distance=await f.locator('#robot').evaluate(robot=>{
-  const c=document.getElementById('canvas').getBoundingClientRect(),a=document.getElementById('nodeAction').getBoundingClientRect();
+ const distance=await f.locator('#canvas .rb-ct').evaluate(robot=>{
+  const c=document.getElementById('canvas').getBoundingClientRect(),a=document.querySelector('.node.action').getBoundingClientRect();
   return Math.hypot(parseFloat(robot.style.left)-(a.left+a.width/2-c.left),parseFloat(robot.style.top)-(a.top+a.height/2-c.top));
  });
  expect(distance).toBeLessThan(1);

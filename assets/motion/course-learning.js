@@ -118,7 +118,7 @@ function trainFrame(now){
   }
   if(trainer.learner.attempts>=stopAt){
     stopTraining();
-    status='本批训练结束。去第 8 页看看冻结策略的成绩。';
+    status='本批训练结束。可以比较冻结后的训练前后成绩。';
     persistTraining();
   }else{
     trainingFrame=requestAnimationFrame(trainFrame);

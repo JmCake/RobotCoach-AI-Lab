@@ -1,6 +1,30 @@
 // Adapted from MIT-declared upstream game.js. See THIRD_PARTY_NOTICES.md.
 import {C} from "./learning.js";
-export function drawRunner(canvas,world){const ctx=canvas.getContext("2d"),robot=world.robot,GAME_CONSTANTS=C;
+function drawFinishLine(ctx, x) {
+    if (x > C.WIDTH + 8) return;
+    const top = C.GROUND_Y - 146;
+    ctx.fillStyle = '#c4f5e3';
+    ctx.fillRect(x - 2, top, 4, C.GROUND_Y - top);
+    for (let row = 0; row < 3; row++) {
+        for (let column = 0; column < 6; column++) {
+            ctx.fillStyle = (row + column) % 2 ? '#20352e' : '#f4fff9';
+            ctx.fillRect(x + column * 7, top + row * 7, 7, 7);
+        }
+    }
+    ctx.fillStyle = '#164c41';
+    ctx.fillRect(x + 2, top + 21, 56, 29);
+    ctx.fillStyle = '#f4fff9';
+    ctx.font = 'bold 20px system-ui';
+    ctx.fillText('终点', x + 9, top + 43);
+    for (let row = 0; row < 4; row++) {
+        ctx.fillStyle = row % 2 ? '#20352e' : '#f4fff9';
+        ctx.fillRect(x - 6, C.GROUND_Y + row * 6, 6, 6);
+        ctx.fillStyle = row % 2 ? '#f4fff9' : '#20352e';
+        ctx.fillRect(x, C.GROUND_Y + row * 6, 6, 6);
+    }
+}
+
+export function drawRunner(canvas,world,finishX=null){const ctx=canvas.getContext("2d"),robot=world.robot,GAME_CONSTANTS=C;
 function drawBackground() {
     // 绘制天空
     ctx.fillStyle = '#111';
@@ -77,8 +101,18 @@ function drawRobot() {
 }
 
 
-drawBackground();drawRobot();
-for(const o of world.obstacles){ctx.fillStyle=o.type==='beam'?'#b692ed':'#ef6858';ctx.fillRect(o.x,o.y,o.width,o.height);ctx.fillStyle='#171b2b';ctx.fillRect(o.x+5,o.y+5,o.width-10,o.height-10);}
+drawBackground();
+if (finishX !== null) drawFinishLine(ctx, finishX);
+drawRobot();
+for(const o of world.obstacles){if(finishX!==null && o.x>=finishX)continue;ctx.fillStyle=o.type==='beam'?'#b692ed':'#ef6858';ctx.fillRect(o.x,o.y,o.width,o.height);ctx.fillStyle='#171b2b';ctx.fillRect(o.x+5,o.y+5,o.width-10,o.height-10);}
 ctx.fillStyle='#b5c5d8';ctx.font='14px system-ui';ctx.fillText('地面障碍：跳跃   横梁：下蹲',380,278);
-if(world.done){ctx.fillStyle='#000a';ctx.fillRect(0,0,800,300);ctx.fillStyle='#fff';ctx.font='bold 24px system-ui';ctx.textAlign='center';ctx.fillText(world.reason,400,130);ctx.textAlign='left';}
+if(world.done){
+    const crossed = finishX !== null && world.success;
+    ctx.fillStyle = crossed ? '#164c41' : '#000a';
+    if (crossed) ctx.fillRect(313, 82, 174, 48);
+    else ctx.fillRect(0, 0, C.WIDTH, C.HEIGHT);
+    ctx.fillStyle='#fff';ctx.font='bold 24px system-ui';ctx.textAlign='center';
+    ctx.fillText(crossed ? '已冲过终点' : world.reason, 400, crossed ? 115 : 130);
+    ctx.textAlign='left';
+}
 }

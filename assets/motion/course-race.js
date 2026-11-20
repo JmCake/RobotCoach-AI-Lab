@@ -73,11 +73,17 @@ const steps=showWorld().track.definition.segments.map(segment=>{
   return item;
 });
 const playback=createMotionPlayback({world:showWorld,step:()=>race.step(),draw:drawStage,settled:finish});
-const replay=createRaceReplay($('raceReplay'),visible);
+const replay=createRaceReplay($('raceReplay'),$('replayEvents'),visible);
+
+function showReplay(open){
+  $('liveRace').hidden=$('raceSetup').hidden=$('legacyEntry').hidden=open;
+  $('replayKeyEvents').hidden=!open;
+  $('openReplay').setAttribute('aria-expanded',String(open));
+}
 
 function closeReplay(){
   replay.close();
-  $('openReplay').setAttribute('aria-expanded','false');
+  showReplay(false);
 }
 
 function summaryText(score,distance){
@@ -92,7 +98,7 @@ function renderResult(){
   text('resultConfig',`${RACE_POLICY_NAMES[kind]}${updates===null?'':` · 冻结 ${updates} 次更新`} · ${sensorNames(sensors)} · 种子 ${trackSeed}`);
   $('download').hidden=!lastRecord;
   text('recordNote',lastRecord?
-    `${frames} 个物理帧 · ${presentation.status==='complete'?'记录至动作结束':'记录至退出时刻'}${recordSaved?' · 本标签页可下载':' · 请在离开此页前下载'}`:
+    `${presentation.status==='complete'?'动作结束':'记录至退出'} · ${frames} 帧${recordSaved?'':' · 请在离开本页前下载'}`:
     '当前标签页没有可用的完整比赛记录，仅可查看成绩摘要。');
 }
 function renderPolicy(){
@@ -105,8 +111,8 @@ function renderPolicy(){
     const changed=keys.some(key=>!config[key]);
     note=`Q 策略负责越障选择，底层规则负责速度、转向、姿态和落脚。冻结 ${frozen.model.updates} 次更新。`;
     if(changed)note+='该模型使用四种感官训练，本场感官不同。';
-  }else if(kind===RACE_LEARNED)note='本机尚无可用的人形 Q 策略。可先去第 7 页训练，或主动选择规则参考。';
-  else note='选择本机学习策略或规则参考。感官默认来自第一章，可在赛前调整。';
+  }else if(kind===RACE_LEARNED)note='本机尚无可用的人形 Q 策略。可先去训练页，或主动选择规则参考。';
+  else note='感官默认来自第一章，可在赛前调整。';
   text('policyNote',note);
   $('goTraining').hidden=busy()||kind!==RACE_LEARNED||model!==null;
 }
@@ -242,8 +248,8 @@ $('pause').addEventListener('click',()=>{
 $('exit').addEventListener('click',exit);
 $('openReplay').addEventListener('click',()=>{
   if(busy()||!lastRecord)return;
+  showReplay(true);
   replay.open(lastRecord);
-  $('openReplay').setAttribute('aria-expanded','true');
 });
 $('closeReplay').addEventListener('click',()=>{
   closeReplay();
@@ -282,4 +288,7 @@ window.addEventListener('pagehide',leave);
 renderer.resize();
 renderResult();
 drawStage();
-new ResizeObserver(()=>{renderer.resize();renderer.draw(showWorld());}).observe(canvas);
+new ResizeObserver(()=>{
+  if($('liveRace').hidden)return;
+  renderer.resize();renderer.draw(showWorld());
+}).observe(canvas);

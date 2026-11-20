@@ -8,30 +8,34 @@
   <link rel="stylesheet" href="../assets/motion/course-trial.css">
 </head>
 <body>
-  <fieldset id="trialModes" class="trial-modes" hidden>
-    <legend>选择试跑配置</legend>
-    <button type="button" data-setup="student" aria-pressed="true">我的配置</button>
-    <button type="button" data-setup="baseline" aria-pressed="false">初代机对照</button>
-  </fieldset>
   <p class="trial-conditions muted" id="conditions"></p>
   <p class="trial-sensors" id="installed"></p>
-  <div class="course-track">
-    <canvas id="motionCanvas" aria-label="双足人形机器人在红色急弯跑道上试跑"></canvas>
-  </div>
-  <div class="trial-toolbar">
-    <button type="button" class="primary" id="play">开始试跑</button>
-    <div class="trial-readout">
-      <strong id="distance"></strong>
-      <span id="motionState" class="muted"></span>
+  <div class="course-motion-grid">
+    <div class="course-track">
+      <canvas id="motionCanvas" aria-label="双足人形机器人在红色急弯跑道上试跑"></canvas>
+    </div>
+    <div class="motion-side">
+      <fieldset id="trialModes" class="trial-modes" hidden>
+        <legend>选择试跑配置</legend>
+        <button type="button" data-setup="student" aria-pressed="true">我的配置</button>
+        <button type="button" data-setup="baseline" aria-pressed="false">初代机对照</button>
+      </fieldset>
+      <div class="trial-toolbar">
+        <button type="button" class="primary" id="play">开始试跑</button>
+        <div class="trial-readout">
+          <strong id="distance"></strong>
+          <span id="motionState" class="muted"></span>
+        </div>
+      </div>
+      <div class="trial-results">
+        <div id="studentResult" class="feedback" role="status" hidden></div>
+        <div id="baselineResult" class="feedback" role="status"></div>
+      </div>
+      <p id="runFeedback" class="muted" hidden></p>
+      <p class="muted trial-note">离开本页后，未完成的试跑会从起点重来。</p>
+      <p id="demoEntry" class="trial-link" hidden><a id="motionLink" href="../demo-motion.html" target="_top">打开独立人形机器人 Demo →</a></p>
     </div>
   </div>
-  <div class="trial-results">
-    <div id="studentResult" class="feedback" role="status" hidden></div>
-    <div id="baselineResult" class="feedback" role="status"></div>
-  </div>
-  <p id="runFeedback" class="muted" hidden></p>
-  <p class="muted trial-note">离开本页后，未完成的试跑会从起点重来。</p>
-  <p id="demoEntry" class="trial-link" hidden><a id="motionLink" href="../demo-motion.html" target="_top">打开独立人形机器人 Demo →</a></p>
   <script type="module" src="../assets/motion/course-trial.js"></script>
   <script src="../assets/frame.js"></script>
 </body>

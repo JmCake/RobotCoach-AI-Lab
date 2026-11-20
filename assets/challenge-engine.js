@@ -2,6 +2,7 @@
 // reward accounting and Bellman updates are shared with the retained V1 experiments.
 import {Runner,Learner,C,REWARDS,rng,intersects} from './learning.js';
 export const ALL_SENSORS={camera:true,lidar:true,imu:true,force:true};
+export const CHALLENGE_FRAMES=1800;
 export const ENVIRONMENTS={
  clear:{name:'晴天跨栏',light:1,friction:1,moving:false,speed:5},
  moving:{name:'动态横梁',light:.85,friction:1,moving:true,speed:5.4},
@@ -46,7 +47,7 @@ export class ChallengeWorld extends Runner {
     if(!o.passed&&o.x+o.width<r.x){o.passed=true;this.passed++;events.pass+=REWARDS.pass;}
    }
    this.obstacles=this.obstacles.filter(o=>o.x+o.width>0);this.score=Math.floor(this.ticks/6);
-   if(this.ticks>=1800&&!this.done){this.done=true;this.success=true;this.reason='完成综合赛道';events.complete+=REWARDS.complete;}
+   if(this.ticks>=CHALLENGE_FRAMES&&!this.done){this.done=true;this.success=true;this.reason='完成综合赛道';events.complete+=REWARDS.complete;}
    if(this.done)break;
   }
   const reward=Object.values(events).reduce((a,b)=>a+b,0);for(const k of Object.keys(events))this.rewardTotals[k]+=events[k];
@@ -146,7 +147,7 @@ export function* evaluateChallenge(policies,config=ALL_SENSORS,environments=Obje
   const runs=[];for(const seed of seeds){const world=new ChallengeWorld(seed,environment);while(!world.done){world.step(choose(observe(world,config)));if(world.ticks%200===0)yield {environment,policy,completed:runs.length};}
    runs.push({seed,success:world.success,passed:world.passed,score:world.score,reason:world.reason,reward:Number(world.totalReward.toFixed(3)),ticks:world.ticks});yield {environment,policy,completed:runs.length};
   }
-  results.push({environment,policy,sensors:{...config},seeds:[...seeds],episodes:runs.length,successRate:100*runs.filter(x=>x.success).length/runs.length,collisions:runs.filter(x=>!x.success).length,meanPassed:runs.reduce((a,b)=>a+b.passed,0)/runs.length,completion:runs.reduce((a,b)=>a+b.ticks/1800,0)/runs.length,runs});
+  results.push({environment,policy,sensors:{...config},seeds:[...seeds],episodes:runs.length,successRate:100*runs.filter(x=>x.success).length/runs.length,collisions:runs.filter(x=>!x.success).length,meanPassed:runs.reduce((a,b)=>a+b.passed,0)/runs.length,completion:runs.reduce((a,b)=>a+b.ticks/CHALLENGE_FRAMES,0)/runs.length,runs});
  }
  return results;
 }

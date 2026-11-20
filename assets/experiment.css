@@ -6,3 +6,23 @@
 #challenge{max-width:850px;margin:auto}#challenge h2{font-size:21px;margin:0}#challengeCanvas{width:100%}select,input{max-width:100%;min-height:44px;color:#f2f6ff;background:#293347;border:1px solid #566278;border-radius:6px;padding:6px;font:inherit}#challengeSeed{width:110px}#challengeSensors button{padding:8px;font-size:14px}#challengeResults{margin:14px 0}#designActivity{border-top:1px solid #465567;margin-top:22px}
 
 body:has(#designActivity[open]) #challenge{display:none}
+
+.sensor-install-layout { display: grid; align-items: start; gap: 14px; max-width: 1100px; margin: 0 auto; }
+.workshop-robot, .workshop-controls { min-width: 0; }
+.workshop-stage { position: relative; display: block; min-height: 0; padding: 0; border-radius: 9px; overflow: hidden; background: #e9eff2; }
+.workshop-stage svg { display: block; width: 100%; height: auto; }
+.workshop-stage.over { outline: 3px solid #7addb1; outline-offset: 2px; }
+.sensor-spot { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%,-50%); width: 44px; height: 44px; padding: 0; border-radius: 50%; background: #263752; }
+.sensor-spot[data-mounted="true"] { border: 2px solid #63e4a9; }
+.workshop-readout { display: grid; gap: 2px; padding-top: 7px; }
+.sensor-info { border: 1px solid #42526b; background: #242e42; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.sensor-info h2, .sensor-info p { margin: 0 0 6px; }
+.sensor-info h2 { font-size: 17px; }
+.sensor-info p { font-size: 14px; }
+.sensor-install-actions p { margin: 8px 0 0; }
+.sensor-install-actions .controls { justify-content: flex-start; margin-bottom: 0; }
+.sensor-install-actions a { color: #9be9c9; }
+.sensor-install-layout #sensors { grid-template-columns: repeat(2,minmax(0,1fr)); }
+@media (min-width: 800px) {
+  .sensor-install-layout { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+}

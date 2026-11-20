@@ -1,4 +1,4 @@
-import {ChallengeWorld,ChallengeLearner,ClonePolicy,ALL_SENSORS,ENVIRONMENTS,TRAIN_SEEDS,TEST_SEEDS_V2,observe,fuse,rulePolicy,observationState,demonstrations,trainQ,evaluateChallenge} from './challenge-engine.js';
+import {ChallengeWorld,ChallengeLearner,ClonePolicy,ALL_SENSORS,CHALLENGE_FRAMES,ENVIRONMENTS,TRAIN_SEEDS,TEST_SEEDS_V2,observe,fuse,rulePolicy,observationState,demonstrations,trainQ,evaluateChallenge} from './challenge-engine.js';
 import {drawRunner} from './runner-render.js';
 import {load,storageNotice} from './state.js';
 import {sensors} from './sensors.js';
@@ -16,17 +16,29 @@ function sensorUI(){
  $('challengeSensors').replaceChildren();for(const [id,s] of Object.entries(sensors)){const b=document.createElement('button');b.dataset.challengeSensor=id;b.setAttribute('aria-pressed',!!config[id]);b.textContent=`${s.icon} ${s.name}`;b.onclick=()=>{config[id]=!config[id];results=[];sensorUI();renderResults();persist();paint();};$('challengeSensors').append(b);}controls();
 }
 function stats(){
- $('challengeScore').textContent=`跨过 ${world.passed} 个 · ${Math.round(world.ticks/18)}%`;
+ $('challengeScore').textContent=`跨过 ${world.passed} 个 · ${Math.floor(world.ticks*100/CHALLENGE_FRAMES)}%`;
  $('challengeAction').textContent=`决策：${['等待','跳跃','下蹲'][lastAction]}`;
  $('cloneStats').textContent=`模仿样本 ${clone.samples} · 留出动作一致率 ${(clone.accuracy*100).toFixed(1)}%`;
  $('qStats').textContent=`试错 ${q.attempts} 轮 · 更新 ${q.updates}`;
  $('challengeTrainingLog').textContent=`模仿采集：${training.cloneSensors?Object.keys(training.cloneSensors).filter(k=>training.cloneSensors[k]).map(k=>sensors[k].name).join('、')||'无感官':'尚未采集'}；试错训练：${training.qSensors?Object.keys(training.qSensors).filter(k=>training.qSensors[k]).map(k=>sensors[k].name).join('、')||'无感官':'尚未训练'}。`+(q.audit.length?`最近更新：动作 ${['等待','跳跃','下蹲'][q.audit.at(-1).action]}，奖励 ${q.audit.at(-1).reward.toFixed(3)}，Q ${q.audit.at(-1).before.toFixed(3)} → ${q.audit.at(-1).after.toFixed(3)}。`:'');
 }
 function paint(){
- drawRunner($('challengeCanvas'),world);
+ // The course ends on a fixed simulation frame. Project the remaining frames into
+ // track coordinates so the robot's leading edge reaches the stripe at that frame.
+ const remaining=CHALLENGE_FRAMES-world.ticks;
+ const finishX=world.randomized?null:world.robot.x+world.robot.width+remaining*world.conditions.speed;
+ drawRunner($('challengeCanvas'),world,finishX);
  const ctx=$('challengeCanvas').getContext('2d');ctx.fillStyle='#ffdb8a';ctx.font='14px system-ui';ctx.fillText(`${world.randomized?'随机训练环境':ENVIRONMENTS[world.environment].name} · 摩擦 ${world.conditions.friction.toFixed(2)} · 光照 ${world.conditions.light.toFixed(2)}`,16,22);
  // Surface marks scroll with travelled distance, making speed and wet patches visible.
  ctx.fillStyle=world.conditions.friction<.8?'#78bfff66':'#ffffff44';for(let i=0;i<8;i++)ctx.fillRect(((i*120-world.distance)%960+960)%960,245,world.conditions.friction<.8?65:26,4);
+ if(!world.randomized){
+  const start=24,end=235,y=273,position=start+(end-start)*world.ticks/CHALLENGE_FRAMES;
+  ctx.fillStyle='#63716f';ctx.fillRect(start,y,end-start,4);
+  ctx.fillStyle='#86e4c2';ctx.fillRect(start,y,position-start,4);
+  ctx.beginPath();ctx.arc(position,y+2,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f4fff9';ctx.fillRect(end,y-6,2,15);
+  ctx.font='bold 16px system-ui';ctx.fillText('终点',end+8,y+7);
+ }
  const o=observe(world,config),f=fuse(o);$('sensorReadout').textContent=`视觉 ${o.camera?(o.camera.type||'视距内无目标'):'关闭'} · 测距 ${o.lidar?`${o.lidar.low??'—'} / ${o.lidar.high??'—'}`:'关闭'} · IMU ${o.imu?`高度 ${o.imu.height}，速度 ${o.imu.speed}`:'关闭'} · 足底 ${o.force?(o.force.contact?`触地，载荷 ${o.force.load}`:'腾空'):'关闭'} → ${f.source}；距目标 ${f.distance??'—'}`;stats();
 }
 function stop(message){revision++;running=false;job=null;cancelAnimationFrame(raf);controls();persist();if(message)feedback(message);}
@@ -51,7 +63,7 @@ $('challengeRun').onclick=()=>{
  stop();world=new ChallengeWorld(seed,$('environment').value);running=true;controls();last=performance.now();acc=0;
  const choose=policies()[policy],runConfig={...config};feedback(`正在使用${names[policy]}；冻结运行不更新模型。`);
  function tick(now){if(!running)return;acc+=Math.min(now-last,100);last=now;while(acc>=1000/15&&!world.done){lastAction=choose(observe(world,runConfig));world.step(lastAction);acc-=1000/15;}paint();
-  if(world.done){lastRun={environment:world.environment,policy,sensors:runConfig,seed,success:world.success,passed:world.passed,ticks:world.ticks,reason:world.reason};stop(`${world.reason}；跨过 ${world.passed} 个，完成 ${(world.ticks/18).toFixed(1)}%。当前策略未更新，可换配置后复跑同一种子。`);return;}
+  if(world.done){lastRun={environment:world.environment,policy,sensors:runConfig,seed,success:world.success,passed:world.passed,ticks:world.ticks,reason:world.reason};stop(`${world.success?'已冲过终点':world.reason}；跨过 ${world.passed} 个，完成 ${(world.ticks*100/CHALLENGE_FRAMES).toFixed(1)}%。当前策略未更新，可换配置后复跑同一种子。`);return;}
   raf=requestAnimationFrame(tick);
  }raf=requestAnimationFrame(tick);
 };
