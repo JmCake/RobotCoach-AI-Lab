@@ -17,19 +17,24 @@ const $=id=>document.getElementById(id);
 const canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
 const play=$('play'),feedback=$('runFeedback');
 const modes=document.querySelectorAll('[data-setup]');
-let mode=baselineOnly?'baseline':'student',world=null,settled=false;
+let mode=baselineOnly?'baseline':'student',world=null,settled=false,recorded=false;
 const playback=createMotionPlayback({
   world:()=>world,
   draw,
   settled(){
     settled=true;
-    const record={conditions,result:structuredClone(world.result),sensorRevision:mode==='student'?revision:undefined};
-    const patch=mode==='baseline'?{chapter1BaselineRun:record}:{chapter1StudentRun:record};
-    records[mode]=record;
-    storageNotice(save(patch));
     readout();
   },
 });
+
+function saveCompletedRun() {
+  if(recorded||!world.done)return;
+  recorded=true;
+  const record={conditions,result:structuredClone(world.result),sensorRevision:mode==='student'?revision:undefined};
+  const patch=mode==='baseline'?{chapter1BaselineRun:record}:{chapter1StudentRun:record};
+  records[mode]=record;
+  storageNotice(save(patch));
+}
 
 function storedResult(setup) {
   const record=records[setup];
@@ -65,6 +70,8 @@ function readout() {
 }
 
 function draw() {
+  // A student can leave as soon as the score is final, even while the robot is slowing down.
+  saveCompletedRun();
   renderer.draw(world);
   readout();
 }
@@ -78,6 +85,7 @@ function reset() {
   playback.pause();
   world=new MotionWorld({...conditions,sensors:configs[mode],repeat:false});
   settled=false;
+  recorded=false;
   feedback.hidden=true;
   draw();
 }

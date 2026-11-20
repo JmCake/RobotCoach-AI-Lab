@@ -61,8 +61,11 @@ test('discover all four sensors repeatedly, install by drag and tap, compare run
  await page.getByRole('button',{name:'下一页'}).click();const trial=frame(page);
  await expect(trial.locator('#studentResult')).toContainText('尚未测试');
  await expect(trial.locator('#installed')).toContainText('姿态传感器 IMU');
- await trial.locator('#play').click();await page.clock.runFor(12000);
+ await trial.locator('#play').click();await page.clock.runFor(8900);
  await expect(trial.locator('#studentResult')).toContainText('已过终点 · 40.0 / 40 m');
+ await expect(trial.locator('#play')).toHaveText('暂停');
+ await page.reload();
+ await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
  await trial.getByRole('button',{name:'初代机对照'}).click();
  await expect(trial.locator('#installed')).toHaveText('本次使用：摄像头');
  await trial.locator('#play').click();await page.clock.runFor(9000);
