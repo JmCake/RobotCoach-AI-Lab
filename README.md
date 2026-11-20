@@ -1,10 +1,18 @@
 # RobotCoach-AI-Lab
 
-**项目状态：V1.0 / V1.1 已合并 main；V2.0 综合升级已实现，提交 PR 供审查，未自动合并或发布生产站点。**
+**项目状态（2026-11-20）：V1.0 / V1.1 / V2.0 已合并 main。人形运动 Demo 在 PR #4，尚未合并；课程整合与连续总决赛为下一阶段计划，尚未实施。**
 
-本项目基于原作者 [PumpkinKiller04/RobotCoachAI](https://github.com/PumpkinKiller04/RobotCoachAI) 的课程与交互设计进行精简改造，目标是将《机器人总教练请就位》从复杂的导学单网站，改造成**打开即可体验、单页顺序推进、以机器人互动为核心**的教学网站。
+本项目基于原作者 [PumpkinKiller04/RobotCoachAI](https://github.com/PumpkinKiller04/RobotCoachAI) 的课程与交互设计进行精简改造，将《机器人总教练请就位》建设为**打开即可体验、单页顺序推进、以机器人比赛为情境，让学生理解 AI 如何看、如何学、如何行动**的教学网站。
 
-> **开发基线**：[完整实施计划与三个版本路线图](DEVELOPMENT_PLAN.md)。本实现从新仓库的方案基线开始，选择性复用原作者静态代码；不包含废弃的 Vue/TypeScript 仿真系统。
+## 当前开发入口
+
+- **[新阶段主方案与分工](DEVELOPMENT_PLAN.md)**：三章课程整合、学习策略接入、连续总决赛、回放与视频；A–E 为待实施工作，不重新开发已完成版本。
+- **[Codex 首轮任务](docs/CODEX_ROUND1_TASK.md)**：只统一第 1、4 页的人形急弯试跑及第 3 页配置传递。
+- **[人形运动 Demo / PR #4](https://github.com/JmCake/RobotCoach-AI-Lab/pull/4)**：下一阶段的代码依赖；[对应基线交接](https://github.com/JmCake/RobotCoach-AI-Lab/blob/bb0f232be832849260801fd3a654a1639105f93d/docs/HANDOFF_MOTION_DEMO.md)不等于已合并 main。
+
+方案和任务直接在仓库维护。ChatGPT 负责设计与一次定向检查，Codex 负责实现和相关测试；复用同提交的有效 CI 证据，不反复全面审查。纯文档更新不手动重跑功能评估或触发部署，合并与发布须经用户授权。
+
+历史版本的实现说明、测试记录和运行命令保留如下。各版本验收数字只对应其当时提交，不是本次文档整理重新执行的结果；原三版本计划保留在 [Git 历史](https://github.com/JmCake/RobotCoach-AI-Lab/blob/06fe2bfcf6529bc98507d399f8020bad8515cb1c/DEVELOPMENT_PLAN.md)。不使用废弃的 Vue/TypeScript 仿真系统。
 
 ## 打开网站
 
@@ -13,11 +21,19 @@
 ```bash
 git clone https://github.com/JmCake/RobotCoach-AI-Lab.git
 cd RobotCoach-AI-Lab
-git switch codex/v2-comprehensive
+git switch main
 npm run dev
 ```
 
 访问 **http://127.0.0.1:4180**，直接进入第一章。也可以在项目目录运行 `python -m http.server 4180`，再访问相同地址。请通过 HTTP 打开，不直接双击 HTML（浏览器对本地 ES 模块有限制）。手机访问时，可使用静态托管站点，或将 Python 服务的局域网地址用于同网设备。
+
+### 已部署的运动 Demo 与课程
+
+当前 Pages 来自运动 Demo 分支，不意味着 PR #4 已合并。线上首页是跑道，原三章课程位于 course.html；普通 main 构建的入口安排不因此改变。
+
+[跑道首页](https://jmcake.github.io/RobotCoach-AI-Lab/) · [独立 Demo](https://jmcake.github.io/RobotCoach-AI-Lab/demo-motion.html) · [三章课程](https://jmcake.github.io/RobotCoach-AI-Lab/course.html)
+
+新阶段开发使用独立非发布分支，不直接推送会自动发布的运动分支。本次文档整理不改变线上站点。
 
 ## V2.0 综合升级
 
@@ -87,6 +103,8 @@ npm run build
 
 `npm test` 为算法检查，`npm run check` 检查原生 JavaScript 语法；Playwright 为真实 Chromium 交互测试，包含桌面、手机视口和触屏模拟；`dist/` 是可部署到任意静态服务器的完整产物。`npm run evaluate -- /绝对路径/training-results.json` 可复现 V1.1 的训练与五个训练检查点；`node scripts/generate-videos.mjs` 可重新生成四段自有图形演示视频。已有本机 Chromium 时，可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE` 指定其路径；端口被占用时可设置 `PORT`，如 4182。
 
+以上是可用命令，不要求每轮全部执行。按本轮改动及影响范围选择测试，同提交的可信 CI 结果无需重复本地运行；训练评估只在学习逻辑或对应环境改变时补做。
+
 本地验收：7 项算法测试、20 项浏览器测试通过，另检查构建产物和 320px 窄屏。PR 审查修复了快速切页未保存最新训练、旧手控/展示标签页覆盖新训练、按钮焦点导致方向键失效、反馈动画提前返回、绘制修改仿真状态和评估随机流不独立的问题，详见 [审查记录](docs/V1_REVIEW.md)。浏览器实录的早期训练仍有碰撞；更正逐轮独立种子后，100,000 次更新的三组冻结测试平均跨障碍数为 17.90、18.00、14.15（训练前为 0）。这不是 V1.1 的训练优化或 V2.0 泛化验证。
 
 ## 产品目标
@@ -112,7 +130,7 @@ npm run build
 
 把原本的答题步骤改成**选择实际改进方向、运行实验、查看真实结果**；保留必要的简短总结，但不额外增加作业和成就墙。
 
-## 三个开发版本
+## 已完成的三个开发版本
 
 | 版本 | 目标 | 交付要求 |
 | --- | --- | --- |
@@ -120,7 +138,7 @@ npm run build
 | **V1.1｜训练与体验增强版** | 整合原 V1.2 + V1.3：优化 Q-learning/奖励/训练对比、机器人操作和动画、移动端、性能与稳定性 | 有可复核的训练记录和完整交互回归 |
 | **V2.0｜综合升级版** | 原 V2.0：更复杂的自主控制、有效传感器融合、复杂环境与综合挑战 | 在稳定旧功能基础上实现可操作的综合任务 |
 
-**三个版本合并了原五版计划的全部功能方向，不通过删减需求来减少版本数量。** 每个版本内部可按模块开发和测试，但不再拆成额外的对外版本。V2.0 的重大升级细节在 V1.1 验收后再确定技术实现，不预设尚未验证的效果。
+三个版本均已合并。上表保留历史目标，不是待执行清单；下一阶段使用主方案中的 A–E 工作包，不重新编号或重复开发旧版本。
 
 ## 研发边界
 
@@ -130,7 +148,7 @@ npm run build
 - 源码、图片、视频等在复制和重新发布前核实原作者及第三方许可，保留适当署名；公开仓库不自动等于可任意复用所有素材。
 - UI 保持自解释，避免控件旁堆叠说明、小字和重复提示。
 
-开发实施、逐章页序、技术边界、验收标准及各版本工作清单详见 **[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)**。
+当前实施方向、分工与阶段完成条件见 **[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)**；具体首轮工作见 **[Codex 任务书](docs/CODEX_ROUND1_TASK.md)**。
 
 ## 当前状态
 
@@ -143,4 +161,13 @@ npm run build
 - [x] 实施 V1.1 训练与体验增强
 - [x] 用户审查并合并 V1.1
 - [x] 实施 V2.0 综合挑战与训练
-- [ ] 用户审查、合并并发布 V2.0
+- [x] 用户审查并合并 V2.0（PR #3）
+- [x] 人形运动 Demo 与书本跳转在 PR #4 实现并部署预览（未合并 main）
+- [x] 新阶段课程整合方案、分工和首轮任务入库
+- [ ] A：统一第一章人形对照试跑
+- [ ] B：学习策略接入人形运动模型
+- [ ] C：六段连续总决赛
+- [ ] D：完整比赛回放
+- [ ] E：视频导出与最终交付
+
+PR #4 的合并以及新阶段的正式发布均未在本次文档整理中执行。
