@@ -1,0 +1,175 @@
+[
+  {
+    "name": "rule-finish",
+    "sensors": {
+      "camera": true,
+      "lidar": true,
+      "imu": true,
+      "force": true
+    },
+    "seed": 2026,
+    "strategy": "rule",
+    "strategyId": "short-rule-v1",
+    "segments": [
+      {
+        "id": "straight",
+        "time": 0,
+        "x": 0
+      },
+      {
+        "id": "obstacles",
+        "time": 4.808333333333334,
+        "x": 24.00766205596648
+      },
+      {
+        "id": "night",
+        "time": 9.5,
+        "x": 54.03333341069415
+      },
+      {
+        "id": "curve",
+        "time": 13.875,
+        "x": 82.03333333334463
+      },
+      {
+        "id": "rough",
+        "time": 21.15,
+        "x": 126.00082749800518
+      },
+      {
+        "id": "wet",
+        "time": 28.516666666666666,
+        "x": 156.04042859834937
+      }
+    ],
+    "score": {
+      "outcome": "finished",
+      "reason": null,
+      "distance": 190,
+      "collisions": 0,
+      "falls": 0,
+      "offTrack": false,
+      "passed": 6,
+      "time": 40.9,
+      "tick": 4908,
+      "segment": "wet"
+    },
+    "presentation": {
+      "status": "complete",
+      "tick": 5269,
+      "time": 43.90833333333333,
+      "displayState": "finished"
+    },
+    "frames": 5270,
+    "decisions": 409
+  },
+  {
+    "name": "rule-failure",
+    "sensors": {
+      "camera": true,
+      "lidar": false,
+      "imu": false,
+      "force": false
+    },
+    "seed": 2026,
+    "strategy": "rule",
+    "strategyId": "short-rule-v1",
+    "segments": [
+      {
+        "id": "straight",
+        "time": 0,
+        "x": 0
+      },
+      {
+        "id": "obstacles",
+        "time": 4.808333333333334,
+        "x": 24.00766205596648
+      }
+    ],
+    "score": {
+      "outcome": "failed",
+      "reason": "小腿撞上矮栏",
+      "distance": 26.780415367538932,
+      "collisions": 1,
+      "falls": 0,
+      "offTrack": false,
+      "passed": 0,
+      "time": 5.241666666666666,
+      "tick": 629,
+      "segment": "obstacles"
+    },
+    "presentation": {
+      "status": "complete",
+      "tick": 951,
+      "time": 7.925,
+      "displayState": "fallen"
+    },
+    "frames": 952,
+    "decisions": 53
+  },
+  {
+    "name": "learned-transfer",
+    "sensors": {
+      "camera": true,
+      "lidar": true,
+      "imu": true,
+      "force": true
+    },
+    "seed": 2026,
+    "strategy": "learned",
+    "strategyId": "humanoid-q-v1-ba181f12",
+    "trainingUpdates": 13857,
+    "segments": [
+      {
+        "id": "straight",
+        "time": 0,
+        "x": 0
+      },
+      {
+        "id": "obstacles",
+        "time": 4.808333333333334,
+        "x": 24.00766205596648
+      },
+      {
+        "id": "night",
+        "time": 9.5,
+        "x": 54.03333341069415
+      },
+      {
+        "id": "curve",
+        "time": 13.875,
+        "x": 82.03333333334463
+      },
+      {
+        "id": "rough",
+        "time": 21.15,
+        "x": 126.00092001044557
+      },
+      {
+        "id": "wet",
+        "time": 26.525,
+        "x": 156.02657179575172
+      }
+    ],
+    "score": {
+      "outcome": "finished",
+      "reason": null,
+      "distance": 190,
+      "collisions": 0,
+      "falls": 0,
+      "offTrack": false,
+      "passed": 6,
+      "time": 38.74166666666667,
+      "tick": 4649,
+      "segment": "wet"
+    },
+    "presentation": {
+      "status": "complete",
+      "tick": 5010,
+      "time": 41.75,
+      "displayState": "finished"
+    },
+    "frames": 5011,
+    "decisions": 388
+  }
+]

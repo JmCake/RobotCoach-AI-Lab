@@ -10,33 +10,39 @@ const pages=[
  ['showcase','学过以后，真的更好了吗？','冻结训练前后的策略，让它们各跑相同的 20 条留出短道，比较实际成绩。','motion-learning.html?mode=showcase'],
  ['loop','把一次行动，连成一个闭环','拖动三个模块，运行后把「行动」接回「感知」。手机和键盘也可先选模块、再选位置。','loop.html'],
  ['fault','拿掉一个环节，会发生什么？','关闭一个节点或反馈回路，再运行。观察信息在哪一步中断，然后恢复它。','fault.html'],
- ['design','综合挑战：让方案真正跑起来','选感官、训练策略，在复杂环境里实际运行并比较成绩；图形化方案设计与总结仍可展开使用。','design.html']
+ ['design','终极挑战：让机器人跑向终点','让机器人一口气跑过六个赛段。选择感官和动作策略，看看它在哪里稳住了、又在哪里遇到困难。','final-race.html']
 ];
 const state=load(),host=document.getElementById('page');
-const legacyRunner=new URLSearchParams(location.search).get('runner')==='legacy';
+const options=new URLSearchParams(location.search);
+const legacyRunner=options.get('runner')==='legacy';
+const legacyChallenge=options.get('lab')==='v2';
 let current=-1;
 function fromHash(){const id=location.hash.slice(1);return pages.findIndex(x=>x[0]===id);}
 function render(index,focus=false){
   index=Math.max(0,Math.min(pages.length-1,index));
   if(current===index)return;
   current=index;storageNotice(save({page:index}));
-  const [id,title,lead,src]=pages[index];
+  const [id,pageTitle,lead,src]=pages[index];
+  const oldFinal=legacyChallenge&&id==='design';
+  const title=oldFinal?'V2 综合挑战：让方案真正跑起来':pageTitle;
   // Flush and pause synchronously before removal: native iframe pagehide and
   // visibility events are not delivered consistently by all browsers.
-  document.getElementById('experiment')?.contentDocument?.dispatchEvent(new CustomEvent('coursevisibility',{detail:true}));
+  const previous=document.getElementById('experiment')?.contentDocument;
+  previous?.dispatchEvent(new Event('courseleave'));
+  previous?.dispatchEvent(new CustomEvent('coursevisibility',{detail:true}));
   // Removing the frame then destroys its remaining loops/listeners.
   host.replaceChildren();host.style.animation='none';void host.offsetWidth;host.style.animation='';
   const eyebrow=document.createElement('p');eyebrow.className='eyebrow';eyebrow.textContent=['第一章 · 感知与选拔','第二章 · 学习与训练','第三章 · AI闭环'][index<4?0:index<8?1:2];
   const h=document.createElement('h1');h.id='pageTitle';h.textContent=title;h.tabIndex=-1;
   const legacy=legacyRunner&&index>=5&&index<=7;
-  const p=document.createElement('p');p.className='lead';p.textContent=legacy?'使用旧版 Runner 和本机保留的训练记录。':lead;
+  const p=document.createElement('p');p.className='lead';p.textContent=legacy?'使用旧版 Runner 和本机保留的训练记录。':oldFinal?'继续使用原有 V2 训练、综合实验和图形化方案。':lead;
   host.append(eyebrow,h,p);
   if(index===0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const intro=document.createElement('iframe');intro.src='experiments/parkour.html';intro.className='parkour';intro.title='机器人自动跑酷开场';intro.tabIndex=-1;intro.setAttribute('aria-hidden','true');host.append(intro);}
-  const frame=document.createElement('iframe');frame.src='experiments/'+(legacy?src.replace('motion-learning.html','runner.html'):src);frame.className='experiment';frame.title=title;frame.id='experiment';host.append(frame);
-  if(legacy){
+  const frame=document.createElement('iframe');frame.src='experiments/'+(legacy?src.replace('motion-learning.html','runner.html'):oldFinal?'design.html':src);frame.className='experiment';frame.title=title;frame.id='experiment';host.append(frame);
+  if(legacy||oldFinal){
     const link=document.createElement('a'),url=new URL(location.href);
-    url.searchParams.delete('runner');url.hash=id;
-    link.href=url;link.textContent='返回人形短道实验';host.append(link);
+    url.searchParams.delete(legacy?'runner':'lab');url.hash=id;
+    link.href=url;link.textContent=legacy?'返回人形短道实验':'返回连续总决赛';host.append(link);
   }
   document.getElementById('prev').disabled=index===0;
   document.getElementById('next').disabled=index===pages.length-1;

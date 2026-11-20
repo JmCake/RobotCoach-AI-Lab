@@ -16,7 +16,7 @@ export class MotionRenderer{
   ellipse(x,y,rx,ry,fill){const c=this.ctx;c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);c.fillStyle=fill;c.fill();}
   round(x,y,w,h,r,fill,stroke=null){const c=this.ctx;c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke();}}
   draw(w){
-    const c=this.ctx,W=this.width,H=this.height,night=w.scene==='night',mobile=W<800;
+    const c=this.ctx,W=this.width,H=this.height,night=!w.track&&w.scene==='night',mobile=W<800;
     this.scale=mobile?145:113;this.anchor=mobile?240:390;this.camera=w.x;this.ground=mobile?H*.65:H*.68;
     if(w.scene==='curve'){
       // Leave room for the full fallen pose when the runner drifts toward the near edge.
@@ -30,9 +30,19 @@ export class MotionRenderer{
     this.finishLine(w,night);
     // Back obstacles, robot, then near uprights preserve depth cues.
     if(w.hasObstacles)for(const o of w.obstacles)if(o.x>w.x-4&&o.x<w.x+13)this.obstacle(w,o,false,night);
+    if(w.track){
+      const darkness=1-w.lightAt(w.x);
+      if(darkness>0){
+        c.fillStyle=`rgba(14,28,53,${darkness*.64})`;
+        c.fillRect(0,0,W,H);
+      }
+    }
     this.robot(w);
     if(w.hasObstacles)for(const o of w.obstacles)if(o.x>w.x-4&&o.x<w.x+13)this.obstacle(w,o,true,night);
-    if(w.scene==='wet')this.rain(w);
+    const rain=w.track?smooth((w.x-w.track.definition.segments[5].start)/4):Number(w.scene==='wet');
+    if(rain>0){
+      c.save();c.globalAlpha=rain;this.rain(w);c.restore();
+    }
     if(night){
       const p=this.project(w.x,.8,w.center(w.x));
       const light=c.createRadialGradient(p.x+60,p.y,40,p.x+60,p.y,mobile?320:460);
@@ -73,7 +83,7 @@ export class MotionRenderer{
       this.line(bottom,top,night?'#c5c4a5':'#617b6e',4);
       this.path([top,{x:top.x+36,y:top.y+4},{x:top.x+26,y:top.y+19},{x:top.x,y:top.y+17}],'#e8c889');
     }
-    const label=this.project(x,h+2.18,center-3.7);c.fillStyle=night?'#e8d9b9':'#486455';c.font='bold 13px system-ui';c.fillText('终点 · 40 m',label.x-30,label.y);
+    const label=this.project(x,h+2.18,center-3.7);c.fillStyle=night?'#e8d9b9':'#486455';c.font='bold 13px system-ui';c.fillText(`终点 · ${w.courseDistance} m`,label.x-30,label.y);
   }
   track(w,night){
     const c=this.ctx,left=w.x-8,right=w.x+16,points=[];
@@ -85,16 +95,27 @@ export class MotionRenderer{
       const x=n*5,p=this.project(x,w.height(x),w.center(x)+3.1),q=this.project(x,w.height(x),w.center(x)+3.5);
       this.line(p,q,night?'#a27f72':'#e5b49a',2);c.save();c.translate(q.x+5,q.y-6);c.fillStyle=night?'#bc9684':'#eac5ab';c.font='10px ui-monospace,monospace';c.fillText(`${n*5}m`,0,0);c.restore();
     }
-    if(w.scene==='wet'){
-      for(let n=Math.floor(left/2);n<=right/2;n++)if(n*2>7){
-        const x=n*2+.3*Math.sin(n+w.terrainPhase),z=.8*Math.sin(n*2),p=this.project(x,w.height(x),z);
+    for(let n=Math.floor(left/2);n<=right/2;n++){
+      const x=n*2+.3*Math.sin(n+w.terrainPhase);
+      if(w.track?w.friction(x)<.5:w.scene==='wet'&&n*2>7){
+        const z=.8*Math.sin(n*2),p=this.project(x,w.height(x),z);
         this.ellipse(p.x,p.y+4,55+15*Math.sin(n*3),9+3*Math.cos(n),night?'#78918b70':'#9abbb1a8');
         this.ellipse(p.x+8,p.y,37,1.2,'#d3e2d3a0');
       }
     }
-    if(w.scene==='rough')for(let n=Math.floor(left/.5);n<right/.5;n++){
-      const x=n*.5,p=this.project(x,w.height(x),w.center(x)+.65),q=this.project(x+.3,w.height(x+.3),w.center(x+.3)+.7);
+    for(let n=Math.floor(left/.5);n<right/.5;n++){
+      const x=n*.5;
+      if(w.track?w.track.segmentAt(x).id!=='rough':w.scene!=='rough')continue;
+      const p=this.project(x,w.height(x),w.center(x)+.65),q=this.project(x+.3,w.height(x+.3),w.center(x+.3)+.7);
       this.line(p,q,'#833e3470',3);this.line({x:p.x,y:p.y-3},{x:q.x,y:q.y-3},'#e69a7c80',1);
+    }
+    if(w.track)for(const segment of w.track.definition.segments){
+      const x=segment.start;
+      if(x<left||x>right)continue;
+      const z=w.center(x),h=w.height(x);
+      this.line(this.project(x,h,z-3.6),this.project(x,h,z+3.6),'#f5d683b5',2);
+      const label=this.project(x,h+.18,z-3.6);
+      c.fillStyle='#493c35';c.font='bold 14px system-ui';c.fillText(segment.name,label.x+4,label.y-8);
     }
     // A subtle marked middle lane makes drift, curvature and foot locations readable.
     c.setLineDash([9,13]);const mid=[];for(let x=left;x<right;x+=.12)mid.push(this.project(x,w.height(x),w.center(x)));this.path(mid,null,night?'#d6ad7d55':'#f6d6aa75',1);c.setLineDash([]);

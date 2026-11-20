@@ -34,8 +34,4 @@ zone.ondrop=event=>{
 document.getElementById('reset').onclick=()=>{
   change({...INITIAL_SENSORS},'已恢复初代机配置：只安装视觉摄像头。');
 };
-const parentEntry=new URL(document.referrer||location.href);
-if(parentEntry.origin===location.origin&&parentEntry.pathname.endsWith('/course.html')){
-  document.getElementById('designLink').href='../course.html#design';
-}
 update();

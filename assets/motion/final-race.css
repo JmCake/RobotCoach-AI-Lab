@@ -1,0 +1,33 @@
+body { background: #171b2b; color: #eef2ff; color-scheme: dark; }
+main { max-width: 1240px; margin: 0 auto; }
+a { color: #9be9c9; }
+h1 { font-size: clamp(22px,4vw,36px); margin-block: 8px 18px; }
+.race-top, .race-toolbar, .race-telemetry { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.race-top { justify-content: space-between; margin-bottom: 10px; }
+.race-top p { margin: 0; }
+.race-segments { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 6px; list-style: none; padding: 0; margin: 0; }
+.race-segments li { padding: 5px 4px; border-radius: 5px; background: #242e40; text-align: center; font-size: 13px; }
+.race-segments [aria-current="step"] { background: #3e5e57; color: #fff; }
+.race-stage { position: relative; }
+.race-telemetry, .race-toolbar { margin-top: 9px; }
+.race-telemetry { font-size: 14px; font-variant-numeric: tabular-nums; }
+.race-telemetry span { background: #242e40; border-radius: 5px; padding: 4px 9px; }
+.countdown { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; color: #fff9ee; background: #18203055; font-size: clamp(42px,9vw,105px); font-weight: 750; text-shadow: 0 4px 16px #161c29; }
+.countdown[hidden] { display: none; }
+.race-status { min-height: 0; margin-bottom: 12px; }
+.race-status[data-outcome="failed"] { border-left-color: #edaa78; }
+.race-setup, .race-result, .race-legacy { background: #1e2637; border: 1px solid #394762; border-radius: 8px; margin-top: 10px; padding: 10px 13px; }
+.race-setup fieldset { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 10px; }
+.race-sensor { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 14px; cursor: pointer; }
+.race-sensor input { accent-color: #7ad0aa; height: 17px; width: 17px; margin: 0; }
+.policy-setup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.policy-setup select { min-height: 44px; background: #293347; border: 1px solid #566278; border-radius: 7px; padding: 6px 9px; color: #eef2ff; }
+.race-setup p, .race-result p { margin: 8px 0; }
+.race-result h2 { font-size: 17px; margin: 0; }
+.race-legacy summary { cursor: pointer; }
+.race-legacy a { display: inline-block; margin-top: 6px; }
+@media (max-width: 590px) {
+  .race-segments { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .race-toolbar { gap: 7px; }
+  .race-toolbar button { padding-inline: 11px; }
+}

@@ -13,4 +13,4 @@ function tick(now){if(!active)return;acc+=Math.min(now-last,100);last=now;while(
 $('demo').onclick=()=>{init();active=true;tape=[];last=performance.now();acc=0;$('demo').disabled=true;$('change').disabled=true;$('feedback').textContent='示范者观察障碍做动作，模仿者同步回放同一动作。';raf=requestAnimationFrame(tick);};
 $('change').onclick=()=>{changed=!changed;storageNotice(save({imitationChanged:changed}));init();$('feedback').textContent=changed?'模仿者的第一个障碍提前出现，示范者环境保持原样。再运行比较。':'两个跑道的障碍位置已恢复一致。';};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});document.addEventListener('coursevisibility',e=>{if(e.detail)stop()});window.addEventListener('pagehide',stop);init();$('feedback').textContent=load().imitationResult||'点击观看演示，再改变模仿者跑道中的障碍位置。';
-</script><script src="../assets/frame.js"></script><p><a style="color:#9be9c9" href="../index.html#design" target="_top">前往 V2 综合挑战：实际训练与冻结测试 →</a></p></body></html>
+</script><script src="../assets/frame.js"></script><p><a data-v2-book style="color:#9be9c9" href="../index.html?lab=v2#design" target="_top">前往 V2 综合挑战：实际训练与冻结测试 →</a></p></body></html>
