@@ -1,7 +1,48 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>传感器安装与试跑</title><link rel="stylesheet" href="../assets/experiment.css"></head><body>
-<div class="sensor-grid" id="sensors" aria-label="传感器模块"></div>
-<div class="two" id="installArea" style="margin-top:18px;align-items:center"><img src="../assets/robot.svg" alt="待安装传感器的机器人" style="width:100%;max-height:260px"><div><div class="drop-zone" id="dropzone" tabindex="0" aria-label="将传感器拖到机器人身上">把传感器拖到这里安装</div><p id="installed" class="muted"></p></div></div>
-<div class="track" id="trialArea"><canvas id="track" width="520" height="340" aria-label="机器人在红色操场试跑"></canvas></div>
-<div class="controls"><button id="run" class="primary">开始试跑</button><button id="reset">恢复初代机</button></div>
-<div class="stats" id="stats"></div><div id="feedback" class="feedback" role="status"></div>
-<script type="module" src="../assets/selection.js"></script><script src="../assets/frame.js"></script><p><a style="color:#9be9c9" href="../index.html#design" target="_top">前往 V2 综合挑战：实际训练与冻结测试 →</a></p></body></html>
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>认识并安装感官</title><link rel="stylesheet" href="../assets/experiment.css"></head><body>
+<main class="sensor-install-layout">
+  <div class="workshop-robot">
+    <div id="dropzone" class="drop-zone workshop-stage" role="group" aria-label="机器人与传感器安装位置" aria-describedby="installed">
+      <svg viewBox="0 0 400 300" aria-hidden="true">
+        <image href="../assets/robot.svg" width="400" height="300"/>
+        <g data-mounted-sensor="camera" hidden stroke="#123952" stroke-width="2.5">
+          <rect x="228" y="44" width="31" height="25" rx="5" fill="#29bdf8"/>
+          <circle cx="246" cy="56.5" r="8" fill="#183c63"/>
+          <circle cx="248" cy="54" r="3" fill="#d9f9ff" stroke="none"/>
+        </g>
+        <g data-mounted-sensor="lidar" hidden stroke="#3b2354" stroke-width="2.5">
+          <rect x="154" y="27" width="39" height="16" rx="4" fill="#ad6df0"/>
+          <ellipse cx="173.5" cy="27" rx="19.5" ry="6" fill="#e0b9ff"/>
+          <path d="M159 35h29" stroke="#f7e5ff"/>
+        </g>
+        <g data-mounted-sensor="imu" hidden stroke="#633b18" stroke-width="2.5">
+          <rect x="174" y="142" width="52" height="25" rx="5" fill="#ffbe5c"/>
+          <path d="M191 157l7 5 12-13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="214" cy="153" r="3" fill="#fff4d7" stroke="none"/>
+        </g>
+        <g data-mounted-sensor="force" hidden stroke="#13533d" stroke-width="2.5">
+          <rect x="146" y="278" width="48" height="12" rx="5" fill="#59dba1"/>
+          <rect x="206" y="278" width="48" height="12" rx="5" fill="#59dba1"/>
+          <path d="M155 284h30m30 0h30" stroke="#d8ffec" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <button type="button" class="sensor-spot" data-discover="camera" style="--x:73%;--y:17%" aria-label="发现视觉摄像头" aria-controls="sensorInfo"><span aria-hidden="true">📷</span></button>
+      <button type="button" class="sensor-spot" data-discover="lidar" style="--x:28%;--y:12%" aria-label="发现激光雷达" aria-controls="sensorInfo"><span aria-hidden="true">📡</span></button>
+      <button type="button" class="sensor-spot" data-discover="imu" style="--x:72%;--y:52%" aria-label="发现姿态传感器" aria-controls="sensorInfo"><span aria-hidden="true">🧭</span></button>
+      <button type="button" class="sensor-spot" data-discover="force" style="--x:72%;--y:87%" aria-label="发现足底力觉传感器" aria-controls="sensorInfo"><span aria-hidden="true">🦶</span></button>
+    </div>
+    <div class="workshop-readout muted"><span id="foundSensors"></span><span id="installed"></span></div>
+  </div>
+  <div class="workshop-controls">
+    <section id="sensorInfo" class="sensor-info" aria-labelledby="sensorTitle">
+      <h2 id="sensorTitle">感官模块</h2>
+      <p id="sensorDescription">点击机器人上的图标，看看这个部位能感知什么。</p>
+      <button id="toggleSensor" class="primary" type="button" hidden></button>
+    </section>
+    <div class="sensor-grid" id="sensors" aria-label="选择或拖入传感器模块"></div>
+    <div class="sensor-install-actions">
+      <p id="feedback" class="muted" role="status">可点击模块，也可拖到机器人上安装。</p>
+      <div class="controls"><button id="reset">恢复初代机</button><a id="designLink" data-v2-book href="../index.html?lab=v2#design" target="_top">前往 V2 综合挑战 →</a></div>
+    </div>
+  </div>
+</main>
+<script type="module" src="../assets/selection.js"></script><script src="../assets/frame.js"></script></body></html>

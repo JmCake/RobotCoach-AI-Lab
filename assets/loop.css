@@ -1,1 +1,17 @@
 body{width:auto;height:auto;overflow:visible;padding:18px;color:#edf3ff;font-size:16px}.container{width:100%;height:auto;min-height:390px;max-width:760px;margin:auto}.main{padding:0;gap:16px}.panel{padding:12px}.panel-title{font-size:14px}.mod{min-height:60px;min-width:0;flex:1}.mod .ml{font-size:16px}.mod .md{font-size:12px}.mod.selected{outline:3px solid #fff1b1}.main-row{width:100%;flex-direction:column;gap:14px}.canvas-wrap{width:100%;max-width:480px;height:280px}.side-actions{flex-direction:row}.mode-tag{font-size:13px}.btn{font-size:15px;min-height:44px}.dt{display:flex;align-items:center;justify-content:center;color:#b3c2d4;font-size:14px}.dt.p1{left:calc(21.875% - 33px);top:107px}.dt.p2{left:calc(50% - 33px);top:107px}.dt.p3{left:calc(78.125% - 33px);top:107px}.dt.t1{left:calc(50% - 33px);top:24px}.dt.t2{left:calc(78.54% - 33px);top:188px}.dt.t3{left:calc(21.46% - 33px);top:188px}.node .nl{font-size:14px}.feedback{width:100%;margin:12px 0 0}.btm-hint,.lap-badge{position:static;transform:none}.mod:focus-visible,.node:focus-visible,.dt:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:480px){body{padding:12px 8px}.mod{padding:8px 6px;gap:3px;justify-content:center}.mod .md{display:none}.mod .mi{font-size:19px}.panel-list{gap:7px}.mode-tag{font-size:12px}.node,.dt{width:62px;height:62px}.node .ni{font-size:20px}}
+
+@media (min-width: 820px) {
+  .container { max-width: 880px; min-height: 0; }
+  .main { display: grid; align-items: start; grid-template-columns: minmax(230px,1fr) minmax(0,480px); gap: 20px; }
+  .panel-list { flex-direction: column; }
+  .main-row { gap: 8px; }
+}
+
+.side-actions { flex-wrap: wrap; justify-content: center; }
+.loop-faults { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 0; }
+.loop-faults legend { font-size: 14px; margin-bottom: 6px; }
+.loop-faults button { padding-inline: 8px; font-size: 14px; }
+.loop-faults button[aria-pressed="true"] { background: #643b38; border: 1px solid #ff9b91; }
+.node.fault-off { filter: saturate(.12); outline: 2px dashed #ff9b91; }
+.canvas-svg line.broken { stroke: #ff9b91; stroke-dasharray: 6 5; filter: none; marker-end: none; }
+#faultClip { margin: 6px 0 0; }

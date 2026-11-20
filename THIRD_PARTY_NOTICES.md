@@ -12,6 +12,8 @@
 
 V2.0 继续复用以上机器人绘制、Runner 基础与 Q-learning 更新；新增的观测融合、复杂环境、决策树模仿、独立策略状态、评估及综合挑战界面为本项目扩展，采用同一 MIT 许可。未新增第三方图像、字体、视频或运行依赖。
 
+独立 `demo-motion.html` 延续 `assets/robot.svg` 的灰色外壳、蓝色眼睛、天线与胸部指示灯，以及原版红色跑道的色彩；查阅 `robot-dom.js`、`runner-render.js` 后，将原有整块肢体/两帧绘制扩展为独立的 Canvas 关节骨架。直接复用 `assets/learning.js` 的种子随机生成器；新运动控制、逆运动学、六场景绘制与 UI 为本项目扩展，采用同一 MIT 许可。不含新第三方素材或生产依赖。
+
 ## 上游代码适用的 MIT 条款
 
 Copyright (c) PumpkinKiller04 (RobotCoachAI contributors)

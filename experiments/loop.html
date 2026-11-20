@@ -10,8 +10,8 @@
 <div class="container">
     <div class="main">
         <div class="panel">
-            <div class="panel-title">感知 → 决策 → 行动</div>
-            <div class="panel-list">
+            <div class="panel-title" id="builderTitle">感知 → 决策 → 行动</div>
+            <div class="panel-list" id="modules">
                 <div class="mod sb" draggable="true" data-module="sense">
                     <div class="mi">👁️</div>
                     <div><div class="ml">感知</div><div class="md">观察收集信息</div></div>
@@ -25,7 +25,14 @@
                     <div><div class="ml">行动</div><div class="md">执行产生影响</div></div>
                 </div>
             </div>
-            <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+            <div class="prog-bar" id="assemblyProgress"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+            <fieldset id="faultTests" class="loop-faults" hidden>
+                <legend>断开一个环节再运行</legend>
+                <button type="button" class="btn" data-fault="sense">关闭感知</button>
+                <button type="button" class="btn" data-fault="decision">关闭决策</button>
+                <button type="button" class="btn" data-fault="action">关闭行动</button>
+                <button type="button" class="btn" data-fault="loop">关闭反馈回路</button>
+            </fieldset>
         </div>
 
         <div class="main-row">
@@ -55,7 +62,12 @@
             </div>
         </div>
     </div>
-</div><div class="feedback" id="feedback" role="status"></div>
+    <div class="feedback" id="feedback" role="status"></div>
+    <details id="faultClip" hidden>
+        <summary>观看这个故障的示意片段</summary>
+        <video id="faultVideo" controls playsinline preload="none" aria-label="节点故障示意片段"></video>
+    </details>
+</div>
 <script type="module" src="../assets/loop.js"></script><script src="../assets/frame.js"></script>
 </body>
 </html>

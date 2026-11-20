@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>人形机器人连续总决赛</title>
+  <link rel="stylesheet" href="../assets/experiment.css">
+  <link rel="stylesheet" href="../assets/motion/course-trial.css">
+  <link rel="stylesheet" href="../assets/motion/final-race.css">
+</head>
+<body>
+<main>
+  <header id="standalone" hidden>
+    <a id="backToBook" href="../index.html#design">← 返回课堂总决赛</a>
+    <h1>终极挑战：让机器人跑向终点</h1>
+  </header>
+  <div class="course-motion-grid race-layout">
+    <section id="raceSetup" class="race-setup" aria-label="选择比赛配置">
+      <fieldset id="sensorSetup">
+        <legend>本场感官</legend>
+      </fieldset>
+      <div class="policy-setup">
+        <label for="policy">动作策略</label>
+        <select id="policy">
+          <option value="">选择策略</option>
+          <option value="learned">我的学习策略</option>
+          <option value="rule">规则参考</option>
+        </select>
+      </div>
+      <div class="race-toolbar">
+        <button id="start" class="primary" type="button">开始比赛</button>
+        <button id="pause" class="primary" type="button" hidden>暂停</button>
+        <button id="exit" type="button" hidden>退出本场</button>
+      </div>
+      <p id="status" class="feedback race-status" role="status"></p>
+      <p class="muted" id="policyNote"></p>
+      <a id="goTraining" href="../index.html#training" target="_top" hidden>去训练页 →</a>
+    </section>
+    <section id="liveRace" aria-label="比赛画面">
+      <div class="race-top">
+        <p id="raceConditions" class="muted"></p>
+        <a id="fullView" target="_top" href="?view=full">独立打开 ↗</a>
+      </div>
+      <ol class="race-segments" id="segments" aria-label="六个连续赛段"></ol>
+      <div class="course-track race-stage">
+        <canvas id="motionCanvas" aria-label="红色跑道上的双足人形机器人"></canvas>
+        <div id="countdown" class="countdown" hidden></div>
+      </div>
+      <div class="race-telemetry" aria-label="比赛实况">
+        <strong id="segment"></strong>
+        <span id="distance"></span>
+        <span id="raceTime"></span>
+        <span id="speed"></span>
+        <span id="bend" hidden></span>
+      </div>
+    </section>
+    <section id="raceReplay" class="race-replay" aria-labelledby="replayTitle" hidden>
+      <header class="race-top">
+        <h3 id="replayTitle" tabindex="-1">本场比赛回放</h3>
+        <p id="replayStatus" class="replay-status"></p>
+        <button id="closeReplay" type="button">关闭回放</button>
+      </header>
+      <div class="course-track">
+        <canvas id="replayCanvas" aria-label="按本场记录重绘的机器人和赛道"></canvas>
+      </div>
+      <div class="replay-controls">
+        <div class="race-toolbar">
+          <button id="replayPlay" class="primary" type="button">播放回放</button>
+          <label class="visually-hidden" for="replaySpeed">播放速度</label>
+          <select id="replaySpeed">
+            <option value="1">正常 · 1×</option>
+            <option value="0.5">慢动作 · 0.5×</option>
+          </select>
+        </div>
+        <div class="replay-timeline">
+          <label for="replayProgress">回放进度</label>
+          <span id="replayTime"></span>
+          <div class="replay-scrubber">
+            <input id="replayProgress" type="range" min="0" step="1" value="0">
+            <span id="replayScoreMark" aria-hidden="true" hidden></span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="race-sidebar">
+      <section id="lastRace" class="race-result" aria-labelledby="resultTitle" hidden>
+        <h2 id="resultTitle">最近一场成绩</h2>
+        <p id="resultStatus"></p>
+        <p class="muted" id="resultConfig"></p>
+        <div class="race-toolbar">
+          <button id="openReplay" class="primary" type="button" aria-controls="raceReplay" aria-expanded="false" hidden>回看比赛</button>
+          <button id="retry" type="button" hidden>同条件重试</button>
+          <button id="download" type="button" hidden>下载 JSON</button>
+        </div>
+        <p id="recordNote" class="muted"></p>
+      </section>
+      <section id="replayKeyEvents" class="race-events" aria-labelledby="replayEventsTitle" hidden>
+        <h3 id="replayEventsTitle">关键事件</h3>
+        <ul class="replay-events" id="replayEvents"></ul>
+      </section>
+      <details id="legacyEntry" class="race-legacy">
+        <summary>原 V2 综合实验与课程总结</summary>
+        <a id="legacy" data-v2-book href="../index.html?lab=v2#design" target="_top">打开 V2 实验和图形化方案 →</a>
+      </details>
+    </div>
+  </div>
+</main>
+<script type="module" src="../assets/motion/course-race.js"></script>
+<script src="../assets/frame.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+.trial-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.trial-modes[hidden] { display: none; }
+.trial-modes legend { font-size: 14px; }
+.trial-conditions, .trial-sensors { margin: 0 0 6px; }
+.trial-conditions { font-variant-numeric: tabular-nums; }
+.trial-sensors { font-size: 14px; }
+.course-motion-grid { display: grid; align-items: start; gap: 14px; }
+.course-motion-grid > * { min-width: 0; }
+.course-motion-grid .course-track { margin-top: 0; }
+.motion-side > :first-child:not([hidden]), .motion-side > [hidden] + .trial-toolbar { margin-top: 0; }
+.course-track { container-type: inline-size; margin-top: 10px; }
+.course-track canvas { width: 100%; aspect-ratio: 1200 / 610; background: #dce9e6; }
+.trial-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; }
+.trial-readout { display: flex; flex-wrap: wrap; gap: 4px 12px; font-variant-numeric: tabular-nums; }
+.trial-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 8px; }
+.trial-results [data-outcome="failed"] { border-left-color: #edaa78; }
+.trial-note { margin-bottom: 0; }
+.trial-link { margin-bottom: 0; font-size: 14px; }
+.trial-link a { color: #9be9c9; }
+@media (min-width: 944px) {
+  .course-motion-grid { grid-template-columns: minmax(0,1fr) minmax(245px,27%); }
+  .course-motion-grid .course-track canvas { aspect-ratio: 1200 / 475; max-height: 410px; }
+}
+@container (width < 650px) {
+  .course-track canvas { aspect-ratio: 720 / 760; }
+}
+@media (max-width: 590px) {
+  .course-motion-grid .course-track canvas { aspect-ratio: 6 / 5; }
+}
