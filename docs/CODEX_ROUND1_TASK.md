@@ -1,7 +1,9 @@
 # Codex 首轮任务｜统一第一章的人形机器人对照试跑
 
 **日期：2026-11-20**  
-**状态：待实施；本次仅将任务入库，未启动 Codex。**  
+**状态：已实施，见 [PR #6](https://github.com/JmCake/RobotCoach-AI-Lab/pull/6)，待审查与合并。**
+
+本地验证覆盖同条件成绩、配置隔离与失效、翻页暂停、桌面与窄屏布局，以及普通和 Pages 构建入口。  
 **主方案：[DEVELOPMENT_PLAN.md](../DEVELOPMENT_PLAN.md)。本文件只细化阶段 A。**
 
 ## 1. 目标与范围
