@@ -11,6 +11,11 @@ const zone=document.getElementById('dropzone');
 const mounts=[...zone.querySelectorAll('[data-mounted-sensor]')];
 const spots=[...zone.querySelectorAll('[data-discover]')];
 const toggle=document.getElementById('toggleSensor');
+if (window.parent !== window) {
+  const course = new URL(document.referrer || location.href);
+  const entry = document.getElementById('visionLab');
+  entry.search = course.pathname.endsWith('/course.html') ? '?from=course' : '?from=index';
+}
 
 function showModule(id){
   selected=id;

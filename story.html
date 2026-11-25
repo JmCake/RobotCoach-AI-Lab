@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14262e">
+  <title>机器人进化跑 · 剧情课堂</title>
+  <link rel="icon" href="assets/robot.svg">
+  <link rel="stylesheet" href="assets/story/story.css">
+</head>
+<body>
+  <header class="mast"><div class="mast-inner">
+    <a class="brand" href="story.html"><i class="track-mark" aria-hidden="true"></i>机器人进化跑</a>
+    <nav aria-label="课堂导航"><button id="mapButton" aria-haspopup="dialog">课程地图</button><a href="index.html#diagnosis">实验目录 ↗</a></nav>
+  </div></header>
+  <main class="lesson">
+    <div class="chapter-line"><span>第一关</span><strong>感知世界</strong></div>
+    <h1>弯道上的第一次试跑</h1>
+    <div id="localHelp" hidden>双击项目里的“打开剧情课堂.cmd”，即可在本机浏览器中运行实验。</div>
+    <div class="stage-layout">
+      <section class="field" aria-label="赛场画面">
+        <div class="screen" id="screen">
+          <img id="still" src="assets/story/media/grid.webp" alt="分格画面中，初代机面向赛道，前方的白线拐进弯道。">
+          <video id="movie" playsinline preload="none" hidden aria-label="剧情镜头"></video>
+          <canvas id="trackCanvas" hidden aria-label="使用本次传感器配置运行的 40 米急弯仿真"></canvas>
+          <div id="mounts" aria-hidden="true" hidden></div>
+          <span id="sceneTag" class="scene-tag">场边镜头</span>
+        </div>
+        <div class="field-foot"><div><i aria-hidden="true"></i><span id="fieldNote">入弯前，初代机只装了一枚摄像头。</span></div><button id="sound" aria-pressed="false" hidden>开启声音</button></div>
+      </section>
+      <section class="desk" aria-labelledby="sceneTitle">
+        <div class="desk-eyebrow"><i aria-hidden="true"></i><span id="deskLabel">总教练席</span></div>
+        <h2 id="sceneTitle" tabindex="-1">盯住入弯的那一步。</h2>
+        <p id="brief">你是它的总教练。先看白线往哪里拐，再看机器人的脚落在哪里。</p>
+        <div id="controls"></div>
+        <div id="actions" class="actions"><button class="primary" type="button" disabled>播放现场镜头 →</button></div>
+      </section>
+    </div>
+    <ol class="steps" aria-label="本关进度">
+      <li aria-current="step">观察现场</li><li>提出猜想</li><li>同场试跑</li><li>赛后复盘</li>
+    </ol>
+    <details id="notes" class="notes" hidden><summary>我的试跑记录</summary><div id="notebook"></div></details>
+    <noscript>请在浏览器中启用 JavaScript，以运行互动实验。</noscript>
+  </main>
+  <dialog id="map" aria-labelledby="mapTitle">
+    <div class="dialog-top"><h2 id="mapTitle">三关课程地图</h2><button id="closeMap" autofocus>关闭</button></div>
+    <div class="map-row"><img src="assets/story/media/grid.webp" alt=""><div><small>第一关 · 本次可体验</small><h3>感知世界</h3><p>看得到弯道，怎样才能稳住身体？用同场试跑检验你的改装。</p><button id="returnStory">回到当前剧情 →</button></div></div>
+    <div class="map-row"><img src="assets/story/media/hurdle.webp" alt=""><div><small>第二关 · 剧情待接入</small><h3>学会学习</h3><p>站稳后，谁来决定何时跳、何时蹲？在变化的栏位前比较三种做法。</p><div class="lab-links"><a href="index.html#manual">手动操控</a><a href="index.html#imitation">模仿学习</a><a href="index.html#training">强化学习</a></div></div></div>
+    <div class="map-row"><img src="assets/story/media/trail.webp" alt=""><div><small>第三关 · 剧情待接入</small><h3>面对未知</h3><p>带自己的策略跑连续六段赛道。从比赛回到湖边，看看机器人能否分清栈道和水面。</p><div class="lab-links"><a href="index.html#showcase">冻结测试</a><a href="index.html#design">连续总决赛</a><a href="experiments/road-vision.html?sample=jiuzhaigou">栈道实拍识别</a></div></div></div>
+  </dialog>
+  <script>if(location.protocol==='file:')document.getElementById('localHelp').hidden=false;</script>
+  <script type="module" src="assets/story/story.js"></script>
+</body>
+</html>

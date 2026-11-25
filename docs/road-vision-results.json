@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-22",
+  "runtime": "Chromium on Windows, ONNX Runtime Web 1.22.0, single-threaded WASM",
+  "surface": {
+    "dataset": "Tong Zhao and Yintao Wei, RSCD, Mendeley Data v3, doi:10.17632/w86hvkrzc5.3",
+    "split_by": "Source capture hour from the original filename. Each captured hour belongs to exactly one split.",
+    "photos": {"train": 4280, "validation": 491, "test": 636},
+    "capture_hours": {"train": 158, "validation": 43, "test": 42},
+    "model_sha256": "3c95f8ac14c66c97301dcee9c1d36f28d2a83408cca17af6cdec45f4a776552a",
+    "evaluation": "Each original held-out road patch was decoded in Chromium and resampled as a full-photo selection using the page's readPixels function. The production worker received only pixels. Confusion matrices use the highest model score before abstention. Rows are ground truth, columns are predictions.",
+    "wetness": {
+      "classes": ["dry", "wet", "standing water"],
+      "confusion": [[166,31,24],[49,135,35],[22,61,113]],
+      "top1_correct": 414, "threshold": 0.58, "answered": 416, "correct_when_answered": 314, "abstained": 220
+    },
+    "unevenness": {
+      "classes": ["smooth", "slight", "severe"],
+      "confusion": [[132,66,23],[22,95,76],[14,81,127]],
+      "top1_correct": 354, "threshold": 0.52, "answered": 340, "correct_when_answered": 221, "abstained": 296
+    }
+  },
+  "obstacles": {
+    "dataset": "GOOSE 2D validation, three frames each from four sequences near Garching and Neubiberg",
+    "photos": 12,
+    "sampling": "Examples with more and fewer annotated obstacle pixels were deliberately included. These results describe this small sample.",
+    "model_sha256": "10fdba6ebb4d88f4b800ac9d511498660f1511fe7fb676508878a81cba2d6284",
+    "evaluation": "Browser worker overlay after connected-component filtering compared to all annotated pixels of the supported obstacle classes at 512 x 512, with all obstacle classes combined.",
+    "with_scene_review_sha256": "bf66319523c746b1827a2940cc12a5ea474d1adcf43fd776c0875b9abb0124d1",
+    "previous_single_model": {"intersection_pixels": 100800, "union_pixels": 130091, "foreground_iou": 0.774842},
+    "intersection_pixels": 101016, "union_pixels": 130119, "foreground_iou": 0.776336,
+    "photos_with_labeled_obstacles": 7, "photos_with_zero_overlap_among_those": 3
+  },
+  "passable_ground": {
+    "dataset": "The same 12 GOOSE validation frames and production worker as the obstacle comparison.",
+    "ground_class_ids": {"cobble": 3, "bikeway": 7, "pedestrian_crossing": 9, "road_marking": 11, "sidewalk": 21, "asphalt": 23, "gravel": 24, "soil": 31},
+    "rule": "Four-connected candidate pixels must reach the central 60% of the bottom edge, with contact in at least 2% of all columns and area of at least 0.2% of the image. At the bottom of each sampled column, only a continuous camera-vehicle hood (class 8) may be skipped while searching upwards as far as the 70% height boundary.",
+    "evaluation": "The browser worker processed the photos at 512 x 512. Reference masks were derived from human GOOSE semantic labels using nearest-neighbor sampling and an independent SciPy connected-component implementation. IoU pools foreground intersection and union over all frames.",
+    "photos": 12, "predicted_pixels": 912696, "reference_pixels": 845492,
+    "intersection_pixels": 790623, "union_pixels": 967565, "foreground_iou": 0.817126,
+    "previous_single_model_iou": 0.811920,
+    "additional_prediction_labels": {"64": "path", "65": "steps", "66": "conflicting evidence", "67": "possible water"},
+    "green_pixels_on_human_obstacle_labels": 1591,
+    "scope": "The reference measures visible ground continuity in the photo. These 12 frames contain no pixels annotated as water. They do not establish physical clearance, traction, or water detection performance."
+  },
+  "scenic_gallery": {
+    "photos": 6,
+    "evaluation": "The same browser photo decoding and production worker were run on six gallery photographs, an urban car control and three additional photographs before and after the change. The rectangular checks below were selected by inspection of the original photos before inspecting the new predictions. They cover interiors only. The examples informed development and do not yield a gallery-wide accuracy estimate.",
+    "coordinates": "Fractions [left, top, right, bottom] of the displayed image. On the 512-square inference grid, pixel indices range from ceil(min*512) up to but excluding floor(max*512).",
+    "probes": [
+      {"photo": "jiuzhaigou.webp", "surface": "river", "box": [0.04,0.535,0.37,0.61], "pixels": 6384, "green_before": 6384, "green_after": 0, "water_after": 6384},
+      {"photo": "jiuzhaigou.webp", "surface": "boardwalk", "box": [0.70,0.77,0.85,0.94], "pixels": 6536, "green_before": 52, "green_after": 6275, "water_after": 0},
+      {"photo": "new-forest.webp", "surface": "puddle", "box": [0.524,0.601,0.558,0.618], "pixels": 128, "green_before": 128, "green_after": 0, "water_after": 125},
+      {"photo": "Quiet Boardwalk, Jiuzhaigou, opposite bank", "surface": "river", "box": [0.62,0.72,0.70,0.86], "pixels": 2840, "green_before": 0, "green_after": 0, "water_after": 2840},
+      {"photo": "Quiet Boardwalk, Jiuzhaigou, opposite bank", "surface": "boardwalk", "box": [0.08,0.77,0.28,0.88], "pixels": 5610, "green_before": 5610, "green_after": 5610, "water_after": 0}
+    ],
+    "opposite_bank_source": "https://commons.wikimedia.org/wiki/File:幽静的栈道_-_Quiet_Boardwalk_-_2011.10_-_panoramio.jpg",
+    "car_free_gallery_photos": {"photos": 5, "false_car_reports_before": 4, "false_car_reports_after": 0},
+    "controls": ["An actual car was still reported in the GOOSE avenue photograph.", "After the change the Taroko photograph reports a motorcycle and a person.", "The Huangshan staircase is classified as steps at its default point and excluded from the continuous candidate surface."],
+    "additional_checks": {
+      "selection": "Three other original photographs were checked after the fusion rules were fixed. These rectangles only test false green on visible background.",
+      "photos": [
+        {"commons_file": "Tourist steps built on the cliffs of Huangshan.jpg", "surface": "cliff", "box": [0.36,0.14,0.47,0.31], "pixels": 4730, "green": 0},
+        {"commons_file": "无人涉足的则查洼沟栈道 - Boardwalk in Zechawa Valley - 2011.10 - panoramio.jpg", "surface": "hillside", "box": [0.10,0.10,0.35,0.35], "pixels": 16129, "green": 0},
+        {"commons_file": "Queens Garden Trail, Bryce Canyon (21219391858).jpg", "surface": "sky", "box": [0.50,0.08,0.75,0.18], "pixels": 6528, "green": 0}
+      ]
+    },
+    "remaining_limitations": "Parts of the grassy margin beside the Jiuzhaigou deck still receive green. Debris labels and small obstacles still need human review. The photos show appearance only. Traction, water depth and step height were not measured."
+  },
+  "ui": {
+    "verified": ["course entry and return", "local batch photo import", "original, predicted and annotated layers", "independent road and obstacle layer switches", "selected road, car, steps and water readings", "keyboard and touch region selection", "uniform photos and patches abstain", "corrupt file recovery", "model load retry", "annotation image load retry", "Pages subdirectory return path", "save and remove a point correction", "JSON export with normalized coordinates, model readings and human observation", "restore a correction after reopening an identical upload under a different filename"],
+    "desktop_first_analysis_ms": 3771,
+    "mobile_emulation_first_analysis_ms": 4081,
+    "timing_context": "One timed analysis of the Jiuzhaigou gallery photo after navigation on a local server. Both the 1280-pixel desktop viewport and 320-pixel touch emulation ran on Windows. Network cold-cache and physical handset latency were not measured."
+  }
+}

@@ -40,14 +40,14 @@ test('page eleven runs all six segments with one clock and downloads the real fi
   await page.screenshot({path:join(evidence,'final-race-desktop-curve.png'),fullPage:true});
   await page.clock.runFor(29500);
   await expect(f.locator('#status')).toHaveAttribute('data-state','finished');
-  await expect(f.locator('#resultStatus')).toContainText('190.0 / 190 m · 40.9 秒 · 越障 6');
+  await expect(f.locator('#resultStatus')).toContainText('190.0 / 190 m · 40.1 秒 · 越障 6');
   await expect(f.locator('#liveCall')).toHaveText('冲线 · 190.0 m');
   await page.screenshot({path:join(evidence,'final-race-desktop-finish.png'),fullPage:true});
   const download=page.waitForEvent('download');
   await f.locator('#download').click();
   const actual=JSON.parse(await readFile(await (await download).path(),'utf8'));
   expect(actual).toEqual(await record(page));
-  expect(actual.frames).toHaveLength(5270);
+  expect(actual.frames).toHaveLength(actual.presentation.tick+1);
   expect(actual.events.filter(event=>event.type==='segment').map(event=>event.segment))
     .toEqual(['straight','obstacles','night','curve','rough','wet']);
   expect(actual.presentation.tick).toBeGreaterThan(actual.score.tick);
@@ -230,12 +230,13 @@ test('student selection is required and the frozen learning model survives a sto
 
 test('the full view and the legacy V2 experiment return to page eleven',async({page})=>{
   await page.goto('/#design');const f=frame(page);
-  await f.locator('#fullView').click();
+  await expect(f.locator('#fullView')).toHaveCount(0);
+  await page.goto('/experiments/final-race.html?view=full&book=index.html');
   await expect(page).toHaveURL(/\/experiments\/final-race\.html\?view=full&book=index\.html$/);
   await page.locator('#backToBook').click();
   await expect(page).toHaveURL(/index\.html#design$/);
-  await f.getByText('原 V2 综合实验与课程总结',{exact:true}).click();
-  await f.locator('#legacy').click();
+  await expect(f.locator('#legacy')).toHaveCount(0);
+  await page.goto('/?lab=v2#design');
   await expect(page).toHaveURL(/\?lab=v2#design$/);
   await expect(f.locator('#challengeRun')).toBeVisible();
   await page.getByRole('link',{name:'返回连续总决赛'}).click();

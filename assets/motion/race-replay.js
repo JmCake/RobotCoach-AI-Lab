@@ -9,12 +9,12 @@ function eventLabel(event,record) {
   switch(event.type){
     case 'segment': return record.track.segments.find(segment=>segment.id===event.segment).name;
     case 'obstacle-pass': return `越障 ${event.passed}`;
-    case 'collision': return `碰撞 · ${event.reason}`;
+    case 'collision': return '发生碰撞';
     case 'score': {
-      const {outcome,reason}=record.score;
+      const {outcome}=record.score;
       if(outcome==='finished')return '冲过终点 · 成绩锁定';
       if(outcome==='aborted')return '退出比赛 · 成绩已记录';
-      return `成绩锁定${reason?` · ${reason}`:''}`;
+      return '未通过 · 成绩锁定';
     }
     case 'motion-state':
       return ['falling','fallen'].includes(event.state)?STATE_NAMES[event.state]:null;

@@ -2,5 +2,6 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+/study-photos/bohai/
 .DS_Store
 .npm-cache/

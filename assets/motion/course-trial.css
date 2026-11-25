@@ -8,15 +8,13 @@
 .course-motion-grid > * { min-width: 0; }
 .course-motion-grid .course-track { margin-top: 0; }
 .motion-side > :first-child:not([hidden]), .motion-side > [hidden] + .trial-toolbar { margin-top: 0; }
-.course-track { container-type: inline-size; margin-top: 10px; }
+.course-track { position: relative; container-type: inline-size; margin-top: 10px; }
 .course-track canvas { width: 100%; aspect-ratio: 1200 / 610; background: #dce9e6; }
 .trial-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; }
 .trial-readout { display: flex; flex-wrap: wrap; gap: 4px 12px; font-variant-numeric: tabular-nums; }
 .trial-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 8px; }
 .trial-results [data-outcome="failed"] { border-left-color: #edaa78; }
 .trial-note { margin-bottom: 0; }
-.trial-link { margin-bottom: 0; font-size: 14px; }
-.trial-link a { color: #9be9c9; }
 @media (min-width: 944px) {
   .course-motion-grid { grid-template-columns: minmax(0,1fr) minmax(245px,27%); }
   .course-motion-grid .course-track canvas { aspect-ratio: 1200 / 475; max-height: 410px; }
@@ -58,9 +56,7 @@
 .trial-results .feedback { background: #263d33; border-left-color: #94b3a0; padding: 7px 10px; min-height: 0; margin-top: 7px; font-size: 14px; }
 .trial-results [data-outcome="passed"] { border-color: #cee983; }
 .trial-results [data-outcome="failed"] { border-color: #f5a876; }
-.trial-details { margin: 5px 0 0; }
-.trial-details summary { color: #c9d8c6; font-size: 14px; }
-.trial-details p, #runFeedback { margin: 2px 0 4px; color: #c8d4c3; font-size: 14px; }
+
 #verdict { margin: 9px 0 3px; color: #ddf594; font-size: 17px; font-weight: 750; }
 @media (min-width: 820px) {
   .trial-grid { grid-template-columns: minmax(0,1fr) minmax(250px,25%); }
@@ -73,7 +69,21 @@
   .trial-console .scoreboard { padding: 0; border: 0; margin: 0; }
   .trial-console fieldset { margin: 0; gap: 4px; }
   .trial-console fieldset button { padding: 3px 7px; }
-  .trial-console #play, .trial-results, #verdict, #runFeedback, .trial-details, .trial-link { grid-column: 1/-1; }
+  .trial-console #play, .trial-results, #verdict { grid-column: 1/-1; }
   .distance-lanes { padding-top: 5px; }
   .track-state { left: auto; right: 8px; top: 8px; }
 }
+
+.track-speech {
+  position: absolute; z-index: 2; box-sizing: border-box; margin: 0;
+  padding: 8px 11px; border-radius: 12px; background: #fff8e7; color: #382d20;
+  box-shadow: 0 2px 9px #172c283b; font: 600 clamp(14px,1.6vw,17px)/1.45 system-ui,sans-serif;
+  pointer-events: none;
+}
+.track-speech::before {
+  content: ''; position: absolute; top: var(--tip); margin-top: -6px;
+  border: 6px solid transparent;
+}
+.track-speech[data-side="right"]::before { right: 100%; border-right-color: #fff8e7; border-left: 0; }
+.track-speech[data-side="left"]::before { left: 100%; border-left-color: #fff8e7; border-right: 0; }
+canvas[hidden] + .track-speech { display: none; }

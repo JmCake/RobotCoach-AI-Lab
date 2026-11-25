@@ -4,8 +4,8 @@ import {MotionRenderer} from './render.js';
 import {createMotionPlayback} from './playback.js';
 import {MODEL_KEY} from './short-learning.js';
 import {FinalRace,RACE_LEARNED,RACE_RULE,RACE_POLICY_NAMES,raceStrategy} from './final-race.js';
-import {FinalTrack,RACE_SEED,RACE_TARGET,createFinalTrack} from './final-track.js';
-import {RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView} from './race-record.js';
+import {FinalTrack,TRACK_VERSION,RACE_SEED,RACE_TARGET,createFinalTrack} from './final-track.js';
+import {MOTION_MODEL,RACE_RECORD_VERSION,isRaceScore,isRaceSensors,isReplayableRace,raceFrameView} from './race-record.js';
 import {createRaceReplay} from './race-replay.js';
 import {showRaceCall} from './race-call.js';
 
@@ -77,7 +77,7 @@ const playback=createMotionPlayback({world:showWorld,step:()=>race.step(),draw:d
 const replay=createRaceReplay($('raceReplay'),$('replayEvents'),visible);
 
 function showReplay(open){
-  $('liveRace').hidden=$('raceSetup').hidden=$('legacyEntry').hidden=open;
+  $('liveRace').hidden=$('raceSetup').hidden=open;
   $('replayKeyEvents').hidden=!open;
   $('openReplay').setAttribute('aria-expanded',String(open));
 }
@@ -88,33 +88,33 @@ function closeReplay(){
 }
 
 function summaryText(score,distance){
-  const reason=score.reason?` · ${score.reason}`:'';
-  return `${outcomeNames[score.outcome]}${reason} · ${score.distance.toFixed(1)} / ${distance} m · ${score.time.toFixed(1)} 秒 · 越障 ${score.passed}`;
+  return `${outcomeNames[score.outcome]} · ${score.distance.toFixed(1)} / ${distance} m · ${score.time.toFixed(1)} 秒 · 越障 ${score.passed}`;
 }
 function renderResult(){
   $('lastRace').hidden=!lastSummary;
   if(!lastSummary)return;
-  const {score,distance,sensors,kind,updates,trackSeed,frames,presentation}=lastSummary;
+  const {score,distance,sensors,kind}=lastSummary;
   text('resultStatus',summaryText(score,distance));
-  text('resultConfig',`${RACE_POLICY_NAMES[kind]}${updates===null?'':` · 冻结 ${updates} 次更新`} · ${sensorNames(sensors)} · 种子 ${trackSeed}`);
+  text('resultConfig',RACE_POLICY_NAMES[kind]+' · '+sensorNames(sensors));
   $('download').hidden=!lastRecord;
-  text('recordNote',lastRecord?
-    `${presentation.status==='complete'?'动作结束':'记录至退出'} · ${frames} 帧${recordSaved?'':' · 请在离开本页前下载'}`:
-    '当前标签页没有可用的完整比赛记录，仅可查看成绩摘要。');
+  const notice=!lastRecord?'仅可查看成绩摘要。':recordSaved?'':'请在离开本页前下载记录。';
+  text('recordNote',notice);
+  $('recordNote').hidden=!notice;
 }
 function renderPolicy(){
   const kind=busy()?race.strategy.kind:selection.value;
   const frozen=busy()?race.strategy:model;
   let note;
-  if(kind===RACE_RULE)note='规则参考负责越障选择，底层规则负责速度、转向、姿态和落脚。';
+  if(kind===RACE_RULE)note='';
   else if(kind===RACE_LEARNED&&frozen){
     const config=busy()?race.record.sensors:selectedSensors();
     const changed=keys.some(key=>!config[key]);
-    note=`Q 策略负责越障选择，底层规则负责速度、转向、姿态和落脚。冻结 ${frozen.model.updates} 次更新。`;
-    if(changed)note+='该模型使用四种感官训练，本场感官不同。';
-  }else if(kind===RACE_LEARNED)note='本机尚无可用的人形 Q 策略。可先去训练页，或主动选择规则参考。';
-  else note='感官默认来自第一章，可在赛前调整。';
+    note=`使用第 ${frozen.model.updates} 次更新后的策略。`;
+    if(changed)note+='训练用了四种感官，本场感官不同。';
+  }else if(kind===RACE_LEARNED)note='尚无可用的人形 Q 策略。请先训练或选择规则参考。';
+  else note='';
   text('policyNote',note);
+  $('policyNote').hidden=!note;
   $('goTraining').hidden=busy()||kind!==RACE_LEARNED||model!==null;
 }
 function render(){
@@ -142,17 +142,17 @@ function render(){
   $('start').hidden=active;
   $('start').disabled=selection.value===''||(selection.value===RACE_LEARNED&&!model);
   $('retry').hidden=active||!lastRecord;
+  if(lastRecord)text('retry',lastRecord.track.version===TRACK_VERSION&&lastRecord.motionModel===MOTION_MODEL?'同条件重试':'用原配置跑新版赛道');
   $('openReplay').hidden=active||!lastRecord;
   $('pause').hidden=$('exit').hidden=!active;
   text('pause',counting||playing?'暂停':countdown>0?'继续倒计时':'继续比赛');
   $('sensorSetup').disabled=selection.disabled=active;
-  $('fullView').hidden=active||standalone;
   if(score){
     const motion=active?` · ${STATE_NAMES[world.state]}`:'';
     text('status',summaryText(score,distance)+motion);
   }else if(active){
     text('status',counting?'起跑倒计时':playing?`${RACE_POLICY_NAMES[race.strategy.kind]} · ${STATE_NAMES[world.state]}`:'比赛已暂停');
-  }else text('status',selection.value?'准备起跑': '请先选择动作策略');
+  }else text('status',!selection.value?'请先选择动作策略':selection.value===RACE_LEARNED&&!model?'尚无已训练策略':'准备起跑');
   renderPolicy();
 }
 function drawStage(){
@@ -227,14 +227,8 @@ const book=parentBook?.origin===location.origin?parentBook:new URL('../'+bookEnt
 book.searchParams.delete('runner');book.searchParams.delete('lab');book.hash='design';
 $('standalone').hidden=!standalone;
 $('backToBook').href=book;
-const full=new URL(location.href);
-full.search=new URLSearchParams({view:'full',book:book.pathname.endsWith('/course.html')?'course.html':'index.html'});
-$('fullView').href=full;
 const trainingLink=new URL(book);trainingLink.hash='training';
 $('goTraining').href=trainingLink;
-const legacy=new URL(book);legacy.searchParams.set('lab','v2');
-$('legacy').href=legacy;
-text('raceConditions',`连续 ${showWorld().courseDistance} m · 目标速度 ${RACE_TARGET} m/s · 种子 ${RACE_SEED}`);
 
 $('start').addEventListener('click',()=>{
   model=availableModel();

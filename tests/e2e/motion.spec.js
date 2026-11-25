@@ -22,7 +22,8 @@ test('book page four opens curve practice with sensor choices and returns to the
  await book.locator('[data-sensor=camera]').click();
  await book.locator('[data-sensor=imu]').click();
  await page.getByRole('button',{name:'下一页'}).click();
- await book.locator('#motionLink').click();
+ await expect(book.locator('#motionLink')).toHaveCount(0);
+ await page.goto('/demo-motion.html?from=book&scene=curve&sensors=imu');
  await expect(page).toHaveURL(/demo-motion\.html\?from=book/);
  const trial=await snapshot(page);
  expect(trial.scene).toBe('curve');

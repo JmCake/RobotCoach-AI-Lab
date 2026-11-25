@@ -27,3 +27,15 @@ export function explainFall({cause='',sensors,scene,observation={},control={}}){
   }
   return sensors.imu?'我察觉身体在歪，也试着调整，可这次还是没稳住。':'身体慢慢歪了，我却没及时察觉，等想站稳时已经晚了。';
 }
+
+export function robotSpeech(world){
+  if(world.fallFeedback?.text)return world.fallFeedback.text;
+  if(world.finishFeedback?.text)return world.finishFeedback.text;
+  const cause=world.result?.reason;
+  if(!cause)return '';
+  if(cause.includes('偏离跑道'))return '我跑出了道线。';
+  if(cause.includes('时限'))return '我没能在规定时间内跑完。';
+  if(cause.includes('小腿撞上'))return '我的小腿撞上了矮栏。';
+  if(cause.includes('头部碰到'))return '我没蹲够低，头碰到了横梁。';
+  return explainFall({cause,sensors:world.sensors,scene:world.scene});
+}

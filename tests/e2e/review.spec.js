@@ -22,7 +22,7 @@ test('navigating away before the periodic save preserves the latest actual Q upd
  await frame(page).getByRole('button',{name:'开始',exact:true}).click();
  await expect.poll(async()=>Number(await frame(page).locator('#updates').textContent())).toBeGreaterThan(3);
  const updates=Number(await frame(page).locator('#updates').textContent());
- await page.getByRole('button',{name:'三 · AI闭环'}).click();
+ await page.locator('#openContents').click();await page.locator('#lessonList a[href="#loop"]').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:q:v1')));
  expect(saved?.updates||0).toBeGreaterThanOrEqual(updates);
  await page.goto('/?runner=legacy#training');
@@ -73,10 +73,15 @@ test('disabled feedback cannot move the robot back to perception during the acti
  await expect(f.getByRole('status')).toContainText('反馈回路断开');
 });
 
-test('unchanged imitation environment completes the demonstration and restores its real feedback',async({page})=>{
+test('completed imitation comparison restores on a narrow screen',async({page})=>{
+ await page.setViewportSize({width:320,height:740});await page.clock.install();
  await page.goto('/#imitation');const f=frame(page);
- await f.getByRole('button',{name:'观看模仿演示'}).click();
- await expect(f.getByRole('status')).toContainText('相同环境中，回放示范动作也能跨过障碍',{timeout:15000});
- await page.reload();
- await expect(frame(page).getByRole('status')).toContainText('相同环境中，回放示范动作也能跨过障碍');
+ await f.locator('#demo').click();await page.clock.runFor(14000);
+ await expect(f.locator('#change')).toBeVisible();
+ await f.locator('#change').click();await page.clock.runFor(7500);
+ const score='下一页换你来跑，栏架位置相同。';
+ await expect(f.getByRole('status')).toHaveText(score);
+ await page.reload();await expect(f.getByRole('status')).toHaveText(score);
+ await expect(f.locator('#secondCount')).toContainText('3 / 3');
+ expect(await f.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

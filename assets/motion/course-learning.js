@@ -1,7 +1,9 @@
+import {load} from '../state.js';
+import {lessonTrack,readLesson} from './imitation-lesson.js';
 import {MOTION_ACTION,STATE_NAMES} from './world.js';
 import {MotionRenderer} from './render.js';
 import {createMotionPlayback} from './playback.js';
-import {ACTION_NAMES,CONDITIONS,LESSON_SEED,ShortCourse,TEST_SEEDS,ruleAction} from './short-course.js';
+import {ACTION_NAMES,CONDITIONS,TEST_SEEDS,ruleAction} from './short-course.js';
 import {COMPARISON_KEY,MODEL_KEY,MotionTrainer,compareFrozen,createModel,freezePolicy,readModel} from './short-learning.js';
 
 const {forward,jump,duck}=MOTION_ACTION;
@@ -13,7 +15,9 @@ const play=$('play'),crouch=$('duck');
 let parentHidden=false,queuedJump=false,ducking=false,settled=false;
 let trainingFrame=null,comparisonFrame=null,dirty=false,stopAt=0;
 let status='',comparisonStatus='',auditUpdate=-1;
-let preview=new ShortCourse(LESSON_SEED),previewPolicy=null,report=null;
+const lesson=manual?readLesson(load().imitationLesson):null;
+const coachJump=lesson?.samples.find(sample=>sample.action===jump);
+let preview=lessonTrack(lesson?.moved),previewPolicy=null,report=null;
 let modelRaw=manual?null:readStorage(MODEL_KEY);
 let trainer=manual?null:new MotionTrainer(readModel(modelRaw));
 
@@ -66,7 +70,7 @@ function pausePreview(){
 }
 function resetPreview(){
   pausePreview();
-  preview=new ShortCourse(LESSON_SEED);
+  preview=lessonTrack(lesson?.moved);
   ducking=false;
   settled=false;
 }
@@ -118,7 +122,7 @@ function trainFrame(now){
   }
   if(trainer.learner.attempts>=stopAt){
     stopTraining();
-    status='本批训练结束。可以比较冻结后的训练前后成绩。';
+    status='本批训练结束，可比较成绩。';
     persistTraining();
   }else{
     trainingFrame=requestAnimationFrame(trainFrame);
@@ -139,7 +143,7 @@ function toggleTraining(){
   }else if(visible()){
     syncModel();
     if(trainer.learner.attempts>=stopAt)stopAt=trainer.learner.attempts+TRAIN_BATCH;
-    status='正在试错训练，每个动作完成后更新 Q 值。';
+    status='训练中';
     trainingFrame=requestAnimationFrame(trainFrame);
   }
   drawStage();
@@ -178,7 +182,7 @@ function renderTraining(){
   setText('attempts',String(learner.attempts));
   setText('updates',String(learner.updates));
   const latest=history.at(-1);
-  setText('lastEpisode',latest?`上轮 ${latest.reason} · 跨过 ${latest.passed} 个`:'');
+  setText('lastEpisode',latest?`上轮${latest.success?'完赛':'未通过'} · 跨过 ${latest.passed} 个`:'');
   $('reset').disabled=trainingFrame!==null;
   if(!$('trainingDetails').open||auditUpdate===learner.updates)return;
   auditUpdate=learner.updates;
@@ -290,11 +294,13 @@ function render(){
   const sensed=episode.observe().obstacle;
   setText('sensed',sensed&&sensed.distance>=0
     ? `${sensed.source==='lidar'?'激光测距':'摄像头'} · ${sensed.type==='beam'?'横梁':'矮栏'} ${sensed.distance.toFixed(1)} m`
-    : '前方暂无障碍读数');
-  const outcome=result?(result.success?'已过终点':`未通过 · ${result.reason}`):'';
+    : '');
+  $('sensed').hidden=!sensed||sensed.distance<0;
+  const outcome=result?(result.success?'已过终点':'未通过'):'';
   const action=episode.rejected?'腾空中，未重复起跳':`动作 · ${ACTION_NAMES[episode.action]}`;
-  const feedback=training?status:(status||outcome||(world.time>0?action:'等待开始试跑。'));
-  setText('feedback',feedback||'从本机训练表继续。');
+  const feedback=status||(training?'':outcome||(world.time>0?action:coachJump?`教练在距第一栏 ${coachJump.distance.toFixed(1)} 米时起跳。`:''));
+  setText('feedback',feedback);
+  $('feedback').hidden=!feedback;
   $('feedback').dataset.outcome=result?(result.success?'passed':'failed'):'pending';
   $('feedback').dataset.action=String(episode.action);
   crouch.setAttribute('aria-pressed',String(ducking));
@@ -310,7 +316,7 @@ function render(){
     setText('roles',$('policy').value==='rule'
       ? '预览中，规则参考决定越障动作。底层规则仍负责速度、姿态和落脚。'
       : '学习策略决定前进、跳跃或下蹲。规则控制负责速度、姿态和落脚。');
-    setText('comparisonStatus',comparisonStatus||`当前训练表 ${trainer.learner.updates} 次更新。两份策略关闭探索，比较期间冻结 Q 表。`);
+    setText('comparisonStatus',comparisonStatus||`已更新 ${trainer.learner.updates} 次。对照时暂停学习和探索。`);
   }
 }
 function drawStage(){
@@ -335,19 +341,6 @@ $('jump').hidden=crouch.hidden=!manual;
 setText('conditions',`越障短道 · ${CONDITIONS.distance} m · 目标速度 ${CONDITIONS.target} m/s · 摄像头、激光测距、IMU、足底力觉`);
 setText('roles',manual?'你决定前进、跳跃或下蹲。规则控制负责速度、姿态和落脚。':
   '学习策略决定前进、跳跃或下蹲。规则控制负责速度、姿态和落脚。');
-setText('modeNotes',manual?'空格或 ↑ 跳跃，↓ 切换下蹲。手动试跑独立于训练。':
-  training?`每批训练 ${TRAIN_BATCH} 轮。离页或刷新后保留 Q 表和已完成轮次，未完成的一轮从同一赛道起点重来。`:
-  `预览使用种子 ${LESSON_SEED}。比较使用种子 ${TEST_SEEDS[0]}–${TEST_SEEDS.at(-1)}，独立于训练赛道。`);
-
-const pageId=training?'training':showcase?'showcase':'manual';
-const book=new URL(document.referrer||'../index.html',location.href);
-if(book.origin===location.origin&&window!==parent){
-  book.hash='showcase';
-  $('showcaseLink').href=book;
-  book.hash=pageId;
-  book.searchParams.set('runner','legacy');
-  $('legacy').href=book;
-}else $('legacy').href='runner.html?mode='+(training?'train':pageId);
 play.addEventListener('click',training?toggleTraining:togglePreview);
 $('retry').addEventListener('click',()=>{resetPreview();status='';drawStage();});
 $('jump').addEventListener('click',requestJump);

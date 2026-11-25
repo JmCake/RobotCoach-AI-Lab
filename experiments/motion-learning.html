@@ -9,15 +9,14 @@
   <link rel="stylesheet" href="../assets/motion/course-learning.css">
 </head>
 <body>
-  <p id="conditions" class="muted trial-conditions"></p>
-  <p id="roles" class="trial-sensors"></p>
   <div class="course-motion-grid">
     <div class="course-track">
       <canvas id="motionCanvas" tabindex="0" aria-label="双足人形机器人越过矮栏与横梁"></canvas>
+      <p class="track-speech" role="status" hidden></p>
       <section id="pairedTracks" aria-labelledby="pairedTitle" hidden>
         <header><h2 id="pairedTitle">同场对照</h2></header>
         <div class="pair-score"><span>训练前完赛<strong id="beforeTotal"></strong></span><b aria-hidden="true">→</b><span>训练后完赛<strong id="afterTotal"></strong></span></div>
-        <p class="pair-legend">每格一条赛道，上排训练前，下排训练后。✓ 完赛，× 未通过。</p>
+        <p class="pair-legend">上排训练前，下排训练后。✓ 完赛，× 未通过。</p>
         <div id="trackPairs"></div>
         <p id="pairReading" role="status"></p>
         <div id="comparison" hidden>
@@ -69,9 +68,8 @@
           <span>Q 更新 <strong id="updates"></strong></span>
           <span id="lastEpisode"></span>
         </div>
-        <a href="#showcase" id="showcaseLink" target="_top">比较训练前后 →</a>
         <details class="lab-details" id="trainingDetails">
-          <summary>奖励规则与真实 Q 更新</summary>
+          <summary>训练详情</summary>
           <p class="muted">每跨过一个障碍 +8，过线 +4，失败 −12。实际起跳 −0.03，每次下蹲决策 −0.02。</p>
           <p class="muted" id="exploration"></p>
           <p class="muted" id="rewardBreakdown"></p>
@@ -85,10 +83,9 @@
         </details>
       </section>
       <details class="lab-details">
-        <summary>实验条件与操作</summary>
-        <p class="muted">物理每秒更新 120 次，每 0.1 秒选择一次动作。跳跃在该次决策开始时发出，腾空时拒绝再次起跳；下蹲保持到下一次决策。</p>
-        <p class="muted" id="modeNotes"></p>
-        <a id="legacy" target="_top" href="runner.html">打开旧版 Runner 实验</a>
+        <summary>试跑条件</summary>
+        <p id="conditions" class="muted"></p>
+        <p id="roles" class="muted"></p>
       </details>
     </div>
   </div>

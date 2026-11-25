@@ -23,10 +23,10 @@ for(const mobile of [false,true])test(`${mobile?'mobile touch':'desktop'}: all n
  }
  await expect(page.getByRole('button',{name:'下一页'})).toBeDisabled();
  await page.getByRole('button',{name:'上一页'}).click();await expect(page).toHaveURL(/#loop$/);
- await page.getByRole('button',{name:'二 · 学习与训练'}).click();await expect(page).toHaveURL(/#imitation$/);
+ await page.locator('#openContents').click();await page.locator('#lessonList a[href="#imitation"]').click();await expect(page).toHaveURL(/#imitation$/);
  await page.reload();await expect(page).toHaveURL(/#imitation$/);await expect(page.getByText('04 / 9')).toBeVisible();
  await page.goto('/');await expect(page).toHaveURL(/#imitation$/);
- await page.getByRole('button',{name:'三 · AI闭环'}).click();await expect(page).toHaveURL(/#loop$/);
+ await page.locator('#openContents').click();await page.locator('#lessonList a[href="#loop"]').click();await expect(page).toHaveURL(/#loop$/);
  expect(errors).toEqual([]);expect(external).toEqual([]);
 });
 test('diagnosis locks the physical result, finishes falling and restores the score',async({page})=>{
@@ -35,11 +35,13 @@ test('diagnosis locks the physical result, finishes falling and restores the sco
  await expect(f.locator('#baselineResult')).toContainText('尚未测试');
  await f.getByRole('button',{name:'会失误'}).click();
  await expect(f.locator('#verdict')).toBeHidden();
- await f.locator('#play').click();await page.clock.runFor(5650);
- await expect(f.locator('#baselineResult')).toContainText('未通过 · 偏离跑道边界 · 24.2 / 40 m');
- await expect(f.locator('#verdict')).toContainText('猜中了！跑到 24.2 米');
+ await f.locator('#play').click();await page.clock.runFor(3600);
+ await expect(f.locator('#baselineResult')).toContainText('未通过 · 14.9 / 40 m');
+ await expect(f.locator('#verdict')).toContainText('猜中了！跑到 14.9 米');
+ await expect(f.locator('.trial-stage .track-speech')).toContainText('我看见弯道了');
+ await expect(f.locator('.trial-console')).not.toContainText('重心超出支撑范围');
  const savedAtVerdict=await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).chapter1BaselineRun);
- expect(savedAtVerdict.result.distance.toFixed(1)).toBe('24.2');
+ expect(savedAtVerdict.result.distance.toFixed(1)).toBe('14.9');
  await expect(f.getByRole('button',{name:'能完赛'})).toBeDisabled();
  const lockedDistance=await f.locator('#distance').textContent();
  await expect(f.locator('#play')).toHaveText('暂停');
@@ -48,11 +50,20 @@ test('diagnosis locks the physical result, finishes falling and restores the sco
  await expect(f.locator('#distance')).toHaveText(lockedDistance);
  await expect(f.locator('#baselineResult')).toContainText('摔倒 1 次');
  await page.screenshot({path:`${evidence}/chapter1-desktop-initial.png`,fullPage:true});
+ for(const width of [1280,320]){
+   await page.setViewportSize({width,height:800});
+   const bubble=f.locator('.track-speech'),canvas=f.locator('#motionCanvas');
+   await expect(bubble).toBeVisible();
+   await expect.poll(async()=>{
+     const b=await bubble.boundingBox(),c=await canvas.boundingBox();
+     return b.x>=c.x&&b.y>=c.y&&b.x+b.width<=c.x+c.width+1&&b.y+b.height<=c.y+c.height+1;
+   }).toBe(true);
+ }
  const stored=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).chapter1BaselineRun);
  const first=await stored();
  await page.reload();
  await expect(f.locator('#baselineResult')).toHaveAttribute('data-outcome','failed');
- await f.locator('#play').click();await page.clock.runFor(9000);
+ await f.locator('#play').click();await page.clock.runFor(12000);
  await expect(f.locator('#play')).toHaveText('重新试跑');
  expect(await stored()).toEqual(first);
 });
@@ -91,19 +102,19 @@ test('discover, visibly install and remove sensor parts, then compare runs',asyn
  const {chapter1BaselineRun:baseline,chapter1StudentRun:student,sensors}=await saved();
  expect(sensors).toEqual({camera:true,lidar:true,imu:true,force:true});
  expect(baseline.conditions).toEqual(student.conditions);
- expect(baseline.conditions).toEqual({scene:'curve',seed:2026,distance:40,target:6.4,controller:'motion-rule-v1'});
- expect(baseline.result).toMatchObject({success:false,offTrack:true,falls:1,sensors:{camera:true,lidar:false,imu:false,force:false}});
+ expect(baseline.conditions).toEqual({scene:'curve',seed:2026,distance:40,target:6.4,controller:'motion-rule-v1',layout:'stadium-semicircle-v1',physics:'turn-load-v2'});
+ expect(baseline.result).toMatchObject({success:false,offTrack:false,falls:1,sensors:{camera:true,lidar:false,imu:false,force:false}});
  expect(student.result).toMatchObject({success:true,distance:40,sensors});
  await trial.getByRole('button',{name:'我的配置'}).click();
  await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
  await page.screenshot({path:`${evidence}/chapter1-desktop-comparison.png`,fullPage:true});
- await expect(trial.locator('#distanceDelta')).toContainText('多跑了 15.8 米');
- await expect(trial.locator('#baselineLane output')).toHaveText('24.2 m');
+ await expect(trial.locator('#distanceDelta')).toContainText('多跑了 25.1 米');
+ await expect(trial.locator('#baselineLane output')).toHaveText('14.9 m');
  await expect(trial.locator('#studentLane output')).toHaveText('40.0 m');
  await page.reload();
  await expect(trial.locator('#studentResult')).toHaveAttribute('data-outcome','passed');
  // Page 1 uses the initial camera-only snapshot after the student has installed all four modules.
- await page.getByRole('button',{name:'一 · 感知与选拔'}).click();
+ await page.locator('#openContents').click();await page.locator('#lessonList a[href="#diagnosis"]').click();
  await expect(trial.locator('#installed')).toHaveText('本次使用：摄像头');
  expect((await saved()).sensors).toEqual(sensors);
  expect((await saved()).chapter1StudentRun).toEqual(student);
@@ -124,7 +135,7 @@ test('class contents pauses a live lesson and jumps directly to the final',async
  await expect(f.locator('#distance')).not.toHaveText('0.0 / 40 m');
  await page.getByRole('button',{name:'课堂目录'}).click();
  const contents=page.getByRole('dialog');
- await expect(contents.getByRole('link')).toHaveCount(9);
+ await expect(contents.locator('#lessonList a')).toHaveCount(9);
  await expect(f.locator('#play')).toHaveText('继续试跑');
  await page.keyboard.press('Escape');
  await expect(contents).toBeHidden();
@@ -193,8 +204,25 @@ test('real browser training updates Q, survives refresh, freezes showcase, reset
  await page.getByRole('button',{name:'下一页'}).click();await frame(page).getByRole('button',{name:'开始',exact:true}).click();await page.waitForTimeout(2500);await frame(page).getByRole('button',{name:'暂停',exact:true}).click();const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:q:v1')));expect(after).toEqual(saved);
  await page.getByRole('button',{name:'上一页'}).click();await frame(page).getByRole('button',{name:'重置训练'}).click();await expect(frame(page).locator('#updates')).toHaveText('0');await expect(frame(page).locator('#attempts')).toHaveText('0');expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:q:v1')).q)).toEqual({});
 });
-test('imitation shows changed environment limitation and labels teaching replay',async({page})=>{
- await page.goto('/#imitation');const f=frame(page);await expect(f.getByText('没有训练独立的行为克隆模型',{exact:false})).toBeVisible();await f.getByRole('button',{name:'改变障碍位置'}).click();await f.getByRole('button',{name:'观看模仿演示'}).click();await expect(f.getByRole('status')).toContainText('模仿者撞上地面障碍',{timeout:15000});
+test('one demonstration teaches an independent jump and duck policy',async({page})=>{
+ await page.clock.install();
+ await page.goto('/#imitation');const f=frame(page);
+ await f.locator('#demo').click();
+ await expect(f.locator('#firstTitle')).toHaveText('教练示范');
+ await page.clock.runFor(14000);
+ await expect(f.locator('#firstCount')).toContainText('0 / 3');
+ await expect(f.locator('#secondCount')).toContainText('3 / 3');
+ const snapshot=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).imitationLesson.samples);
+ const learned=await snapshot();expect(learned.length).toBeGreaterThan(0);
+ await f.locator('#change').click();await page.clock.runFor(7500);
+ await expect(f.locator('#secondCount')).toContainText('3 / 3');
+ await expect(f.locator('#feedback')).toHaveText('下一页换你来跑，栏架位置相同。');
+ expect(await snapshot()).toEqual(learned);
+ await page.locator('#next').click();await expect(page).toHaveURL(/#manual$/);
+ await expect(f.locator('#feedback')).toContainText('教练在距第一栏 2.8 米时起跳');
+ await f.locator('#play').click();await page.clock.runFor(3450);
+ await expect(f.locator('#feedback')).toHaveAttribute('data-outcome','failed');
+ await expect(f.locator('#distance')).toHaveText('9.9 / 32 m');
 });
 for(const mobile of [false,true])test(`${mobile?'mobile':'desktop'} loop drag/tap assembly, feedback connection, restore`,async({page})=>{
  if(mobile)await page.setViewportSize({width:390,height:844});await page.goto('/#loop');const f=frame(page);
@@ -225,7 +253,7 @@ test('graphical design restores five selections and ends with concise summary',a
  await page.setViewportSize({width:390,height:844});await page.goto('/?lab=v2#design');const f=frame(page);await f.locator('#designActivity > summary').click();for(const name of ['公园','巡检避障','激光雷达','自主试错','异常停车'])await f.getByRole('button',{name,exact:true}).click();await expect(f.locator('#result')).toContainText('在公园中巡检避障');await expect(f.locator('#result')).toContainText('异常停车');await page.reload();await frame(page).locator('#designActivity > summary').click();await expect(frame(page).getByRole('button',{name:'公园',exact:true})).toHaveAttribute('aria-pressed','true');await page.screenshot({path:`${evidence}/mobile-design.png`,fullPage:true});
 });
 test('leaving training destroys the frame and stops updates; hidden document pauses',async({page})=>{
- await page.goto('/?runner=legacy#training');const f=frame(page);await f.getByRole('button',{name:'开始',exact:true}).click();await expect.poll(async()=>Number(await f.locator('#updates').textContent())).toBeGreaterThan(1);await page.evaluate(()=>document.getElementById('experiment').contentWindow.postMessage({type:'robotcoach:visibility',hidden:true},location.origin));await expect(f.getByRole('button',{name:'继续',exact:true})).toBeVisible();const paused=await f.locator('#updates').textContent();await page.waitForTimeout(300);await expect(f.locator('#updates')).toHaveText(paused);await f.getByRole('button',{name:'继续',exact:true}).click();await page.getByRole('button',{name:'三 · AI闭环'}).click();const before=await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'));await page.waitForTimeout(800);expect(await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'))).toBe(before);expect(page.frames().filter(f=>f.url().includes('runner.html'))).toHaveLength(0);
+ await page.goto('/?runner=legacy#training');const f=frame(page);await f.getByRole('button',{name:'开始',exact:true}).click();await expect.poll(async()=>Number(await f.locator('#updates').textContent())).toBeGreaterThan(1);await page.evaluate(()=>document.getElementById('experiment').contentWindow.postMessage({type:'robotcoach:visibility',hidden:true},location.origin));await expect(f.getByRole('button',{name:'继续',exact:true})).toBeVisible();const paused=await f.locator('#updates').textContent();await page.waitForTimeout(300);await expect(f.locator('#updates')).toHaveText(paused);await f.getByRole('button',{name:'继续',exact:true}).click();await page.locator('#openContents').click();await page.locator('#lessonList a[href="#loop"]').click();const before=await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'));await page.waitForTimeout(800);expect(await page.evaluate(()=>localStorage.getItem('robotcoach:q:v1'))).toBe(before);expect(page.frames().filter(f=>f.url().includes('runner.html'))).toHaveLength(0);
 });
 test('iframe changes survive parent navigation without an intervening refresh',async({page})=>{
  await page.goto('/#discovery');await frame(page).getByRole('button',{name:'发现激光雷达'}).click();for(const type of ['lidar','imu','force'])await frame(page).locator(`[data-sensor="${type}"]`).click();await page.getByRole('button',{name:'下一页'}).click();await expect(frame(page).locator('#installed')).toContainText('激光测距、姿态传感器 IMU、足底力觉');await page.reload();await expect(frame(page).locator('#installed')).toContainText('激光测距');expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('robotcoach:v1')).discovered)).toContain('lidar');
@@ -245,7 +273,7 @@ test('phone touch controls operate sensors, jump, assembly and node switches',as
  await page.goto(baseURL+'/?runner=legacy#manual');await f.getByRole('button',{name:'开始',exact:true}).tap();
  await f.getByRole('button',{name:'↑ 跳跃'}).tap();await f.getByRole('button',{name:'↓ 下蹲'}).tap();
  await expect(f.getByRole('button',{name:'↓ 下蹲'})).toHaveAttribute('aria-pressed','true');
- await page.getByRole('button',{name:'三 · AI闭环'}).tap();
+ await page.locator('#openContents').tap();await page.locator('#lessonList a[href="#loop"]').tap();
  for(const type of ['sense','decision','action']){await f.locator(`[data-module="${type}"]`).tap();await f.locator(`[data-target="${type}"]`).tap();}
  await f.locator('#submitBtn').tap();await expect(f.getByRole('status')).toContainText('一次行动结束');
  await f.locator('.node.action').tap();await f.locator('.node.sense').tap();

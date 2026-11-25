@@ -4,9 +4,9 @@ import {DT} from './world.js';
 export function showRaceCall(element,record,tick) {
   let caption='',tone='';
   if(record?.score&&tick>=record.score.tick){
-    const {outcome,reason,distance}=record.score;
+    const {outcome,distance}=record.score;
     tone=outcome;
-    const label=outcome==='finished'?'冲线':outcome==='aborted'?'退出比赛':reason||'本场未通过';
+    const label=outcome==='finished'?'冲线':outcome==='aborted'?'退出比赛':'本场未通过';
     caption=`${label} · ${distance.toFixed(1)} m`;
   }else if(record){
     const event=record.events.findLast(event=>event.tick<=tick&&(tick-event.tick)*DT<=1.5&&

@@ -12,6 +12,7 @@
     <div class="trial-field">
       <div class="course-track trial-stage">
         <canvas id="motionCanvas" aria-label="双足人形机器人在红色急弯跑道上试跑"></canvas>
+        <p class="track-speech" role="status" hidden></p>
         <span id="motionState" class="track-state"></span>
       </div>
       <div class="distance-lanes" aria-label="40 米试跑距离对照">
@@ -41,13 +42,6 @@
         <div id="studentResult" class="feedback" role="status" hidden></div>
         <div id="baselineResult" class="feedback" role="status"></div>
       </div>
-      <p id="runFeedback" class="muted" hidden></p>
-      <details class="trial-details">
-        <summary>试跑条件</summary>
-        <p id="conditions"></p>
-        <p>离开本页后，未完成的试跑会从起点重来。</p>
-      </details>
-      <p id="demoEntry" class="trial-link" hidden><a id="motionLink" href="../demo-motion.html" target="_top">打开独立人形机器人 Demo →</a></p>
     </aside>
   </main>
   <script type="module" src="../assets/motion/course-trial.js"></script>

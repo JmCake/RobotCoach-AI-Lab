@@ -12,7 +12,7 @@
 <main>
   <header id="standalone" hidden>
     <a id="backToBook" href="../index.html#design">← 返回课堂总决赛</a>
-    <h1>终极挑战：让机器人跑向终点</h1>
+    <h1>终极挑战：带你的机器人跑完六段赛道</h1>
   </header>
   <div class="course-motion-grid race-layout">
     <section id="raceSetup" class="race-setup" aria-label="选择比赛配置">
@@ -37,13 +37,10 @@
       <a id="goTraining" href="../index.html#training" target="_top" hidden>去训练页 →</a>
     </section>
     <section id="liveRace" aria-label="比赛画面">
-      <div class="race-top">
-        <p id="raceConditions" class="muted"></p>
-        <a id="fullView" target="_top" href="?view=full">独立打开 ↗</a>
-      </div>
       <ol class="race-segments" id="segments" aria-label="六个连续赛段"></ol>
       <div class="course-track race-stage">
         <canvas id="motionCanvas" aria-label="红色跑道上的双足人形机器人"></canvas>
+        <p class="track-speech" role="status" hidden></p>
         <div class="broadcast-head"><strong id="segment"></strong><span id="raceTime"></span></div>
         <p class="broadcast-call" id="liveCall" hidden></p>
         <div id="countdown" class="countdown" hidden></div>
@@ -62,6 +59,7 @@
       </header>
       <div class="course-track race-stage">
         <canvas id="replayCanvas" aria-label="按本场记录重绘的机器人和赛道"></canvas>
+        <p class="track-speech" role="status" hidden></p>
         <div class="broadcast-head"><strong id="replaySegment"></strong><span>回放</span></div>
         <p class="broadcast-call" id="replayCall" hidden></p>
       </div>
@@ -100,10 +98,6 @@
         <h3 id="replayEventsTitle">关键事件</h3>
         <ul class="replay-events" id="replayEvents"></ul>
       </section>
-      <details id="legacyEntry" class="race-legacy">
-        <summary>原 V2 综合实验与课程总结</summary>
-        <a id="legacy" data-v2-book href="../index.html?lab=v2#design" target="_top">打开 V2 实验和图形化方案 →</a>
-      </details>
     </div>
   </div>
 </main>
