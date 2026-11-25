@@ -1,0 +1,7 @@
+ffconcat version 1.0
+file 'outer-0.mp4'
+duration 59.900000
+file 'painted.mp4'
+duration 62.700000
+file 'outer-2.mp4'
+duration 9.600000

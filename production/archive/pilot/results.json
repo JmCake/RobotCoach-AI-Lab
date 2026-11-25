@@ -1,0 +1,112 @@
+{
+  "base": {
+    "success": false,
+    "reason": "转弯侧倾 · 重心超出支撑范围",
+    "distance": 14.904293033029921,
+    "time": 3.383333333333324,
+    "collisions": 0,
+    "falls": 1,
+    "offTrack": false,
+    "attempt": 1,
+    "sensors": {
+      "camera": true,
+      "lidar": false,
+      "imu": false,
+      "force": false
+    }
+  },
+  "failed": {
+    "success": false,
+    "reason": "转弯侧倾 · 重心超出支撑范围",
+    "distance": 14.904293033029921,
+    "time": 3.383333333333324,
+    "collisions": 0,
+    "falls": 1,
+    "offTrack": false,
+    "attempt": 1,
+    "sensors": {
+      "camera": true,
+      "lidar": true,
+      "imu": false,
+      "force": false
+    }
+  },
+  "monitor": {
+    "result": {
+      "success": false,
+      "reason": "转弯侧倾 · 重心超出支撑范围",
+      "distance": 14.904293033029921,
+      "time": 3.383333333333324,
+      "collisions": 0,
+      "falls": 1,
+      "offTrack": false,
+      "attempt": 1,
+      "sensors": {
+        "camera": true,
+        "lidar": false,
+        "imu": true,
+        "force": false
+      }
+    },
+    "tilt": 44.143455431178495,
+    "slip": null,
+    "sawBend": true,
+    "sawObject": false,
+    "correction": false,
+    "monitor": true,
+    "guess": "foot",
+    "guessText": "也许问题出在脚底打滑。"
+  },
+  "connected": {
+    "result": {
+      "success": true,
+      "distance": 40,
+      "time": 7.308333333333486,
+      "collisions": 0,
+      "falls": 0,
+      "offTrack": false,
+      "attempt": 1,
+      "sensors": {
+        "camera": true,
+        "lidar": false,
+        "imu": true,
+        "force": false
+      }
+    },
+    "tilt": 7.846498140669613,
+    "slip": null,
+    "sawBend": true,
+    "sawObject": false,
+    "correction": true,
+    "monitor": false,
+    "guess": "foot",
+    "guessText": "也许问题出在脚底打滑。"
+  },
+  "mobileRun": {
+    "result": {
+      "success": true,
+      "distance": 40,
+      "time": 7.308333333333486,
+      "collisions": 0,
+      "falls": 0,
+      "offTrack": false,
+      "attempt": 1,
+      "sensors": {
+        "camera": true,
+        "lidar": false,
+        "imu": true,
+        "force": true
+      }
+    },
+    "tilt": 7.846498140669613,
+    "slip": 0,
+    "sawBend": true,
+    "sawObject": false,
+    "correction": true,
+    "monitor": false,
+    "guess": "lean",
+    "guessText": "也许它没察觉身体已经歪了。"
+  },
+  "consoleErrors": [],
+  "requestErrors": []
+}

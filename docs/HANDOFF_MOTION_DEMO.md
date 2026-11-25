@@ -192,7 +192,7 @@ npm run dev
 npm test
 npm run check
 $env:PORT='4190'
-$env:PLAYWRIGHT_CHROMIUM_EXECUTABLE='C:/Users/Stone One/AppData/Local/ms-playwright/chromium-1255/chrome-win64/chrome.exe'
+$env:PLAYWRIGHT_CHROMIUM_EXECUTABLE='<本机浏览器缓存>/chromium-1255/chrome-win64/chrome.exe'
 node node_modules/@playwright/test/cli.js test tests/e2e/motion.spec.js
 npm run build
 node scripts/evaluate-motion.mjs
@@ -212,7 +212,7 @@ node scripts/evaluate-motion.mjs C:\Temp\motion-results.json
 
 证据根目录（仓库外，未提交图片/JSON）：
 
-`C:\Users\Stone One\.codex\visualizations\2026\11\19\01a1f1e9-c7f8-70e1-8d1e-36f7d92f2f2f`
+`本机历史验收截图目录`
 
 优先看这些文件：
 

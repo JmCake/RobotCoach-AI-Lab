@@ -1,8 +1,8 @@
 import {LESSON_SEED,ShortCourse} from './short-course.js';
 import {MOTION_ACTION} from './world.js';
 
-export function lessonTrack(moved=false){
-  const course=new ShortCourse(LESSON_SEED);
+export function lessonTrack(moved=false,sensors){
+  const course=new ShortCourse(LESSON_SEED,{sensors});
   if(moved)course.world.obstacles[0].x-=2;
   return course;
 }

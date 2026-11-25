@@ -1,0 +1,24 @@
+﻿开始秒,结束秒,镜头,母片
+0,5,初代机入场,films/robot-evolution/robot-evolution-v6.mp4
+5,22.2,起跑、入弯、失衡,films/robot-evolution/robot-evolution-v6.mp4
+22.2,25.9,安装 IMU,films/robot-evolution/robot-evolution-v6.mp4
+25.9,31.3,同弯复测,films/robot-evolution/robot-evolution-v6.mp4
+31.3,33.8,白天矮栏,films/robot-evolution/robot-evolution-v6.mp4
+33.8,38.4,弱光,films/robot-evolution/robot-evolution-v6.mp4
+38.4,41.9,安装雷达,films/robot-evolution/robot-evolution-v6.mp4
+41.9,47.7,弱光复测,films/robot-evolution/robot-evolution-v6.mp4
+47.7,51.5,凹凸,films/robot-evolution/robot-evolution-v6.mp4
+51.5,55.1,安装足底力觉,films/robot-evolution/robot-evolution-v6.mp4
+55.1,59.9,凹凸复测,films/robot-evolution/robot-evolution-v6.mp4
+59.9,64.9,规则教练,films/robot-evolution/robot-evolution-v6.mp4
+64.9,70,交棒,films/robot-evolution/robot-evolution-v6.mp4
+70,76.1,首次试错,films/robot-evolution/robot-evolution-v6.mp4
+76.1,83.1,前进观察,films/robot-evolution/robot-evolution-v6.mp4
+83.1,90,探索起跳,films/robot-evolution/robot-evolution-v6.mp4
+90,94.9,动作评分,films/robot-evolution/robot-evolution-v6.mp4
+94.9,101.9,同栏距离对照,films/robot-evolution/robot-evolution-v6.mp4
+101.9,106.1,碰低梁,films/robot-evolution/robot-evolution-v6.mp4
+106.1,111.4,钻低梁,films/robot-evolution/robot-evolution-v6.mp4
+111.4,118.6,冻结测试,films/robot-evolution/robot-evolution-v6.mp4
+118.6,122.6,成绩,films/robot-evolution/robot-evolution-v6.mp4
+122.6,132.2,栈道巡检,films/robot-evolution/robot-evolution-v6.mp4

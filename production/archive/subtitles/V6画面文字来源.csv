@@ -1,0 +1,245 @@
+﻿源文件,函数,行号,现存画面文字或模板
+films/robot-evolution/source/classroom.py,instruments,93,此刻的传感器读数
+films/robot-evolution/source/classroom.py,instruments,95,探测范围内无障碍
+films/robot-evolution/source/classroom.py,instruments,100,雷达
+films/robot-evolution/source/classroom.py,instruments,104,足底
+films/robot-evolution/source/classroom.py,instruments,103, 米/秒   倾角 
+films/robot-evolution/source/classroom.py,instruments,97,已到身侧
+films/robot-evolution/source/classroom.py,instruments,99, 米
+films/robot-evolution/source/classroom.py,instruments,105,双脚离地
+films/robot-evolution/source/classroom.py,instruments,105,单脚支撑
+films/robot-evolution/source/classroom.py,instruments,105,双脚支撑
+films/robot-evolution/source/classroom.py,instruments,97,矮栏
+films/robot-evolution/source/classroom.py,instruments,97,低梁
+films/robot-evolution/source/classroom.py,instruments,99,矮栏
+films/robot-evolution/source/classroom.py,instruments,99,低梁
+films/robot-evolution/source/classroom.py,reading,122,选择动作时     
+films/robot-evolution/source/classroom.py,reading,122, 米     IMU 测速 
+films/robot-evolution/source/classroom.py,reading,122, 米/秒     足底
+films/robot-evolution/source/classroom.py,reading,122,已着地
+films/robot-evolution/source/classroom.py,reading,122,已离地
+films/robot-evolution/source/classroom.py,rule,131,越障演示  /  人写的规则
+films/robot-evolution/source/classroom.py,rule,134,先看原来的程序怎样跨栏。
+films/robot-evolution/source/classroom.py,rule,134,传感器报告前方的栏距、身体速度和脚是否着地。
+films/robot-evolution/source/classroom.py,rule,136,规则发令  ·  起跳
+films/robot-evolution/source/classroom.py,rule,137,人写好条件，栏够近、脚已着地就起跳。
+films/robot-evolution/source/classroom.py,rule,139,前脚落地，膝盖屈一下，再迈出下一步。
+films/robot-evolution/source/classroom.py,rule,139,起跳时机由规则给出，落脚和恢复跑姿由运动控制器执行。
+films/robot-evolution/source/classroom.py,handover,148,强化学习  /  动作选择
+films/robot-evolution/source/classroom.py,handover,149,让它自己找起跳时机
+films/robot-evolution/source/classroom.py,handover,150,四件传感器继续工作，原控制器照管平衡和落脚。
+films/robot-evolution/source/classroom.py,handover,151,撤下越障规则，动作评分从零开始。
+films/robot-evolution/source/classroom.py,handover,156,训练时可以试不同的动作。
+films/robot-evolution/source/classroom.py,handover,156,碰栏扣 12 分，越过一个障碍加 8 分。下一轮从起点跑，保留学到的评分。
+films/robot-evolution/source/classroom.py,handover,153,前进
+films/robot-evolution/source/classroom.py,handover,153,起跳
+films/robot-evolution/source/classroom.py,handover,153,下蹲
+films/robot-evolution/source/classroom.py,early,161,训练节选  /  第 3 轮
+films/robot-evolution/source/classroom.py,early,163,矮栏已经进入雷达的探测范围。
+films/robot-evolution/source/classroom.py,early,163,动作表还在探索。看看这次从哪里起跳。
+films/robot-evolution/source/classroom.py,early,166,这次在离栏较远时就跳了。
+films/robot-evolution/source/classroom.py,early,168,小腿碰栏  −12
+films/robot-evolution/source/classroom.py,early,169,跳早了。前脚过去，后面的小腿在下落时碰栏。
+films/robot-evolution/source/classroom.py,early,169,这一轮到这里结束。下一轮会从起点再跑。
+films/robot-evolution/source/classroom.py,early,165,随机探索  ·  起跳
+films/robot-evolution/source/classroom.py,early,165,仍在上升
+films/robot-evolution/source/classroom.py,early,165,已经下落
+films/robot-evolution/source/classroom.py,forward,174,第 6 轮  /  从起点重跑
+films/robot-evolution/source/classroom.py,forward,174,第 6 轮  /  栏前慢放
+films/robot-evolution/source/classroom.py,forward,176,第 6 轮，从起点重跑。
+films/robot-evolution/source/classroom.py,forward,176,看栏前的最后几步。雷达持续测距，足底传感器报告哪只脚着地。
+films/robot-evolution/source/classroom.py,forward,178,选择前进
+films/robot-evolution/source/classroom.py,forward,179,栏就在前面，脚也已着地，这次它继续跑。
+films/robot-evolution/source/classroom.py,forward,183,小腿碰栏  −12
+films/robot-evolution/source/classroom.py,forward,184,上一次选动作时，距栏 
+films/robot-evolution/source/classroom.py,forward,184, 米。它继续跑，随即碰栏。
+films/robot-evolution/source/classroom.py,forward,185,把这次结果记回动作表。这种情况下，“前进”的评分由 
+films/robot-evolution/source/classroom.py,forward,185, 降到 
+films/robot-evolution/source/classroom.py,explore,190,第 7 轮  /  从起点重跑
+films/robot-evolution/source/classroom.py,explore,190,第 7 轮  /  栏前慢放
+films/robot-evolution/source/classroom.py,explore,192,回到起点，再试一次。
+films/robot-evolution/source/classroom.py,explore,192,栏架位置略有变化，控制平衡和落脚的程序照常运行。
+films/robot-evolution/source/classroom.py,explore,195,在相近的距离，这一轮试了另一个动作。
+films/robot-evolution/source/classroom.py,explore,194,随机探索  ·  这次试跳
+films/robot-evolution/source/classroom.py,explore,194,双脚腾空
+films/robot-evolution/source/classroom.py,explore,197,通过第一道栏  +8
+films/robot-evolution/source/classroom.py,explore,198,前脚伸过栏，后腿收起，两条腿都过去了。
+films/robot-evolution/source/classroom.py,explore,198,越栏这一步得到奖励。这个结果会影响以后在相近栏距时的选择。
+films/robot-evolution/source/classroom.py,explore,200,落地  ·  继续跑
+films/robot-evolution/source/classroom.py,explore,201,前脚踩实，屈膝接住身体，再换另一条腿向前。
+films/robot-evolution/source/classroom.py,explore,201,足底传感器重新测到支撑，运动控制器接回跑步节奏。
+films/robot-evolution/source/classroom.py,score_history,211,同一类读数  /  起跳评分怎样改变
+films/robot-evolution/source/classroom.py,score_history,212,第 7 轮 · 起跳回看
+films/robot-evolution/source/classroom.py,score_history,213,脚已着地，矮栏在约 1.3～1.9 米处
+films/robot-evolution/source/classroom.py,score_history,214,同一速度档，每个点是一笔实际更新
+films/robot-evolution/source/classroom.py,score_history,230,程序每走一步，都用结果更新刚才那个选择。
+films/robot-evolution/source/classroom.py,score_history,231,下一步有好结果，也会提高前一步的评分。反复遇到相近的栏距，起跳的分数逐渐变高。
+films/robot-evolution/source/classroom.py,score_history,229,第 
+films/robot-evolution/source/classroom.py,score_history,229, 轮
+films/robot-evolution/source/classroom.py,matched,237,同一道栏，同一组传感器读数
+films/robot-evolution/source/classroom.py,matched,239,第 6 轮
+films/robot-evolution/source/classroom.py,matched,239,第 36 轮
+films/robot-evolution/source/classroom.py,matched,248,同样的栏距，先看两边脚下会发生什么。
+films/robot-evolution/source/classroom.py,matched,248,第 6 轮继续跑，第 36 轮按最高分选择起跳。
+films/robot-evolution/source/classroom.py,matched,249,此时动作表里的评分     前进  
+films/robot-evolution/source/classroom.py,matched,249,         起跳  
+films/robot-evolution/source/classroom.py,matched,249,         下蹲  
+films/robot-evolution/source/classroom.py,matched,245,碰栏  −12
+films/robot-evolution/source/classroom.py,matched,245,前进
+films/robot-evolution/source/classroom.py,matched,245,落地续跑
+films/robot-evolution/source/classroom.py,matched,245,越栏  +8
+films/robot-evolution/source/classroom.py,matched,245,起跳
+films/robot-evolution/source/classroom.py,beam_lesson,257,低梁再试  /  第 246 轮
+films/robot-evolution/source/classroom.py,beam_lesson,257,继续看第 36 轮  /  第二个障碍
+films/robot-evolution/source/classroom.py,beam_lesson,260,刚过了矮栏，前面换成低梁。
+films/robot-evolution/source/classroom.py,beam_lesson,260,雷达报出低梁，动作表仍然选前进，身体保持直立。
+films/robot-evolution/source/classroom.py,beam_lesson,262,头部碰梁  −12
+films/robot-evolution/source/classroom.py,beam_lesson,263,跨栏会了，过低梁还会碰头。
+films/robot-evolution/source/classroom.py,beam_lesson,263,这次失败也写进动作表。接下来还要练什么时候开始蹲、要蹲多久。
+films/robot-evolution/source/classroom.py,beam_lesson,265,重跑第 36 轮的这根低梁。
+films/robot-evolution/source/classroom.py,beam_lesson,265,身体仍由相同的姿态控制程序保持平衡。
+films/robot-evolution/source/classroom.py,beam_lesson,267,选择下蹲  ·  屈膝过梁
+films/robot-evolution/source/classroom.py,beam_lesson,268,先屈膝压低头顶，再交替迈步从梁下钻过。
+films/robot-evolution/source/classroom.py,beam_lesson,270,低梁通过  +8
+films/robot-evolution/source/classroom.py,beam_lesson,271,头部从梁下通过，随后重新站起。
+films/robot-evolution/source/classroom.py,beam_lesson,271,策略刚刚学到的是在低梁前连续收身。
+films/robot-evolution/source/classroom.py,test,276,冻结测试  /  新赛道
+films/robot-evolution/source/classroom.py,test,278,训练满 300 轮，锁住动作表，换一条没练过的赛道。
+films/robot-evolution/source/classroom.py,test,279,硬件和运动控制器照常工作。测试中关掉随机探索，也停止改分。
+films/robot-evolution/source/classroom.py,test,287,先跨矮栏，再收身通过低梁。
+films/robot-evolution/source/classroom.py,test,287,策略用传感器读数选动作，运动控制器负责执行、落脚和扶稳身体。
+films/robot-evolution/source/classroom.py,test,281,选择起跳
+films/robot-evolution/source/classroom.py,test,284,低梁通过
+films/robot-evolution/source/classroom.py,test,286,选择下蹲
+films/robot-evolution/source/classroom.py,report,293,同样四件传感器  /  同一组测试赛道
+films/robot-evolution/source/classroom.py,report,294,谁来发越障指令
+films/robot-evolution/source/classroom.py,report,300,两种办法都能完成这组测试。
+films/robot-evolution/source/classroom.py,report,300,规则由人给出时机。强化学习从试错中学到时机，走稳和落地仍交给原控制器。
+films/robot-evolution/source/classroom.py,report,296,人写的规则
+films/robot-evolution/source/classroom.py,report,296,空白动作表
+films/robot-evolution/source/classroom.py,report,296,学到的动作表
+films/robot-evolution/source/classroom.py,report,299, 条完赛
+films/robot-evolution/source/evolution.py,opening,69,机器人进化跑
+films/robot-evolution/source/evolution.py,opening,78,头侧摄像头
+films/robot-evolution/source/evolution.py,opening,71,头侧摄像头辨认跑道。
+films/robot-evolution/source/evolution.py,opening,72,双腿按人写好的步态程序迈步。
+films/robot-evolution/source/evolution.py,opening,74,初代机只有一枚摄像头。
+films/robot-evolution/source/evolution.py,install,99,维修区
+films/robot-evolution/source/evolution.py,install,83,胸口装上姿态传感器
+films/robot-evolution/source/evolution.py,install,83,IMU 测出身体倾斜的角度。
+films/robot-evolution/source/evolution.py,install,83,控制器据此调整转向和身体姿态。
+films/robot-evolution/source/evolution.py,install,84,头顶装上激光雷达
+films/robot-evolution/source/evolution.py,install,84,激光脉冲打在栏杆上，再反射回来。
+films/robot-evolution/source/evolution.py,install,84,根据往返时间，算出到栏杆的距离。
+films/robot-evolution/source/evolution.py,install,85,两只脚装上力觉传感器
+films/robot-evolution/source/evolution.py,install,85,鞋底受力，就知道哪只脚先着地。
+films/robot-evolution/source/evolution.py,install,85,比较两脚的落差，调整下一步。
+films/robot-evolution/source/evolution.py,bend_retry,121,重跑同一个弯道
+films/robot-evolution/source/evolution.py,bend_retry,123,摄像头看见白线拐弯，机器人开始转向。
+films/robot-evolution/source/evolution.py,bend_retry,125,胸口测到侧倾，控制器随步纠偏，双脚留在红道内。
+films/robot-evolution/source/evolution.py,daylight,159,同一道矮栏  ·  白天
+films/robot-evolution/source/evolution.py,daylight,160,摄像头发现矮栏，人写的规则根据栏距和速度发出起跳指令。
+films/robot-evolution/source/evolution.py,daylight,161,白天能看见栏，照原有的规则就能跨过去。
+films/robot-evolution/source/evolution.py,night_run,178,重跑同一道弱光矮栏
+films/robot-evolution/source/evolution.py,night_run,178,同一道矮栏  ·  灯光变暗
+films/robot-evolution/source/evolution.py,night_run,200,雷达已测到栏杆，先继续跑。
+films/robot-evolution/source/evolution.py,night_run,181,摄像头在这里仅能探测 1.05 米
+films/robot-evolution/source/evolution.py,night_run,182,灯光变暗。脚步还很稳，栏杆的位置却看不清。
+films/robot-evolution/source/evolution.py,night_run,185,碰栏
+films/robot-evolution/source/evolution.py,night_run,186,图像来得太晚，来不及起跳。
+films/robot-evolution/source/evolution.py,night_run,199,距栏 
+films/robot-evolution/source/evolution.py,night_run,199, 米
+films/robot-evolution/source/evolution.py,night_run,203,距离合适，预设规则这才发出起跳指令。
+films/robot-evolution/source/evolution.py,night_run,206,越过同一道栏，屈膝落地，胸口的 IMU 帮它稳住身体。
+films/robot-evolution/source/evolution.py,night_run,202,距栏 
+films/robot-evolution/source/evolution.py,night_run,202, 米起跳
+films/robot-evolution/source/evolution.py,uneven,243,重跑同一段起伏路面
+films/robot-evolution/source/evolution.py,uneven,243,下一关  ·  起伏路面
+films/robot-evolution/source/evolution.py,uneven,245,同一条凸起，仍由前脚先落地。
+films/robot-evolution/source/evolution.py,uneven,245,越过栏杆后，前脚踏上凸起，后脚还在低处。
+films/robot-evolution/source/evolution.py,uneven,248,前脚先受力，膝盖一软
+films/robot-evolution/source/evolution.py,uneven,249,沿用平地的步幅，身体向前栽。
+films/robot-evolution/source/evolution.py,uneven,255,前脚着地
+films/robot-evolution/source/evolution.py,uneven,256,鞋底传回落脚差，控制器减速、收短下一步。
+films/robot-evolution/source/evolution.py,uneven,258,后脚跟上，重心稳住，继续跑过接缝。
+films/robot-evolution/source/evolution.py,early_learning,290,加装软件  ·  强化学习（Q-learning）
+films/robot-evolution/source/evolution.py,early_learning,292,从空白动作表开始
+films/robot-evolution/source/evolution.py,early_learning,293,跑、跳、蹲它已经会了。这次由它自己试，何时用哪招。
+films/robot-evolution/source/evolution.py,early_learning,295,第 
+films/robot-evolution/source/evolution.py,early_learning,295, 轮   选择前进
+films/robot-evolution/source/evolution.py,early_learning,296,距栏 
+films/robot-evolution/source/evolution.py,early_learning,296, 米，脚已着地。
+films/robot-evolution/source/evolution.py,early_learning,301,这时选“前进”的评分从 
+films/robot-evolution/source/evolution.py,early_learning,301, 降到 
+films/robot-evolution/source/evolution.py,early_learning,299,碰栏  
+films/robot-evolution/source/evolution.py,practice,306,强化学习  ·  反复试跑
+films/robot-evolution/source/evolution.py,practice,325,按障碍、距离和落脚情况分别记分，再试下一轮。
+films/robot-evolution/source/evolution.py,practice,310,已训练 
+films/robot-evolution/source/evolution.py,practice,310, 轮
+films/robot-evolution/source/evolution.py,practice,323,前进
+films/robot-evolution/source/evolution.py,practice,323,起跳
+films/robot-evolution/source/evolution.py,practice,323,下蹲
+films/robot-evolution/source/evolution.py,learned_hurdle,346,冻结动作表  ·  未见过的赛道
+films/robot-evolution/source/evolution.py,learned_hurdle,348,栏架位置变了。没有人发指令，它按眼前的距离起跳。
+films/robot-evolution/source/evolution.py,learned_hurdle,350,训练 300 轮后  ·  重跑同一道栏
+films/robot-evolution/source/evolution.py,learned_hurdle,347,第一栏移到 
+films/robot-evolution/source/evolution.py,learned_hurdle,347, 米
+films/robot-evolution/source/evolution.py,learned_hurdle,353,再次接近这道矮栏，脚底传回着地信号。
+films/robot-evolution/source/evolution.py,learned_hurdle,352,第一栏在 
+films/robot-evolution/source/evolution.py,learned_hurdle,352, 米
+films/robot-evolution/source/evolution.py,learned_hurdle,356,同样的位置，这次它选了起跳。
+films/robot-evolution/source/evolution.py,learned_hurdle,360,越栏得到正反馈。
+films/robot-evolution/source/evolution.py,learned_hurdle,355,距栏 
+films/robot-evolution/source/evolution.py,learned_hurdle,355, 米   选择起跳
+films/robot-evolution/source/evolution.py,learned_hurdle,359,成功越栏  +
+films/robot-evolution/source/evolution.py,low_beam,383,冻结测试  ·  第二个障碍
+films/robot-evolution/source/evolution.py,low_beam,385,前方低梁   选择下蹲
+films/robot-evolution/source/evolution.py,low_beam,386,这次挡住的是头顶。它换了动作，收身从梁下通过。
+films/robot-evolution/source/evolution.py,low_beam,390,训练前后，测试用的是同一组陌生赛道。
+films/robot-evolution/source/evolution.py,low_beam,389,测试完赛   
+films/robot-evolution/source/evolution.py,boardwalk,416,应用设想  ·  雨后栈道巡检
+films/robot-evolution/source/evolution.py,boardwalk,418,摄像头看见木板上的水痕，运动控制器让它放慢脚步。
+films/robot-evolution/source/evolution.py,boardwalk,419,摄像头先看见木板上的水痕，机器人放慢脚步。
+films/robot-evolution/source/evolution.py,boardwalk,424,它收短步幅，稳住重心，继续沿栈道巡检。
+films/robot-evolution/source/evolution.py,boardwalk,421,鞋底报滑移，IMU 报侧倾，运动控制器随即调整姿态。
+films/robot-evolution/source/evolution.py,boardwalk,422,支撑脚开始滑动，鞋底反馈滑移，胸口的 IMU 测到侧倾。
+films/robot-evolution/source/film.py,boot,56,初代机
+films/robot-evolution/source/film.py,boot,57,机器人进化跑
+films/robot-evolution/source/film.py,boot,58,第一次上跑道。
+films/robot-evolution/source/film.py,sensors,80,感知升级
+films/robot-evolution/source/film.py,sensors,84,摄像头
+films/robot-evolution/source/film.py,sensors,84,辨认跑道与弯道
+films/robot-evolution/source/film.py,sensors,86,激光测距
+films/robot-evolution/source/film.py,sensors,86,估计障碍物距离
+films/robot-evolution/source/film.py,sensors,88,惯性测量单元
+films/robot-evolution/source/film.py,sensors,88,感受身体倾斜
+films/robot-evolution/source/film.py,sensors,90,足底力觉
+films/robot-evolution/source/film.py,sensors,90,确认落脚与滑移
+films/robot-evolution/source/film.py,sensors,92,看见环境，也要知道身体正在做什么。
+films/robot-evolution/source/film.py,control,173,运动控制
+films/robot-evolution/source/film.py,control,175,先测距离，找准起跳点。
+films/robot-evolution/source/film.py,control,177,起跳
+films/robot-evolution/source/film.py,control,179,落地时屈膝，用足底反馈缓冲。
+films/robot-evolution/source/film.py,learning,196,人工智能学习
+films/robot-evolution/source/film.py,learning,199,第一次试跑，机器人选择继续前进。
+films/robot-evolution/source/film.py,learning,202,碰撞反馈  −12
+films/robot-evolution/source/film.py,learning,202,小腿撞上矮栏
+films/robot-evolution/source/film.py,learning,203,这次反馈会降低该状态下前进的 Q 值。
+films/robot-evolution/source/film.py,learning,206,多轮训练后，再遇同一道栏。
+films/robot-evolution/source/film.py,learning,208,在合适的距离选择起跳。
+films/robot-evolution/source/film.py,learning,210,越栏反馈  +8
+films/robot-evolution/source/film.py,learning,210,更新这次起跳的 Q 值
+films/robot-evolution/source/film.py,learning,211,策略从每一次动作的结果中学习。
+films/robot-evolution/source/film.py,decision,237,自主决策
+films/robot-evolution/source/film.py,decision,259,前方低梁
+films/robot-evolution/source/film.py,decision,259,测距信号持续更新
+films/robot-evolution/source/film.py,decision,261,策略选择下蹲，收身通过。
+films/robot-evolution/source/film.py,decision,263,通过后重新观察，恢复前进。
+films/robot-evolution/source/film.py,trail,278,水面
+films/robot-evolution/source/film.py,trail,280,栈道
+films/robot-evolution/source/film.py,trail,284,应用设想 · 栈道巡检
+films/robot-evolution/source/film.py,trail,286,识别水面和栈道，沿可通行区域前进。
+films/robot-evolution/source/film.py,trail,288,水痕提示可能湿滑，落脚后再检查反馈。
+films/robot-evolution/source/bend.py,trackside,198,跑道拐弯了，它还在直跑。
+films/robot-evolution/source/bend.py,trackside,200,转向晚了一步
+films/robot-evolution/source/bend.py,trackside,200,脚踩上碎石，鞋底滑了出去。

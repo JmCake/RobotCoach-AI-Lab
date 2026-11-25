@@ -1,0 +1,187 @@
+{
+  "trials": [
+    {
+      "success": true,
+      "distance": 40,
+      "time": 7.308333333333486,
+      "collisions": 0,
+      "falls": 0,
+      "offTrack": false,
+      "attempt": 1,
+      "sensors": {
+        "camera": true,
+        "lidar": true,
+        "imu": true,
+        "force": true
+      },
+      "gear": {
+        "camera": true,
+        "lidar": true,
+        "imu": true,
+        "force": true
+      },
+      "monitor": false,
+      "peak": 7.846498140669613,
+      "slip": 0,
+      "corrected": true
+    }
+  ],
+  "training": {
+    "reinforcement": {
+      "attempts": 300,
+      "updates": 13857,
+      "before": 0,
+      "after": 20,
+      "count": 20,
+      "gear": {
+        "camera": true,
+        "lidar": true,
+        "imu": true,
+        "force": true
+      }
+    },
+    "demonstration": {
+      "seed": 2026,
+      "success": true,
+      "distance": 32,
+      "time": 6.058333333333424,
+      "passed": 3,
+      "reason": "完成",
+      "reward": 27.76,
+      "rewards": {
+        "pass": 24,
+        "finish": 4,
+        "failure": 0,
+        "action": -0.23999999999999996
+      }
+    },
+    "imitation": {
+      "seed": 2026,
+      "success": true,
+      "distance": 32,
+      "time": 6.058333333333424,
+      "passed": 3,
+      "reason": "完成",
+      "reward": 27.76,
+      "rewards": {
+        "pass": 24,
+        "finish": 4,
+        "failure": 0,
+        "action": -0.23999999999999996
+      },
+      "samples": 61
+    }
+  },
+  "events": [
+    {
+      "event": "opening"
+    },
+    {
+      "event": "incident"
+    },
+    {
+      "event": "evidence",
+      "clue": "身体"
+    },
+    {
+      "event": "bench"
+    },
+    {
+      "event": "curve"
+    },
+    {
+      "event": "curve-result"
+    },
+    {
+      "event": "hurdle"
+    },
+    {
+      "event": "split"
+    },
+    {
+      "event": "learning"
+    },
+    {
+      "event": "learning-result"
+    },
+    {
+      "event": "demo"
+    },
+    {
+      "event": "imitation"
+    },
+    {
+      "event": "imitation-result"
+    },
+    {
+      "event": "broadcast"
+    },
+    {
+      "event": "grid"
+    },
+    {
+      "event": "countdown"
+    },
+    {
+      "event": "race"
+    },
+    {
+      "event": "race-result"
+    },
+    {
+      "event": "trail"
+    },
+    {
+      "event": "field"
+    },
+    {
+      "event": "field-result"
+    },
+    {
+      "event": "ending"
+    },
+    {
+      "event": "black"
+    }
+  ],
+  "field": {
+    "point": {
+      "x": 0.8198588857856828,
+      "y": 0.7093205574912892
+    },
+    "model": "步道 · 可通行候选",
+    "corrections": [
+      {
+        "x": 0.8198588857856828,
+        "y": 0.7790940766550523,
+        "original": {
+          "x": 0.8198588857856828,
+          "y": 0.7093205574912892
+        },
+        "model": "步道 · 可通行候选",
+        "label": "路面"
+      }
+    ],
+    "connectedPixels": 31431
+  },
+  "race": {
+    "outcome": "failed",
+    "reason": "小腿撞上矮栏",
+    "distance": 26.780415367538932,
+    "collisions": 1,
+    "falls": 0,
+    "offTrack": false,
+    "passed": 0,
+    "time": 5.241666666666666,
+    "tick": 629,
+    "segment": "obstacles",
+    "sensors": {
+      "camera": true,
+      "lidar": false,
+      "imu": true,
+      "force": false
+    },
+    "strategy": "rule",
+    "frames": 1171
+  }
+}

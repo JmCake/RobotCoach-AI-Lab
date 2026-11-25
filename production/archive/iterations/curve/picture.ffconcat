@@ -1,0 +1,9 @@
+ffconcat version 1.0
+file 'v1-head.mp4'
+duration 5.000000
+file 'revised-chapter.mp4'
+duration 17.200000
+file 'v1-bridge.mp4'
+duration 7.800000
+file 'v1-tail.mp4'
+duration 52.000000

@@ -6,7 +6,7 @@ const root = resolve(process.env.SERVE_DIST === '1' ? 'dist' : '.');
 const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webm':'video/webm','.webp':'image/webp','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon'};
 Object.assign(mime, {
   '.mjs':'text/javascript; charset=utf-8','.wasm':'application/wasm','.onnx':'application/octet-stream',
-  '.jpg':'image/jpeg','.zip':'application/zip','.mp4':'video/mp4',
+  '.jpg':'image/jpeg','.zip':'application/zip','.mp4':'video/mp4','.m4a':'audio/mp4',
 });
 http.createServer(async (req,res) => {
   try {
