@@ -1,0 +1,263 @@
+{
+  "trials": {
+    "curve": [
+      {
+        "count": 1,
+        "success": false,
+        "distance": 14.904,
+        "events": {},
+        "total": 20,
+        "finished": 0
+      },
+      {
+        "count": 2,
+        "success": true,
+        "distance": 40,
+        "events": {},
+        "total": 20,
+        "finished": 20
+      }
+    ],
+    "night": [
+      {
+        "count": 2,
+        "success": false,
+        "distance": 11.893,
+        "events": {},
+        "total": 20,
+        "finished": 0
+      },
+      {
+        "count": 3,
+        "success": true,
+        "distance": 40,
+        "events": {
+          "lidar": {
+            "distance": 7.468,
+            "time": 1.708
+          },
+          "jump": {
+            "distance": 2.982,
+            "time": 2.475
+          },
+          "camera": {
+            "distance": 1.009,
+            "time": 3
+          }
+        },
+        "total": 20,
+        "finished": 20
+      }
+    ],
+    "rough": [
+      {
+        "count": 3,
+        "success": false,
+        "distance": 9.286,
+        "events": {},
+        "total": 20,
+        "finished": 0
+      },
+      {
+        "count": 4,
+        "success": true,
+        "distance": 40,
+        "events": {},
+        "total": 20,
+        "finished": 20
+      }
+    ],
+    "wet": [
+      {
+        "count": 3,
+        "success": true,
+        "distance": 40,
+        "events": {},
+        "total": 20,
+        "finished": 20
+      },
+      {
+        "count": 4,
+        "success": true,
+        "distance": 40,
+        "events": {},
+        "total": 20,
+        "finished": 20
+      }
+    ]
+  },
+  "learning": {
+    "collision": {
+      "attempt": 6,
+      "seed": 106,
+      "reward": -12,
+      "before": 0,
+      "after": -2.4,
+      "state": "hurdle,1,2,1",
+      "previousChoice": {
+        "state": "hurdle,2,2,1",
+        "action": 0,
+        "distance": 1.463
+      }
+    },
+    "progress": [
+      {
+        "attempt": 1,
+        "updates": 44,
+        "states": 29
+      },
+      {
+        "attempt": 10,
+        "updates": 394,
+        "states": 55
+      },
+      {
+        "attempt": 50,
+        "updates": 2021,
+        "states": 57
+      },
+      {
+        "attempt": 150,
+        "updates": 6440,
+        "states": 58
+      },
+      {
+        "attempt": 300,
+        "updates": 13857,
+        "states": 58
+      }
+    ],
+    "retrial": {
+      "seed": 106,
+      "obstacles": [
+        {
+          "type": "hurdle",
+          "x": 13.25
+        },
+        {
+          "type": "beam",
+          "x": 21.828
+        },
+        {
+          "type": "hurdle",
+          "x": 30.041
+        }
+      ],
+      "passed": 3,
+      "success": true,
+      "events": [
+        {
+          "kind": "jump",
+          "obstacle": "hurdle",
+          "distance": 1.463,
+          "state": "hurdle,2,2,1",
+          "time": 2.9
+        },
+        {
+          "kind": "pass",
+          "obstacle": "hurdle",
+          "distance": -0.436,
+          "state": "hurdle,-1,2,0",
+          "time": 3.2
+        },
+        {
+          "kind": "duck",
+          "obstacle": "beam",
+          "distance": 6.871,
+          "state": "beam,10,2,0",
+          "time": 3.4
+        },
+        {
+          "kind": "pass",
+          "obstacle": "beam",
+          "distance": -0.154,
+          "state": "beam,-1,2,1",
+          "time": 4.5
+        },
+        {
+          "kind": "jump",
+          "obstacle": "hurdle",
+          "distance": 1.661,
+          "state": "hurdle,2,2,1",
+          "time": 5.5
+        },
+        {
+          "kind": "pass",
+          "obstacle": "hurdle",
+          "distance": -0.259,
+          "state": "hurdle,-1,2,0",
+          "time": 5.8
+        }
+      ]
+    },
+    "transfer": {
+      "seed": 9016,
+      "obstacles": [
+        {
+          "type": "hurdle",
+          "x": 12.089
+        },
+        {
+          "type": "beam",
+          "x": 21.57
+        },
+        {
+          "type": "hurdle",
+          "x": 30.341
+        }
+      ],
+      "passed": 3,
+      "success": true,
+      "events": [
+        {
+          "kind": "jump",
+          "obstacle": "hurdle",
+          "distance": 1.558,
+          "state": "hurdle,2,2,1",
+          "time": 2.7
+        },
+        {
+          "kind": "pass",
+          "obstacle": "hurdle",
+          "distance": -0.33,
+          "state": "hurdle,-1,2,0",
+          "time": 3
+        },
+        {
+          "kind": "duck",
+          "obstacle": "beam",
+          "distance": 6.613,
+          "state": "beam,10,2,0",
+          "time": 3.4
+        },
+        {
+          "kind": "pass",
+          "obstacle": "beam",
+          "distance": -0.411,
+          "state": "beam,-1,2,1",
+          "time": 4.5
+        },
+        {
+          "kind": "jump",
+          "obstacle": "hurdle",
+          "distance": 1.321,
+          "state": "hurdle,2,2,1",
+          "time": 5.6
+        },
+        {
+          "kind": "pass",
+          "obstacle": "hurdle",
+          "distance": -0.599,
+          "state": "hurdle,-1,2,0",
+          "time": 5.9
+        }
+      ]
+    },
+    "passReward": 8,
+    "tests": {
+      "total": 20,
+      "before": 0,
+      "after": 20
+    }
+  }
+}

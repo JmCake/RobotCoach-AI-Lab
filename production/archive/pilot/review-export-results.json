@@ -1,0 +1,79 @@
+{
+  "phases": [
+    [
+      "think",
+      "提出猜想"
+    ],
+    [
+      "baseline",
+      "同场试跑"
+    ],
+    [
+      "baseline",
+      "同场试跑"
+    ],
+    [
+      "baselineReview",
+      "同场试跑"
+    ],
+    [
+      "bay",
+      "同场试跑"
+    ],
+    [
+      "think",
+      "提出猜想"
+    ],
+    [
+      "bay",
+      "同场试跑"
+    ],
+    [
+      "review",
+      "赛后复盘"
+    ],
+    [
+      "bay",
+      "同场试跑"
+    ],
+    [
+      "trial",
+      "同场试跑"
+    ],
+    [
+      "review",
+      "赛后复盘"
+    ],
+    [
+      "through",
+      "赛后复盘"
+    ],
+    [
+      "next",
+      "赛后复盘"
+    ]
+  ],
+  "course": [
+    {
+      "title": "还是这三道栏，换你掌握时机",
+      "page": "05 / 9",
+      "hash": "#manual"
+    },
+    {
+      "title": "松开按键，让它靠试错练跳和蹲",
+      "page": "06 / 9",
+      "hash": "#training"
+    },
+    {
+      "title": "弯道之后是跨栏，先跟教练跑一遍",
+      "page": "04 / 9",
+      "hash": "#imitation"
+    }
+  ],
+  "interrupted": "2.1 / 40 米",
+  "afterReload": "0.0 / 40 米",
+  "baseline": 14.904293033029921,
+  "failed": 14.904293033029921,
+  "passed": 40,
+  "errors": []
+}

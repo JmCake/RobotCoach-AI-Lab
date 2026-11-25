@@ -6,6 +6,19 @@ import {
 } from '../assets/motion/short-course.js';
 import {MotionTrainer,compareFrozen,createModel,readModel} from '../assets/motion/short-learning.js';
 
+test('short-course training, stored policy and frozen tests keep the fitted equipment',()=>{
+  const gear={camera:true,imu:true,lidar:false,force:false};
+  const trainer=new MotionTrainer(createModel(),gear);
+  trainer.advance();
+  const restored=new MotionTrainer(readModel(JSON.stringify(trainer.snapshot())));
+  assert.deepEqual(restored.sensors,gear);
+  assert.equal(trainer.episode.observe().support,null);
+  const frozen=compareFrozen(restored.snapshot(),[2026]);
+  let result;
+  do{result=frozen.next();}while(!result.done);
+  assert.deepEqual(result.value.conditions.sensors,gear);
+});
+
 const {forward,jump,duck}=MOTION_ACTION;
 
 test('policies see only installed sensor observations; forward never gets automatic obstacle actions',()=>{

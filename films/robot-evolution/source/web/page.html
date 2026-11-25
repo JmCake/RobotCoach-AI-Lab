@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f3ed">
+  <title>从跑道到栈道 · 机器人进化跑</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f3ed;
+      --ink: #172128;
+      --muted: #546367;
+      --teal: #007b80;
+      --accent: #82eee2;
+      font-family: Barlow, "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); }
+    main {
+      width: min(1300px, calc(100% - 64px), max(680px, calc((100svh - 218px) * 16 / 9)));
+      margin: 0 auto; padding: clamp(16px, 3.6vh, 40px) 0 24px;
+    }
+    header { display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; margin-bottom: 13px; }
+    .series { display: flex; gap: 9px; align-items: center; font-size: 13px; font-weight: 700; letter-spacing: .10em; color: var(--muted); }
+    .track-mark { display: inline-block; width: 20px; height: 10px; transform: skewX(-25deg); border-inline: 4px solid var(--teal); }
+    .track-mark::after { content: ""; display: block; width: 4px; height: 100%; margin: 0 auto; background: var(--teal); }
+    h1 { margin: 4px 0 0; font-size: clamp(26px, 3.25vw, 41px); line-height: 1.18; letter-spacing: .015em; }
+    button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:disabled { cursor: default; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #008a98; outline-offset: 3px; }
+    .full { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 4px 6px; border: 0; background: transparent; font-size: 13px; font-weight: 650; }
+    .full:hover { color: var(--teal); }
+    .corners {
+      width: 16px; height: 16px;
+      background: linear-gradient(currentColor,currentColor) top left / 6px 2px, linear-gradient(currentColor,currentColor) top left / 2px 6px,
+                  linear-gradient(currentColor,currentColor) top right / 6px 2px, linear-gradient(currentColor,currentColor) top right / 2px 6px,
+                  linear-gradient(currentColor,currentColor) bottom left / 6px 2px, linear-gradient(currentColor,currentColor) bottom left / 2px 6px,
+                  linear-gradient(currentColor,currentColor) bottom right / 6px 2px, linear-gradient(currentColor,currentColor) bottom right / 2px 6px;
+      background-repeat: no-repeat;
+    }
+    .stage { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 5px; background: #111d24; box-shadow: 0 0 0 1px #172128, 0 3px 0 #172128; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .notice { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; color: #f6f4ee; text-align: center; }
+    [hidden] { display: none !important; }
+    .toolbar { padding-top: 9px; }
+    .timeline {
+      --fill: 0%; display: block; width: 100%; height: 20px; margin: 0; appearance: none;
+      background: transparent; cursor: pointer; border-radius: 4px; accent-color: var(--teal);
+    }
+    .timeline::-webkit-slider-runnable-track {
+      height: 4px; border-radius: 4px; background: linear-gradient(to right, var(--teal) var(--fill), #ced5d1 var(--fill));
+    }
+    .timeline::-webkit-slider-thumb {
+      appearance: none; width: 12px; height: 12px; margin-top: -4px; border-radius: 50%; background: var(--teal);
+    }
+    .timeline::-moz-range-track { height: 4px; border-radius: 4px; background: #ced5d1; }
+    .timeline::-moz-range-progress { height: 4px; background: var(--teal); }
+    .timeline::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--teal); }
+    .transport, .group, .button { display: flex; align-items: center; }
+    .transport { justify-content: space-between; gap: 14px; min-height: 44px; }
+    .group { gap: 8px; }
+    .button { min-height: 41px; padding: 0 13px; justify-content: center; gap: 8px; border-radius: 5px; font-size: 14px; line-height: 1; font-weight: 700; white-space: nowrap; }
+    .quiet { background: transparent; border: 1px solid transparent; }
+    .quiet:hover, .quiet[aria-pressed="true"] { background: #e0e9e5; }
+    .play { padding-left: 2px; min-width: 69px; justify-content: flex-start; }
+    .play-glyph { width: 13px; height: 13px; border-inline: 4px solid currentColor; }
+    .play[data-playing="false"] .play-glyph { height: 0; width: 13px; border: 0; border-block: 7px solid transparent; border-left: 12px solid currentColor; }
+    .rate { font: 700 15px/1 Barlow, system-ui, sans-serif; }
+    .clock { margin-left: 4px; font: 600 13px/1 "IBM Plex Mono", Consolas, monospace; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .clock span { color: var(--ink); }
+    .action { min-width: 104px; color: #10272a; border: 1px solid #275652; background: var(--accent); }
+    .action:hover:enabled { background: #a1f5e9; }
+    .action:active:enabled { transform: translateY(1px); }
+    .action:disabled { background: #d7e8e2; color: #405954; }
+    .arrow { font: 800 20px/1 system-ui, sans-serif; }
+    .status { color: var(--muted); font-size: 13px; font-weight: 650; }
+    main:fullscreen { width: 100%; height: 100%; max-width: none; padding: 12px 18px; display: flex; flex-direction: column; justify-content: center; background: var(--paper); }
+    main:fullscreen header, main:fullscreen .cinema { width: min(100%, calc((100dvh - 164px) * 16 / 9)); margin-inline: auto; }
+    main:fullscreen header { align-items: center; margin-bottom: 8px; }
+    main:fullscreen .series { display: none; }
+    main:fullscreen h1 { font-size: 20px; }
+    @media (max-width: 650px) {
+      main { width: calc(100% - 24px); padding-top: 24px; }
+      header { margin-bottom: 12px; }
+      .group { gap: 1px; } .button { padding-inline: 8px; min-height: 44px; }
+      .play { padding-left: 2px; min-width: 58px; } .action { min-width: 80px; }
+      .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .clock { margin-left: 3px; font-size: 11px; }
+      .transport { gap: 5px; } .series { font-size: 12px; }
+    }
+    @media (max-width: 650px) and (orientation: portrait) {
+      body { min-height: 100svh; display: grid; align-content: center; padding-bottom: min(11svh, 92px); }
+      main { padding-block: 16px; }
+    }
+    @media (max-width: 355px) { .rate { display: none; } .button { gap: 5px; } }
+    @media (max-height: 520px) and (orientation: landscape) {
+      main { width: min(calc(100% - 28px), calc((100svh - 100px) * 16 / 9)); padding-block: 4px; }
+      header { align-items: center; margin-bottom: 4px; } .series { display: none; } h1 { font-size: 19px; margin: 0; }
+      .full { min-height: 27px; } .toolbar { padding-top: 4px; } .transport { min-height: 33px; } .button { min-height: 33px; }
+    }
+    #chapters { display:flex; flex-wrap:wrap; gap:2px 5px; border-top:1px solid #cdd3cf; margin-top:8px; padding-top:5px; }
+    #chapters button { min-height:34px; padding:3px 9px; color:#526367; background:transparent; border:0; border-radius:3px; font:650 13px/1.3 inherit; font-family:inherit; font-size:13px; }
+    #chapters button:hover { color:var(--teal); }
+    #chapters button[aria-current="step"] { color:#005f62; font-weight:750; background:#deebe5; }
+    .accessible { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+    @media (max-width:650px) { #chapters { gap:1px; } #chapters button { padding-inline:7px; min-height:36px; } }
+    @media (max-height:520px) and (orientation:landscape) { #chapters { display:none; } }
+  </style>
+</head>
+<body>
+  <main id="presentation">
+    <header>
+      <div><div class="series"><i class="track-mark" aria-hidden="true"></i>机器人进化跑</div><h1>从跑道到栈道</h1></div>
+      <button class="full" id="fullscreen" type="button"><span class="corners" aria-hidden="true"></span><span id="fullscreen-label">全屏</span></button>
+    </header>
+    <section class="cinema" aria-label="初代机器人的巡检任务">
+      <div class="stage">
+        <canvas id="scene" width="1280" height="720" role="img" aria-label="银青色机器人从跑道试验走向雨后栈道。"></canvas>
+        <p class="notice" id="notice" role="status">正在载入原画…</p>
+        <noscript><p class="notice">请启用 JavaScript 播放动画。</p></noscript>
+      </div>
+      <div class="toolbar">
+        <input class="timeline" id="seek" aria-label="动画进度" type="range" min="0" max="64" step="0.01" value="0" disabled>
+        <div class="transport">
+          <div class="group">
+            <button class="button quiet play" id="play" type="button" data-playing="false" title="播放或暂停（空格）" disabled><i class="play-glyph" aria-hidden="true"></i><span id="play-label">播放</span></button>
+            <button class="button quiet" id="slow" type="button" aria-pressed="false" title="以半速播放" disabled><span class="rate" aria-hidden="true">½×</span>慢动作</button>
+            <div class="clock" aria-hidden="true"><span id="current">0.0</span> / 64 s</div>
+          </div>
+          <div class="group">
+            <span class="status" id="phase" role="status"></span>
+            <button class="button quiet" id="auto" type="button" hidden>看示范</button><button class="button action" id="jump" type="button" disabled><span id="jump-label">亲自跨栏</span></button>
+          </div>
+        </div>
+      </div>
+      <nav id="chapters" aria-label="跳转到故事章节"></nav>
+      <p class="accessible" id="narration"></p>
+    </section>
+  </main>
+  <!-- SCRIPTS_AND_ART -->
+</body>
+</html>

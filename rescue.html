@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#132e52">
+  <title>拯救初代机器人 · 第一关课堂样片</title>
+  <link rel="icon" href="assets/robot.svg"><link rel="stylesheet" href="assets/rescue/rescue.css">
+</head>
+<body>
+  <header class="bar"><div class="wrap bar-inner">
+    <a class="brand" href="rescue.html"><i aria-hidden="true">Ⅲ</i> 机器人运动会</a>
+    <div class="tools"><button id="journal">调查记录</button><button id="sound" aria-pressed="false">声音关</button><button id="full">全屏</button></div>
+  </div></header>
+  <main class="wrap">
+    <ol class="route" aria-label="本关进度"><li>比赛开始</li><li>意外发生</li><li>寻找线索</li><li>改装验证</li><li>升级成功</li></ol>
+    <article id="deck" aria-label="第一关课堂演示">
+      <div class="spread">
+        <section class="stage" id="stage" aria-label="赛场与调查画面">
+          <div class="filmframe" id="filmframe">
+            <img id="still" src="assets/story/media/grid.webp" alt="初代机器人冲向弯道，另一格是摄像头看到的跑道">
+            <video id="film" playsinline preload="metadata" hidden aria-label="V6 漫画原片"></video>
+            <canvas id="simulation" hidden aria-label="正在运行的干地急弯运动仿真"></canvas>
+            <div id="mounts" aria-hidden="true"></div>
+          </div>
+          <div class="triptych" id="triptych" hidden></div>
+          <div id="cover" class="cover"><div class="cover-copy"><span class="chapter">第一关　/　赛场调查</span><h1>拯救<br>初代机器人</h1>
+            <p>初代机第一次独自入弯。<br>你是今天的机器人诊断专家。</p><button class="primary" id="start">▶　播放比赛</button></div></div>
+          <span id="tag" hidden class="tag"></span>
+        </section>
+        <section class="brief" id="brief" aria-labelledby="heading" hidden>
+          <span class="kicker" id="kicker"></span><h2 id="heading" tabindex="-1"></h2><p id="narration"></p>
+          <div id="inputs"></div><div id="actions"></div>
+        </section>
+      </div>
+      <div class="caption"><span id="caption">V6 原片 · 入弯现场</span><span id="pace">教师控场　/　关键处自动定格</span></div>
+    </article>
+    <p id="notice" role="status"></p>
+    <dialog id="notes"><header><h2>本班调查记录</h2><button id="close">关闭</button></header><div id="entries"></div>
+      <footer><button id="restart">重新开课…</button><span id="confirmRestart" hidden>开始后会清空本班样片记录。 <button id="yesReset">确认重新开课</button><button id="noReset">保留</button></span></footer>
+    </dialog>
+    <noscript>请启用 JavaScript 以播放课堂样片并运行改装实验。</noscript>
+  </main>
+  <script>if(location.protocol==='file:')document.querySelector('#notice').textContent='请双击项目目录中的「打开第一关.cmd」启动本机课堂。';</script>
+  <script type="module" src="assets/rescue/rescue.js"></script>
+</body>
+</html>

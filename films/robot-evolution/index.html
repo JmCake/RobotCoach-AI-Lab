@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>机器人进化跑 · RobotCoach</title>
+<style>
+  * { box-sizing: border-box }
+  body { margin: 0; background: #11151e; color: #f3f6fc; font: 16px/1.55 "Microsoft YaHei", system-ui, sans-serif }
+  main { width: min(1240px, 100%); margin: auto; padding: clamp(16px, 3vw, 40px) }
+  h1 { font-size: clamp(24px, 3vw, 36px); margin: 0 0 16px; letter-spacing: .035em }
+  video { display: block; width: 100%; aspect-ratio: 16/9; background: #080b12; object-fit: contain }
+  nav { display: flex; gap: 7px; flex-wrap: wrap; margin: 16px 0 }
+  button { background: #202632; color: #e7eefa; border: 1px solid #5e6979; border-radius: 4px; padding: 8px 13px; font: inherit; cursor: pointer }
+  button:hover, button:focus-visible, button[aria-current="true"] { color: #9ffaff; border-color: #84eaf2 }
+  a { color: #acdae8; text-underline-offset: 4px }
+  footer { display: flex; gap: 24px; flex-wrap: wrap; font-size: 14px; margin-top: 22px }
+</style>
+<main>
+  <h1>机器人进化跑</h1>
+  <video id="film" controls playsinline preload="metadata" poster="poster.jpg" aria-label="机器人进化跑教学动画">
+    <source src="robot-evolution-v6.mp4" type="video/mp4">
+    <a href="robot-evolution-v6.mp4">打开成片</a>
+  </video>
+  <nav aria-label="按章节播放">
+    <button type="button" data-start="0">初代机</button>
+    <button type="button" data-start="22.2">装 IMU 过弯</button>
+    <button type="button" data-start="38.4">装雷达跨栏</button>
+    <button type="button" data-start="51.5">装足底力觉过坡</button>
+    <button type="button" data-start="59.9">谁决定起跳</button>
+    <button type="button" data-start="70">逐轮训练回放</button>
+    <button type="button" data-start="94.9">同一栏距对照</button>
+    <button type="button" data-start="111.4">冻结策略测试</button>
+    <button type="button" data-start="122.6">栈道巡检</button>
+  </nav>
+  <footer>
+    <a href="../../story.html">进入第一关剧情课堂</a>
+    <a href="robot-evolution-v6.mp4" download>保存完整 MP4</a>
+    <a href="study/跨栏与钻梁.mp4">单看跨栏与钻梁（22.5 秒）</a>
+    <a href="study/漫画训练全段.mp4">单看漫画训练（1 分 03 秒）</a>
+    <a href="robot-evolution-v6.mp4#t=10.2,31.3">对照升级前后的弯道</a>
+    <a href="study/镜头对照.mp4">播放现场与初版对照</a>
+    <a href="study/现场索引.jpg">查看现场关键帧</a>
+  </footer>
+</main>
+<script>
+  const film = document.getElementById("film");
+  const chapters = Array.from(document.querySelectorAll("button[data-start]"));
+  function reflectChapter() {
+    const chapter = chapters.filter(button => Number(button.dataset.start) <= film.currentTime).pop();
+    for (const button of chapters) {
+      if (button === chapter) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    }
+  }
+  for (const button of chapters) {
+    button.addEventListener("click", () => {
+      film.currentTime = Number(button.dataset.start);
+      film.play().catch(() => {});
+    });
+  }
+  film.addEventListener("timeupdate", reflectChapter);
+  reflectChapter();
+</script>
+</html>

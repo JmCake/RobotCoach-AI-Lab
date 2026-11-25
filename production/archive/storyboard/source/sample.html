@@ -1,0 +1,71 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>拯救初代机器人 · 第一关互动样片</title><style>
+*{box-sizing:border-box}body{margin:0;background:#151f29;color:#fcf4df;font-family:"Microsoft YaHei",sans-serif}main{max-width:1200px;margin:auto;padding:20px 32px}header,footer{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}header{border-bottom:1px solid #83909b;padding-bottom:12px;letter-spacing:.1em;font-size:14px}a{color:inherit}h1{font-size:clamp(24px,4vw,48px);line-height:1.18;margin:16px 0}p{line-height:1.6;margin:.5em 0}.stage{position:relative;background:#071117;aspect-ratio:2.12;overflow:hidden;border:2px solid #f5f0e3}.stage>*{position:absolute;inset:0;height:100%;width:100%;object-fit:cover}.stage video{object-fit:contain}.stage #still{object-position:50% 53%}.stage .stamp{inset:auto auto 12px 12px;width:auto;height:auto;color:#101a20;background:#f5dd7e;padding:6px 10px;font-weight:700}.controls{background:#243442;padding:12px 16px;color:white}.controls button{margin:4px 8px 4px 0}button,.next{appearance:none;border:1px solid #f5df95;background:transparent;color:#ffeba6;padding:10px 15px;font:600 16px "Microsoft YaHei",sans-serif;cursor:pointer;border-radius:3px;text-decoration:none;display:inline-block}button:hover,button:focus-visible,.next:hover{background:#ffde75;color:#182431}button:disabled{opacity:.45;cursor:default}button.primary{background:#ffdf7c;color:#182431}#log{padding-left:1.5em;color:#c9e3e4;font-size:14px}footer{border-top:1px solid #62737e;padding-top:12px;color:#dae0de;font-size:13px}[hidden]{display:none!important}@media(max-width:660px){main{padding:12px}.stage{aspect-ratio:1.55}.controls{padding:10px}.controls button{font-size:14px}header{font-size:12px}}
+</style><body><main><header><b>ROBOTCOACH　/　第一关样片</b><a href="三关故事板.html#1">回到故事板</a></header><h1 id="title">白线拐弯了。它能跟上吗？</h1>
+<div class="stage"><img id="still" alt="漫画分镜，左侧是跑道视野，右侧是迎面跑来的初代机"><video hidden id="clip" playsinline muted preload="metadata"></video><canvas id="track" aria-label="同一条四十米干地急弯的实时模拟" hidden></canvas><b id="stamp" class="stamp">定格 · 全班先投票</b></div>
+<section class="controls"><p id="voice" aria-live="polite">初代机只装了摄像头。看着左格的白线和右格的脚，给它投一票。</p><div id="buttons"></div></section>
+<ol id="log" aria-label="本次试跑记录"></ol><footer><span>固定干地急弯　/　40 米　/　目标 6.4 米每秒　/　种子 2026</span><button id="reset" type="button">重新开始样片</button></footer></main>
+<!--IMPORTS-->
+<script type="module">
+import {createCurveTrial} from 'rc/motion/curve-trial.js';
+import {StoryTrack,loadArtwork} from 'rc/story/track.js';
+const $=id=>document.getElementById(id);
+const {clip,track,still,stamp,title,voice,buttons,log}=Object.fromEntries(['clip','track','still','stamp','title','voice','buttons','log'].map(id=>[id,$(id)]));
+const assets=window.storyAssets;
+let world,frame=0,paused=false,guess='',success=false,baseDistance;
+const renderer=new StoryTrack(track);
+renderer.art=await loadArtwork();
+function view(show){[clip,track,still].forEach(el=>el.hidden=el!==show);}
+function actions(...items){buttons.replaceChildren();items.forEach(([label,fn],i)=>{const b=document.createElement('button');b.textContent=label;b.className=i?'':'primary';b.onclick=fn;buttons.append(b);});}
+function choose(){
+  cancelAnimationFrame(frame);world=null;clip.pause();clip.ontimeupdate=null;clip.onended=null;
+  view(still);still.src=assets['grid.webp'];still.alt='跑道主观视野和初代机的正面动作';success=false;baseDistance=null;guess='';log.replaceChildren();
+  title.textContent='白线拐弯了。它能跟上吗？';stamp.textContent='定格 · 全班先投票';
+  voice.textContent='初代机只装了摄像头。看着左格的白线和右格的脚，给它投一票。';
+  actions(...['能跟上','可能会失衡','还需要一条线索'].map(g=>[g,()=>{guess=g;playFilm();}]));
+}
+function playFilm(){
+  title.textContent='盯住靠近白线的那只脚';stamp.textContent='项目动画 · 入弯现场';
+  voice.textContent='你的预测是「'+guess+'」。留意它在哪一步伸手。';view(clip);clip.src=assets['bend.mp4'];clip.currentTime=0;
+  const freeze=()=>{clip.pause();clip.ontimeupdate=null;clip.onended=null;view(still);still.src=assets['catch.webp'];still.alt='机器人一手撑地，身后是弯道外沿';
+    title.textContent='如果把碎石拿掉呢？';stamp.textContent='手掌着地 · 保留猜想';
+    voice.textContent='把地面换成干地，仍只给它摄像头。开跑前，请同桌指一指你想看的那条证据。';
+    actions(['只用摄像头跑一次',()=>trial('base')]);};
+  clip.ontimeupdate=()=>{if(clip.currentTime>=8.05)freeze();};clip.onended=freeze;
+  function toggle(){if(clip.paused){clip.play().then(()=>actions(['暂停镜头',toggle],['看撑地定格',freeze])).catch(()=>actions(['播放镜头',toggle],['看撑地定格',freeze]));}else{clip.pause();actions(['继续镜头',toggle],['看撑地定格',freeze]);}}
+  toggle();
+}
+const modes={base:'仅摄像头',measure:'摄像头＋IMU，仅测量',wire:'相同硬件，IMU 接入控制器'};
+function trial(mode){
+  const has=mode!=='base';world=createCurveTrial({camera:true,imu:has,lidar:false,force:false},mode==='measure');
+  renderer.referenceDistance=baseDistance??null;view(track);renderer.resize();renderer.draw(world);
+  title.textContent=mode==='base'?'这一次，脚下是干燥跑道。':'同一弯道，只换信号接法。';
+  stamp.textContent='实时仿真 · '+modes[mode];let peak=null,controlled=false,last=0,debt=0;
+  paused=false;let pauseButton;
+  const toggle=()=>{paused=!paused;pauseButton.textContent=paused?'继续试跑':'暂停试跑';last=0;if(!paused)frame=requestAnimationFrame(tick);};
+  actions(['暂停试跑',toggle]);pauseButton=buttons.firstChild;
+  const read=()=> (peak===null?'未测量':peak.toFixed(1)+'°')+'　｜　扶正指令 '+(controlled?'已出现':'无');
+  function tick(now){
+    if(paused||!world||world.result)return;
+    debt+=last?Math.min(.10,(now-last)/1000):0;last=now;
+    while(debt>=1/120&&!world.result){world.step();debt-=1/120;const obs=world.observation;
+      if(obs.imu)peak=Math.max(peak??0,Math.abs(obs.imu.tilt)*180/Math.PI);
+      controlled ||= Math.abs(world.control.torque)>.01;}
+    renderer.draw(world);
+    voice.textContent='距离 '+(world.result?.distance??world.progress).toFixed(1)+' 米　｜　最大侧倾 '+read();
+    if(!world.result){frame=requestAnimationFrame(tick);return;}
+    const res=world.result;success ||= res.success;if(!has)baseDistance=res.distance;
+    const line=document.createElement('li');line.textContent=modes[mode]+'　·　'+res.distance.toFixed(1)+' 米　·　'+(res.success?'完赛':'失衡')+'　·　最大侧倾 '+read();log.append(line);
+    title.textContent=res.success?'过线了。前面那道栏怎么办？':'它停在了 '+res.distance.toFixed(1)+' 米处';
+    stamp.textContent='本轮定格 · '+(res.success?'完赛':'失衡');
+    voice.textContent=!has?'你猜的是「'+guess+'」。倾角栏现在能告诉你什么？给胸口装同一枚 IMU，先挑一种接法。':res.success?'请指认本轮何时出现过扶正指令。你可以去跨栏，也可以只换接法，看自己的解释经不经得起反向试验。':'看看有了倾角读数后，控制器收到它了吗？只换接法再试，两次记录都会保留。';
+    const opts=[];if(success)opts.push(['我来操控起跳 →',()=>{location.href='三关故事板.html#4';}]);
+    if(mode!=='wire')opts.push(['接入控制器再跑',()=>trial('wire')]);
+    if(mode!=='measure')opts.push(['仅测量再跑',()=>trial('measure')]);actions(...opts);
+  }
+  frame=requestAnimationFrame(tick);
+}
+$('reset').onclick=choose;new ResizeObserver(()=>{if(!track.hidden&&world){renderer.resize();renderer.draw(world);}}).observe(track);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(!clip.hidden&&!clip.paused)buttons.firstChild?.click();if(!track.hidden&&world&&!world.result&&!paused)buttons.firstChild?.click();}});
+choose();
+</script></body></html>

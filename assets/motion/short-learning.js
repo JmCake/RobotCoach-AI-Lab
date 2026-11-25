@@ -13,7 +13,10 @@ export function readModel(raw) {
   if(!raw)return createModel();
   try{
     const data=JSON.parse(raw);
-    if(data?.version===1&&JSON.stringify(data.conditions)===JSON.stringify(CONDITIONS)
+    const gear=data?.conditions?.sensors;
+    const validGear=gear&&Object.keys(gear).length===Object.keys(CONDITIONS.sensors).length
+      &&Object.keys(CONDITIONS.sensors).every(key=>typeof gear[key]==='boolean');
+    if(data?.version===1&&validGear&&JSON.stringify({...data.conditions,sensors:CONDITIONS.sensors})===JSON.stringify(CONDITIONS)
       &&JSON.stringify(data.training?.seeds)===JSON.stringify(TRAIN_SEEDS)
       &&Number.isSafeInteger(data.training.randomSeed))return data;
   }catch{}
@@ -21,7 +24,8 @@ export function readModel(raw) {
 }
 
 export class MotionTrainer {
-  constructor(model=createModel()) {
+  constructor(model=createModel(), sensors=model.conditions.sensors) {
+    this.sensors={...sensors};
     this.training=model.training;
     this.learner=new Learner(model);
     this.history=Array.isArray(model.history)?model.history.slice(-12):[];
@@ -31,7 +35,7 @@ export class MotionTrainer {
   advance(){
     if(!this.episode||this.episode.finished){
       const attempt=this.learner.attempts;
-      this.episode=new ShortCourse(TRAIN_SEEDS[attempt%TRAIN_SEEDS.length]);
+      this.episode=new ShortCourse(TRAIN_SEEDS[attempt%TRAIN_SEEDS.length],{sensors:this.sensors});
       // The exploration stream is independent of track generation and restarts
       // with the same attempt if the learner returns mid-episode.
       this.random=rng(this.training.randomSeed+Math.imul(attempt+1,0x9e3779b9));
@@ -49,7 +53,7 @@ export class MotionTrainer {
 
   snapshot(){
     const {q,updates,attempts,audit}=this.learner;
-    return {...createModel(this.training.randomSeed),q,updates,attempts,audit,history:this.history};
+    return {...createModel(this.training.randomSeed),conditions:{...CONDITIONS,sensors:{...this.sensors}},q,updates,attempts,audit,history:this.history};
   }
 }
 
@@ -70,19 +74,19 @@ export function summarize(runs){
   };
 }
 
-export function* compareFrozen(model,seeds=TEST_SEEDS) {
+export function* compareFrozen(model,seeds=TEST_SEEDS,sensors=model.conditions.sensors) {
   const before=freezePolicy(createModel());
   const after=freezePolicy(model);
   const runs={before:[],after:[]};
   for(const seed of seeds){
     for(const [phase,policy] of [['before',before],['after',after]]){
-      const episode=new ShortCourse(seed);
+      const episode=new ShortCourse(seed,{sensors});
       while(!episode.finished){episode.advance(policy);yield;}
       runs[phase].push(episode.result());
     }
   }
   return {
-    conditions:CONDITIONS,updates:model.updates,attempts:model.attempts,seeds:[...seeds],
+    conditions:{...CONDITIONS,sensors},updates:model.updates,attempts:model.attempts,seeds:[...seeds],
     before:summarize(runs.before),after:summarize(runs.after),
   };
 }

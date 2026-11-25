@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d1119">
+  <link rel="icon" href="data:,">
+  <title>机器人总教练 · 奔跑的意义</title>
+  <link rel="stylesheet" href="assets/feature/screen.css">
+</head>
+<body>
+  <main id="theatre">
+    <header class="bar"><div class="brand"><i aria-hidden="true"></i>机器人总教练<span>奔跑的意义</span></div>
+      <div class="tools"><button id="pause" aria-keyshortcuts="Space">暂停</button><button id="sound">声音</button><button id="full">全屏</button></div>
+    </header>
+    <section id="screen" aria-label="放映画面">
+      <img id="still" class="surface" alt="">
+      <video id="movie" class="surface" playsinline preload="auto" hidden></video>
+      <canvas id="track" class="surface" hidden aria-label="机器人实时运动"></canvas>
+      <canvas id="ground" class="surface" hidden aria-label="原图落脚点，方向键移动，回车选定"></canvas>
+      <div id="mounts"></div><img id="memory" class="surface" alt="本班刚才的短道训练" hidden><img id="splice" class="surface" alt="" hidden>
+      <span id="slate" hidden></span>
+      <div id="cutin" hidden><img alt=""><div><b></b><p></p></div></div>
+      <div id="split" hidden></div><div id="count" hidden></div>
+      <div id="sub" hidden><small></small><span></span></div>
+    </section>
+    <section id="desk" hidden><div class="info"><p id="scene"></p><h1 id="heading"></h1><p id="detail"></p></div>
+      <div id="choices"></div></section>
+    <div id="notice" role="status"></div>
+  </main>
+  <script type="module" src="assets/feature/show.js"></script>
+</body>
+</html>
