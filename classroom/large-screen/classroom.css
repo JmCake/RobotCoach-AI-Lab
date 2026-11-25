@@ -1,0 +1,403 @@
+
+:root{--navy:#13243d;--dark:#091525;--paper:#f7f3e7;--ink:#13243d;--muted:#617286;--cyan:#15d5e5;--yellow:#edf76b;--red:#dc3944;--green:#0a8463;--scale:1}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#071220;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;color:var(--ink)}
+button,select{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:disabled{cursor:default;opacity:.43}
+button:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:4px solid #12cddd;outline-offset:3px}
+button:hover:not(:disabled){filter:brightness(1.05)}
+[hidden]{display:none!important}
+.stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform:translate(-50%,-50%) scale(var(--scale));transform-origin:center;background:var(--paper);overflow:hidden}
+.top{height:66px;background:var(--navy);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 42px;border-bottom:4px solid var(--cyan)}
+.brand{font-weight:900;font-size:23px;letter-spacing:2px}
+.brand i{color:var(--yellow);font-style:italic;font-family:Georgia,serif;font-size:30px;margin-right:12px}
+.chapterNav{display:flex;align-items:center;gap:8px}
+.chapterNav button,.tools button{border:1px solid #ffffff38;background:transparent;color:#cad6e5;font-size:16px;padding:9px 14px;border-radius:4px}
+.chapterNav button.active{background:var(--yellow);color:var(--navy);border-color:var(--yellow);font-weight:800}
+.tools{display:flex;gap:7px}
+.tools button{font-size:14px}
+.deck{position:absolute;inset:66px 0 74px;overflow:hidden}
+.scene{position:absolute;inset:0;visibility:hidden;opacity:0;transform:translateX(20px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.scene.active{visibility:visible;opacity:1;transform:none;pointer-events:auto}
+.footer{position:absolute;bottom:0;left:0;right:0;height:74px;display:flex;align-items:center;justify-content:space-between;padding:0 42px;background:var(--paper);border-top:1px solid #b5c2c6}
+.footer .side{display:flex;gap:14px;align-items:center}
+.nav{width:48px;height:48px;border:2px solid var(--navy);background:var(--navy);color:white;font-weight:bold;border-radius:50%;font-size:28px;display:grid;place-items:center}
+.nav.next{background:var(--yellow);color:var(--navy)}
+.footer .pageNo{font-size:17px;font-weight:800;min-width:90px}
+.dots{display:flex;gap:10px}
+.dots button{width:10px;height:10px;border:0;border-radius:50%;background:#a4afb8;padding:0}
+.dots button.on{width:28px;background:var(--navy);border-radius:8px}
+.hint{font-size:16px;color:var(--muted)}
+#progress{position:absolute;bottom:0;left:0;height:4px;background:#15b7cd;transition:width .35s}
+.eyebrow{font-size:17px;font-weight:900;letter-spacing:.14em;color:#007e95}
+.label{display:inline-block;background:var(--navy);color:white;font-size:16px;font-weight:800;padding:10px 15px;letter-spacing:1px;border-left:5px solid var(--yellow)}
+.sceneTitle{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:18px}
+.sceneTitle h1{font-size:38px;line-height:1.2;margin:5px 0 0;font-weight:900;letter-spacing:-1px}
+.sceneTitle .small{font-size:18px;color:var(--muted);max-width:520px;text-align:right}
+.frame{position:relative;border:2px solid var(--navy);overflow:hidden;background:var(--navy);box-shadow:5px 6px 0 #14264125}
+.image{width:100%;height:100%;object-fit:cover;display:block}
+.fill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.btn{border:2px solid var(--navy);border-radius:3px;background:var(--yellow);color:var(--navy);padding:12px 21px;font-size:22px;font-weight:850;box-shadow:3px 4px 0 var(--navy);line-height:1.3}
+.btn.secondary{background:var(--paper);box-shadow:none;font-weight:700}
+.btn.dark{color:white;background:var(--navy);border-color:#97b2c7;box-shadow:none}
+.btn.sm{padding:8px 14px;font-size:17px}
+.btn.selected{background:#b6f2ec;outline:3px solid #087e86;outline-offset:1px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.paper{background:var(--paper);color:var(--ink)}
+.tag{position:absolute;top:18px;left:20px;z-index:4}
+.speech{font-size:24px;line-height:1.5;font-weight:650}
+.speech b{font-size:15px;display:block;color:#0c7385;letter-spacing:.12em;margin-bottom:5px}
+.note{font-size:17px;line-height:1.6;color:#536479}
+.action{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.panel{padding:28px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{font-size:31px;line-height:1.26;margin:0;font-weight:900}
+.panel p{margin:0;font-size:21px;line-height:1.48}
+.panel .note{font-size:17px}
+.paperBox{background:#ffffff8c;border:1.5px solid #b5c4cb;border-radius:5px;padding:13px 17px}
+.splitLayout{display:grid;grid-template-columns:1.5fr 1fr;border:2px solid var(--navy);background:var(--paper);box-shadow:5px 6px 0 #14264125;overflow:hidden}
+.splitLayout>.frame{border:0;border-right:2px solid var(--navy);box-shadow:none}
+.inset{padding:26px 42px}
+.dialogue{position:absolute;left:32px;right:32px;bottom:24px;background:#0a182be8;color:white;padding:18px 25px;font-size:25px;font-weight:650;line-height:1.48;border-left:5px solid var(--yellow);z-index:5}
+.dialogue small{font-size:16px;font-weight:900;color:var(--yellow);margin-right:12px}
+.reveal{animation:reveal .4s ease both}
+@keyframes reveal{from{opacity:0;transform:translateY(13px)}
+to{opacity:1;transform:none}
+}
+.shake{animation:shake .34s linear}
+@keyframes shake{20%,60%{transform:translate(-5px,2px)}
+40%,80%{transform:translate(5px,-2px)}
+}
+.cover{background:#13243d;color:white}
+.cover .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover .shade{position:absolute;inset:0;background:linear-gradient(105deg,#11233dfb 0%,#11233df5 29%,#11233d93 43%,transparent 62%)}
+.cover .coverCopy{position:absolute;left:66px;top:128px;width:760px}
+.cover h1{font-size:86px;line-height:1.04;letter-spacing:-3px;margin:22px 0 16px}
+.cover h1 span{display:block;font-size:62px;color:var(--yellow);letter-spacing:1px;margin-top:17px}
+.cover p{font-size:28px;line-height:1.5;color:#e3eef8;max-width:660px}
+.cover .kicker{font-size:18px;letter-spacing:.25em;color:var(--cyan);font-weight:900}
+.cover .start{margin-top:24px;font-size:26px;padding:16px 28px}
+.cover .bottomline{position:absolute;bottom:36px;left:66px;font-size:17px;color:#c3d4e2}
+.fullArt{position:absolute;inset:26px 42px 24px;overflow:hidden}
+.questionBar{position:absolute;left:0;right:0;bottom:0;z-index:8;background:#f7f3e7f5;border-top:2px solid var(--navy);padding:20px 28px;box-shadow:0 -8px 24px #111b3030}
+.questionBar h2{font-size:31px;line-height:1.25;margin:0 0 13px}
+.questionBar .row .btn{flex:1;text-align:left;font-size:20px}
+.questionBar .feedback{font-size:19px;line-height:1.45;color:#184d5e;margin:14px 0 0;min-height:28px}
+.incidentSprite{position:absolute;left:62%;top:20%;height:56%;max-width:31%;object-fit:contain;filter:drop-shadow(4px 12px 3px #08152c70)}
+.spot{position:absolute;z-index:6;border:4px solid var(--yellow);width:80px;height:80px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 8px #eff86b40;pointer-events:none}
+.overlayTop{position:absolute;top:20px;right:20px;display:flex;gap:8px;z-index:10}
+.pointPill{font-size:17px;padding:10px 14px;background:#10243de8;border:1px solid #a4d7e7;color:white;font-weight:800}
+.scene1label{max-width:780px}
+.scene1label .label{font-size:19px}
+.cue{font-size:18px;color:#526479;margin:8px 0}
+.repairLayout{height:628px;grid-template-columns:1.28fr 1fr}
+.bayFrame{position:relative;overflow:hidden;background:#152443}
+.bayFrame .bayBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bayFrame .robot{position:absolute;left:50%;top:8%;height:81%;transform:translateX(-50%);max-width:66%;object-fit:contain}
+.mount{position:absolute;z-index:3;transform:translate(-50%,-50%);width:78px;filter:drop-shadow(0 0 10px #16f2f1);animation:pop .35s ease both}
+@keyframes pop{from{opacity:0;scale:1.5}
+to{opacity:1;scale:1}
+}
+.geargrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.gear{display:grid;grid-template-columns:66px 1fr;gap:8px;align-items:center;min-height:86px;text-align:left;padding:10px 12px;border:1.5px solid #9fb1bc;border-radius:4px;background:#fffdf4;color:var(--navy)}
+.gear img{width:64px;max-height:52px;object-fit:contain}
+.gear strong{font-size:20px;display:block}
+.gear small{font-size:15px;line-height:1.2;color:var(--muted)}
+.gear.on{background:#d7f6ec;border:2px solid #0c9583;box-shadow:inset 0 0 0 2px #0c95831b}
+.gear.on strong:after{content:' ✓';color:#08785a}
+.imuMode{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:16px}
+.imuMode button{flex:1;font-size:16px;padding:7px 12px}
+.statusText{min-height:51px;font-size:18px!important;background:#e9eee8;padding:9px 12px;border-left:4px solid #0a92a1;line-height:1.4!important}
+.resultStrip{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metric{padding:10px 12px;border-top:1px solid #a9b9c1}
+.metric small{font-size:15px;color:var(--muted);display:block}
+.metric b{font-size:26px;font-weight:900}
+.metric.good b{color:var(--green)}
+.metric.bad b{color:#b5303d}
+.raceCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#13243d}
+.canvasLabel{position:absolute;top:18px;left:20px}
+.canvasCaption{position:absolute;bottom:0;left:0;right:0;background:#102239eb;color:white;padding:15px 20px;font-size:20px;line-height:1.4}
+.hurdlePanel{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.hurdlePanel .piece{position:relative;overflow:hidden;border-right:2px solid var(--navy)}
+.hurdlePanel .piece .image{position:absolute;inset:0}
+.obstacle{position:absolute;left:72%;top:64%;width:125px;height:100px;filter:drop-shadow(5px 7px 3px #0005)}
+.hurdleRobot{position:absolute;left:20%;height:45%;bottom:17%;object-fit:contain}
+.choiceCard{flex:1;position:relative;border:2px solid var(--navy);border-radius:4px;background:white;color:var(--navy);padding:12px 17px;font-size:23px;font-weight:850;text-align:left;line-height:1.35;box-shadow:3px 3px 0 var(--navy)}
+.choiceCard small{display:block;font-size:17px;font-weight:500;color:var(--muted);margin-top:4px}
+.choiceCard.selected{background:#d7f4ec;border-color:#007e82}
+.trainingLayout{height:636px;grid-template-columns:1.6fr 1fr}
+.trainSide{padding:25px 25px;gap:13px}
+.tabs{display:flex;gap:9px}
+.tabs button{flex:1;background:#e8ede8;border:1px solid #91a8b1;font-size:22px;font-weight:800;color:var(--navy);padding:12px 10px;border-radius:3px}
+.tabs button.active{background:var(--navy);color:white;border-color:var(--navy)}
+.trainSide .statusText{min-height:64px}
+.trainControls{display:flex;gap:8px;flex-wrap:wrap}
+.trainControls button{font-size:17px;padding:9px 13px}
+.rewardLine{display:flex;align-items:flex-end;gap:3px;height:36px;background:#e4e9df;padding:5px 7px;overflow:hidden}
+.rewardLine i{width:8px;min-width:4px;display:block;opacity:.9}
+.qrow{display:flex;gap:10px;justify-content:space-between;font-size:16px;color:var(--muted);padding:5px 0}
+.trainReadout{font-size:19px;line-height:1.4;padding:9px 12px;background:#e6eee6;border:1px solid #bacac3}
+.trainReadout b{font-size:24px}
+.trainingVisual{position:relative;overflow:hidden;background:#14263b}
+.trainStage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.trainVisualCaption{position:absolute;left:15px;bottom:18px;right:15px;background:#0f233be8;color:white;padding:14px 17px;font-size:20px;font-weight:600}
+.raceHead{display:flex;align-items:flex-end;justify-content:space-between}
+.raceHead .row{justify-content:flex-end}
+.chip{border:1.5px solid #80949f;background:#ffffff8a;color:var(--navy);font-size:16px;padding:9px 14px;border-radius:4px;font-weight:750}
+.chip.on{background:#c5f4e7;border-color:#028b7c;color:#00694d}
+.select{background:var(--paper);border:1.5px solid #8499a6;border-radius:4px;padding:9px 12px;color:var(--navy);font-size:17px}
+.raceFrame{height:508px;margin:14px 0 12px}
+.raceFrame canvas{position:absolute;inset:0;width:100%;height:100%}
+.raceReadout{position:absolute;bottom:18px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;color:white;font-size:20px;background:#0b192ded;padding:11px 18px}
+.raceReadout b{font-size:24px;color:var(--yellow)}
+.segments{height:52px;display:flex;gap:3px}
+.segment{position:relative;background:#e3e8e5;border:1px solid #aabcc3;overflow:hidden;display:grid;place-items:center;font-size:17px;font-weight:800;color:var(--navy)}
+.segment i{position:absolute;top:0;bottom:0;left:0;background:#8ee7d3;width:0;transition:width .1s}
+.segment b{position:relative;z-index:1}
+.segment.active{border:2px solid #168b98}
+.raceBottom{display:flex;justify-content:space-between;align-items:center;padding-top:14px}
+.raceBottom .note{font-size:17px}
+.visionFrame{height:631px;grid-template-columns:1.6fr 1fr}
+.visionLeft{position:relative;background:#12243a;overflow:hidden;display:grid;place-items:center}
+.visionLeft .photoWrap{position:relative;width:100%;aspect-ratio:1134/639;cursor:crosshair}
+.photoWrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.point{position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border:4px solid var(--yellow);box-shadow:0 0 0 3px #11233b,0 0 0 12px #eff76b42;border-radius:50%;pointer-events:none}
+.point:before,.point:after{position:absolute;content:'';background:#f4fa83;left:50%;top:50%;transform:translate(-50%,-50%)}
+.point:before{height:22px;width:3px}
+.point:after{width:22px;height:3px}
+.legend{display:flex;gap:15px;font-size:16px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;background:#22bf77;margin-right:5px}
+.legend .water{background:#318ed9}
+.visionIntro{position:absolute;inset:0;z-index:5}
+.visionIntro .image{position:absolute;inset:0}
+.visionIntro .dialogue{bottom:110px}
+.visionIntro .btn{position:absolute;bottom:28px;right:28px;z-index:6}
+.finalArt{position:absolute;inset:0;background:#081525;overflow:hidden}
+.finalArt img.bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;transition:opacity .8s}
+.finalArt .cinematic{animation:ken 16s linear both}
+@keyframes ken{from{transform:scale(1)}
+to{transform:scale(1.065)}
+}
+.finalArt .finalRobot{position:absolute;height:35%;bottom:20%;left:11%;filter:drop-shadow(4px 10px 6px #0006);z-index:2}
+.scan{position:absolute;left:18%;top:40%;width:48%;height:40%;clip-path:polygon(0 50%,100% 0,100% 100%);background:linear-gradient(90deg,#4af8ed70,transparent);transform-origin:left center;z-index:3;animation:sweep 4s ease-in-out infinite alternate}
+@keyframes sweep{from{transform:rotate(-8deg)}
+to{transform:rotate(9deg)}
+}
+.finalText{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:#081627a8;color:white;z-index:7;padding:80px}
+.finalText h1{font-size:50px;line-height:1.5;margin:0;max-width:1250px;text-shadow:2px 3px 1px #000}
+.finalText h1 strong{color:var(--yellow)}
+.finalText p{font-size:25px;letter-spacing:.25em;margin:28px 0 0;color:#b8eef0}
+.finalControls{position:absolute;left:35px;right:35px;bottom:18px;z-index:12;display:flex;justify-content:space-between;align-items:center}
+.finalControls .row button{font-size:16px}
+.finalControls span{color:white;text-shadow:0 1px 4px #000;font-size:15px;background:#0c1c30b8;padding:6px 12px}
+.finalArt .dialogue{bottom:83px}
+.finalStart{position:absolute;inset:0;z-index:10;display:grid;place-items:center;background:#0b1b2b45}
+.finalStart .paper{padding:32px 38px;max-width:670px;border:2px solid var(--navy);box-shadow:7px 7px 0 #071423b5}
+.finalStart h2{margin:0;font-size:40px}
+.finalStart p{font-size:24px;line-height:1.5}
+.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);z-index:100;background:var(--navy);color:white;padding:14px 23px;border-left:5px solid var(--yellow);box-shadow:0 7px 20px #0005;font-size:18px;max-width:900px}
+.modal{position:absolute;inset:0;background:#091423bd;display:grid;place-items:center;z-index:100}
+.modal article{max-width:910px;padding:38px 44px;background:var(--paper);border:2px solid var(--navy);box-shadow:8px 8px 0 #0007}
+.modal h2{margin:0;font-size:36px}
+.modal p{font-size:22px;line-height:1.7}
+.hiddenText{position:absolute;left:-10000px}
+.loading{position:absolute;inset:0;z-index:200;background:var(--navy);color:white;display:grid;place-items:center;text-align:center}
+.loading b{font-size:31px}
+.loading p{font-size:20px;color:#b7d6df}
+.loading .bar{height:8px;background:#2f4960;margin-top:24px;width:450px}
+.loading .bar i{display:block;height:8px;width:0;background:var(--yellow)}
+
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation-duration:.01s!important}
+}
+
+
+/* Projection-safe layout: preserve the full accident pose and all controls. */
+.questionBar{background:#f7f3e7}
+.splitLayout{grid-template-rows:minmax(0,1fr);align-items:stretch}
+.splitLayout>*{min-height:0}
+.repairLayout .panel{padding:18px 23px;gap:7px;overflow:hidden}
+.repairLayout .panel h2{font-size:26px}
+.repairLayout .panel p.note{font-size:16px}
+.repairLayout .geargrid{gap:7px}
+.repairLayout .gear{min-height:70px;padding:7px 9px;grid-template-columns:58px 1fr}
+.repairLayout .gear img{width:56px}
+.repairLayout .gear strong{font-size:18px}
+.repairLayout .gear small{font-size:14px}
+.repairLayout .resultStrip{gap:5px 10px}
+.repairLayout .metric{padding:5px 10px}
+.repairLayout .metric b{font-size:24px}
+.repairLayout .statusText{min-height:43px;font-size:17px!important}
+.repairLayout .row .btn{font-size:19px;padding:9px 15px}
+.repairLayout .action{margin-top:auto}
+.bayFrame .canvasCaption{z-index:5}
+.bayFrame .tag{z-index:6}
+.trainSide{min-height:0;gap:9px;padding:20px 23px}
+.trainSide .metric{padding:7px 10px}
+.trainSide .action{flex-shrink:0}
+.trainSide .note{font-size:16px}
+.trainSide .statusText{min-height:50px}
+.trainSide #learningSummary{font-size:15px}
+.visionFrame .panel{gap:11px;padding:22px 24px}
+.visionFrame .panel p{font-size:20px}
+.visionFrame .panel .note{font-size:16px}
+
+#incidentFrame[data-step="0"] #incidentBg,#incidentFrame[data-step="1"] #incidentBg{height:calc(100% - 232px);object-position:50% 88%}
+.incidentSprite{left:61%;top:7%;height:52%;max-width:31%}
+#incidentFrame[data-step="1"] #incidentBg{object-position:center bottom}
+#incidentFrame[data-step="anim"] #incidentBg{height:100%;object-position:center center}
+.hurdlePanel{bottom:230px}
+.hurdlePanel .hurdleRobot{bottom:9%;height:53%}
+.hurdlePanel .obstacle{top:68%;height:90px}
+.hurdlePanel .piece .image{object-position:center bottom}
+#learnDialogue{font-size:22px;bottom:240px!important;left:22px;right:22px;padding:13px 18px}
+
+
+/* Projection-first edition: put the picture on stage, not a worksheet. */
+.teacher-detail{display:none!important}
+.top{height:48px;padding:0 24px;border-bottom:3px solid var(--cyan)}
+.brand{font-size:21px;letter-spacing:0}
+.brand i{font-size:24px;margin-right:7px}
+.chapterNav{gap:4px}
+.chapterNav button,.tools button{font-size:17px;padding:5px 10px}
+.tools{gap:4px}
+.deck{inset:48px 0 52px}
+.footer{height:52px;padding:0 22px}
+.footer .nav{width:40px;height:40px;font-size:26px}
+.footer .pageNo{font-size:17px;min-width:70px}
+.footer .dots button{height:11px}
+.inset{padding:0}
+.frame,.splitLayout{box-shadow:none;border:0}
+.fullArt{inset:0}
+.cover .coverCopy{left:62px;top:175px;width:720px}
+.cover h1{font-size:92px}
+.cover h1 span{font-size:64px}
+.cover p{font-size:32px}
+.cover .start{font-size:29px}
+.tag.label{font-size:21px;padding:8px 15px;top:15px;left:20px}
+.btn,.btn.sm{font-size:23px;line-height:1.22;padding:10px 18px;white-space:nowrap}
+.questionBar{padding:13px 26px 12px;display:grid;gap:10px;grid-template-columns:minmax(0,1fr) auto;border:0;box-shadow:none;background:#f7f3e7}
+.questionBar h2{font-size:39px;margin:0;grid-column:1/-1;line-height:1.2}
+.questionBar .row{gap:12px;grid-column:1;flex-wrap:nowrap}
+.questionBar .row .btn,.choiceCard{font-size:25px;padding:10px 18px;text-align:center;flex:1;white-space:nowrap}
+.questionBar .action{grid-column:2;grid-row:2;margin:0!important;justify-content:flex-end}
+.questionBar .feedback{grid-column:1/-1;margin:0;min-height:0;font-size:25px;line-height:1.25;font-weight:750;color:#0a6574}
+.questionBar .feedback:empty{display:none}
+.questionBar .feedback:empty+.action{grid-row:2}
+.overlayTop{top:15px;right:20px}
+.overlayTop .btn{font-size:20px;padding:7px 12px}
+.incidentSprite{display:none!important}
+#incidentFrame[data-step="0"] #incidentBg,#incidentFrame[data-step="1"] #incidentBg{height:calc(100% - 161px);object-position:50% 67%}
+#incidentFrame[data-step="1"] #incidentBg{object-position:50% 100%}
+#incidentFrame[data-step="anim"] #incidentSprite{display:block!important}
+#incidentFrame[data-step="anim"] #incidentBg{height:100%;object-position:center}
+.spot{width:75px;height:75px}
+.hurdlePanel{bottom:135px}
+.hurdlePanel .hurdleRobot{height:56%;bottom:10%}
+.hurdlePanel .obstacle{top:65%}
+.hurdlePanel .piece .image{object-position:center bottom}
+#learnDialogue{display:none!important}
+#s3 .choiceCard{font-size:27px;padding:12px 22px}
+#s3 .questionBar h2{font-size:38px}
+#s3 .questionBar .row{grid-column:1}
+#s3 .questionBar .action{grid-column:2}
+#s3 .questionBar{min-height:135px}
+
+/* Experiments use one large canvas / picture and a compact controls strip. */
+.repairLayout,.trainingLayout,.visionFrame{position:absolute;inset:0;height:auto;display:flex;flex-direction:column;background:var(--paper)}
+.bayFrame,.trainingVisual,.visionLeft{flex:1;min-height:0;position:relative;width:100%;overflow:hidden}
+.bayFrame .bayBg{object-fit:cover;object-position:center}
+.bayFrame .robot{top:4%;height:90%;max-width:45%}
+.bayFrame .mount{width:65px}
+.bayFrame .canvasCaption,.trainVisualCaption{background:#0d2038df;color:white;font-size:27px;line-height:1.22;padding:12px 18px;border-left:5px solid var(--yellow);position:absolute;bottom:14px;left:20px;right:auto;max-width:95%;z-index:5;font-weight:750}
+.bayFrame:has(#curveCanvas:not([hidden])) .canvasCaption{bottom:12px;max-width:72%}
+.raceCanvas{object-fit:fill}
+.repairLayout .panel,.trainSide{flex:0 0 auto;position:relative;padding:12px 24px;gap:10px;overflow:visible;background:var(--paper)}
+.repairLayout .geargrid{grid-template-columns:repeat(4,1fr);gap:12px}
+.repairLayout .gear{grid-template-columns:58px 1fr;min-height:66px;padding:5px 10px;gap:8px;justify-content:center;border-radius:4px}
+.repairLayout .gear img{width:55px;max-height:48px}
+.repairLayout .gear strong{font-size:25px;line-height:1.18}
+.repairLayout .gear small{display:none}
+.repairLayout .imuMode{font-size:22px;gap:12px;align-items:center}
+.repairLayout .imuMode button{flex:0 0 auto;font-size:23px;padding:7px 13px}
+.repairLayout .panel{display:grid;grid-template-columns:1fr auto;align-items:center}
+.repairLayout .geargrid{grid-column:1/-1}
+.repairLayout .curveActions{justify-content:flex-end;gap:8px;grid-column:2}
+.repairLayout .curveActions .btn{font-size:23px;padding:9px 15px}
+.repairLayout .panel:not(:has(#imuMode:not([hidden]))) .curveActions{grid-column:1/-1}
+.repairLayout .curveMetrics{display:none;position:absolute;top:14px;right:20px;z-index:7;grid-template-columns:repeat(2,auto);gap:6px;background:#14263ded;color:white;padding:8px 12px;border:1px solid #ffffff46}
+.bayFrame:has(#curveCanvas:not([hidden])) .curveMetrics{display:grid}
+.curveMetrics .metric{border:0;padding:5px 13px;min-width:150px}
+.curveMetrics .metric small{font-size:20px;color:#d4e4ef}
+.curveMetrics .metric b{font-size:32px;color:var(--yellow)!important}
+.curveMetrics .metric.bad b{color:#ffb6ae!important}
+#curveExplain:disabled,#toLearn:disabled{display:none}
+.trainingVisual .tabs{position:absolute;top:15px;right:20px;z-index:8;width:auto;gap:8px}
+.trainingVisual .tabs button{font-size:25px;padding:9px 20px;background:#f7f3e7;color:var(--navy);border:2px solid var(--navy)}
+.trainingVisual .tabs button.active{color:var(--navy);background:var(--yellow)}
+.trainSide{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:center}
+.trainSide #imitPane,.trainSide #rlPane{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 15px;align-items:center;min-width:0}
+.trainSide .trainActions{grid-column:1/-1;gap:8px;flex-wrap:wrap}
+.trainSide .trainActions .btn{font-size:23px;padding:9px 14px}
+.trainSide .trainingMetrics{display:flex;gap:20px;margin:0;align-items:center}
+.trainSide .trainingMetrics .metric{border:0;padding:0;display:flex;align-items:baseline;gap:9px}
+.trainSide .trainingMetrics .metric small{font-size:22px}
+.trainSide .trainingMetrics .metric b{font-size:27px}
+.trainSide .trainReadout{font-size:29px;font-weight:900;color:#09755e;padding:3px 12px;background:#dcefe2;border:0;margin:0;white-space:nowrap}
+.trainSide .trainNext{align-self:start;display:flex;gap:7px}
+.trainSide .trainNext .btn{font-size:23px;padding:9px 14px}
+.trainSide .rewardChip{font-size:24px;font-weight:900;padding:0;justify-content:flex-end}
+.trainSide .rewardChip b{font-size:32px;color:#057c6c}
+#rlResult:not([hidden]){grid-column:1/-1}
+#rlReset{font-size:20px!important}
+#imitCompare:disabled,#imitMove:disabled,#rlTest:disabled{opacity:.55}
+.trainVisualCaption{font-size:27px;max-width:94%;bottom:12px}
+.trainingVisual .hurdleRobot{height:57%!important;bottom:12%!important}
+.trainingVisual .trainStage{object-position:center bottom}
+
+/* Race: full canvas first, small controls below. */
+#s5{display:flex;flex-direction:column;background:var(--paper)}
+.raceFrame{flex:1;height:auto;min-height:0;margin:0}
+.raceReadout{top:14px;bottom:auto;left:auto;right:20px;width:auto;gap:18px;background:#13243de6;padding:8px 15px;font-size:23px}
+.raceReadout b{font-size:32px}
+.raceReadout #raceTime{font-size:23px}
+.segments{height:39px;flex-shrink:0;gap:2px;padding:3px 24px 0}
+.segment{font-size:20px}
+.raceHead{padding:8px 24px 0;align-items:center;flex-shrink:0}
+.raceHead>div:last-child{display:flex;align-items:center;gap:18px;flex:1;justify-content:space-between}
+.raceHead .row{margin:0!important;gap:8px;flex-wrap:nowrap;justify-content:flex-start}
+.raceHead label,.raceHead .select{font-size:20px!important}
+.raceHead .select{padding:5px 9px}
+.chip{font-size:22px;padding:7px 15px}
+.raceBottom{padding:8px 24px 10px;flex-shrink:0;justify-content:space-between}
+.raceBottom .btn{font-size:23px;padding:9px 15px}
+.raceBottom #toWorld:disabled{display:none}
+
+/* Photo: projection size, selected point and one short answer. */
+.visionFrame .visionLeft{display:flex;align-items:center;justify-content:center;background:#101f34}
+.visionLeft .photoWrap{height:100%;width:auto;max-width:100%;aspect-ratio:1134/639}
+.visionFrame .panel{padding:13px 24px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;flex:0 0 auto}
+.visionFrame .visionQuestion{font-size:39px!important;margin:0;grid-column:1/-1}
+.visionFrame .paperBox{border:0;padding:0;background:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.visionFrame #visionLabel{font-size:31px!important;margin:0!important}
+.archiveLabel{font-size:21px;color:#52677b}
+.visionFrame .legend{font-size:21px;gap:15px}
+.visionFrame .legend i{width:17px;height:17px}
+.visionFrame .panel>.row{grid-column:2;grid-row:2;justify-content:flex-end;flex-wrap:nowrap}
+.visionFrame #toEnding{grid-column:2;justify-self:end}
+.visionFrame #toEnding:disabled{display:none}
+.visionFrame:has(#maskOverlay:not([hidden])) .visionQuestion{font-size:33px!important}
+.visionFrame:has(#maskOverlay[hidden]) .paperBox{display:none}
+.visionFrame:has(#maskOverlay[hidden]) .panel>.row{grid-column:1/-1;justify-content:flex-start}
+.visionIntro .dialogue{font-size:34px;bottom:85px;left:26px;right:auto;max-width:1150px;padding:13px 20px}
+.visionIntro .btn{font-size:27px;bottom:22px;right:25px}
+.finalStart{place-items:end start;background:linear-gradient(0deg,#091525cc,transparent 45%)}
+.finalStart .paper{margin:0 0 30px 32px;background:#102239e8;border:0;color:white;box-shadow:none;padding:22px 32px}
+.finalStart h2{font-size:53px;color:white;margin-bottom:14px}
+.finalArt .dialogue{font-size:30px;bottom:76px}
+.finalArt .dialogue small{font-size:24px}
+.finalControls .row button{font-size:21px}
+.finalControls span{font-size:20px}
+.detailModal article{width:1000px;max-height:700px;overflow:auto}
+.detailContent{margin:18px 0;display:grid;gap:12px;font-size:25px;line-height:1.5}
+.detailContent p{margin:0;font-size:25px}
+.toast{bottom:62px;font-size:23px}

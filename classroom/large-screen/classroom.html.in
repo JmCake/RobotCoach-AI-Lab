@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>机器人总教练 · 奔跑的意义｜大屏精简版</title>
+<style>@@CSS@@</style>
+</head>
+<body>
+<div class="stage" id="stage">
+<header class="top">
+<div class="brand">
+<i>///</i>机器人总教练</div>
+<nav class="chapterNav" id="chapters">
+<button data-jump="0">序幕</button>
+<button data-jump="1">第一关 · 感知</button>
+<button data-jump="3">第二关 · 学习</button>
+<button data-jump="5">第三关 · 未知</button>
+<button data-jump="7">终章</button>
+</nav>
+<div class="tools">
+<button id="voiceBtn">配音开</button>
+<button class="" id="detailBtn">实验详情</button>
+<button id="helpBtn">教师</button>
+<button id="fullBtn">全屏</button>
+</div>
+</header>
+<main class="deck">
+<section class="scene cover active" id="s0">
+<img alt="蓝白机器人站在运动会起跑线" class="bg" data-img="line"/>
+<div class="shade">
+</div>
+<div class="coverCopy">
+<div class="kicker teacher-detail">ROBOTCOACH · 机器人运动会</div>
+<h1>机器人总教练<span>奔跑的意义</span>
+</h1>
+<p>今天，你们是它的总教练。</p>
+<button class="btn start" id="startBtn">开始　→</button>
+</div>
+<div class="bottomline teacher-detail">三关挑战 / 教师掌握节奏 / 真实实验</div>
+</section>
+<section class="scene" id="s1">
+<div class="frame fullArt" id="incidentFrame">
+<canvas id="bendScene" width="1600" height="600" aria-label="同一条红色弯道上的机器人入弯、失衡与落地">
+</canvas>
+<span class="tag label" id="incidentLabel">第一关 · 入弯现场</span>
+<div class="overlayTop">
+<span class="pointPill teacher-detail" id="incidentBeat">01 / 观察</span>
+<button class="btn dark sm" id="bendPause" hidden>暂停</button>
+<button class="btn dark sm" id="incidentReset">重看</button>
+</div>
+<div class="spot" hidden="" id="clueSpot">
+</div>
+<div class="questionBar" id="incidentQuestion">
+<div class="eyebrow teacher-detail" id="incidentEye">先看，再猜</div>
+<h2 id="incidentQuestionTitle">看见弯道，就一定能跑过去吗？</h2>
+<div class="row" id="predictChoices">
+<button class="btn secondary" data-predict="yes">A　能，已经看见弯道</button>
+<button class="btn secondary" data-predict="no">B　不一定，还需要别的能力</button>
+</div>
+<div class="row" hidden="" id="causeChoices">
+<button class="btn secondary" data-cause="camera">看视线</button>
+<button class="btn secondary" data-cause="imu">看身体</button>
+<button class="btn secondary" data-cause="force">看落脚</button>
+</div>
+<div class="feedback" id="incidentFeedback">
+</div>
+<div class="action" style="margin-top:10px">
+<span class="note teacher-detail" id="incidentCue">教师点击一个猜想，讨论完再揭晓。</span>
+<button class="btn" disabled="" id="incidentNext">揭晓　→</button>
+</div>
+</div>
+</div>
+</section>
+<section class="scene inset" id="s2">
+<div class="sceneTitle teacher-detail">
+<div>
+<div class="eyebrow teacher-detail">第一关 / 动手求证</div>
+<h1>给机器人装上什么？</h1>
+</div>
+<div class="small teacher-detail">同一条 40 米干地急弯 · 同一目标速度 · 同一随机种子</div>
+</div>
+<div class="splitLayout repairLayout">
+<div class="bayFrame" id="bayFrame">
+<img class="bayBg" data-img="bay" id="bayBg"/>
+<img alt="维修舱机器人" class="robot" data-img="standing" id="bayRobot"/>
+<div id="mounts">
+</div>
+<canvas class="raceCanvas" height="650" hidden="" id="curveCanvas" width="1600">
+</canvas>
+<span class="tag label" id="repairTag">装备工坊</span>
+<div class="canvasCaption" id="repairSpeech">机器人：教练，这次你想让我补上什么能力？</div>
+<div class="resultStrip curveMetrics">
+<div class="metric bad">
+<small>初代机</small>
+<b id="baseDist">—</b>
+</div>
+<div class="metric">
+<small>本轮</small>
+<b id="curveDist">未开始</b>
+</div>
+<div class="metric teacher-detail">
+<small>姿态读数 / 最大侧倾</small>
+<b id="curveTilt">—</b>
+</div>
+<div class="metric teacher-detail">
+<small>扶正指令</small>
+<b id="curveTorque">—</b>
+</div>
+</div>
+</div>
+<div class="panel" id="repairPanel">
+<h2 class="teacher-detail">选择装备</h2>
+<p class="note teacher-detail">点击装备可安装或卸下。不是装备越多越好：试着只改变一个条件。</p>
+<div class="geargrid" id="gears">
+</div>
+<div class="imuMode" hidden="" id="imuMode">
+<b>IMU：</b>
+<button class="btn secondary sm" data-mode="measure">仅测量</button>
+<button class="btn secondary sm" data-mode="control">接入控制器</button>
+</div>
+<p class="statusText teacher-detail" id="curveStatus">请选择配置。试跑后对照初代机的表现。</p>
+<div class="row curveActions">
+<button class="btn" id="curveRun">开始试跑</button>
+<button class="btn secondary sm" hidden="" id="curvePause">暂停</button>
+<button class="btn secondary sm" hidden="" id="curveChange">改装</button>
+<button class="btn secondary sm" disabled="" id="curveExplain">看原因</button>
+<button class="btn sm" disabled="" id="toLearn">继续　→</button>
+</div>
+</div>
+</div>
+</section>
+<section class="scene" id="s3">
+<div class="frame fullArt">
+<div class="hurdlePanel">
+<div class="piece">
+<img class="image" data-img="stadium"/>
+<canvas aria-label="带着本班改装装备的机器人" class="hurdleRobot" id="hurdleSprite" width="446" height="474"></canvas>
+<svg class="obstacle" viewbox="0 0 130 110">
+<path d="M15 100V28L117 10V85M15 100H5M117 85H125" fill="none" stroke="#14283d" stroke-width="10">
+</path>
+<path d="M9 20L120 2L122 20L10 38Z" fill="#ffd552" stroke="#14283d" stroke-width="4">
+</path>
+<path d="M28 17L43 14L51 29L36 32M72 10L87 7L95 22L80 25" fill="#203045">
+</path>
+</svg>
+</div>
+<div class="piece">
+<img class="image" data-img="beam"/>
+</div>
+</div>
+<span class="tag label">第二关 · 矮栏与横梁</span>
+<div class="dialogue teacher-detail" id="learnDialogue" style="bottom:238px">
+<small>机器人</small>教练，前面有矮栏，还有横梁。难道每遇到一个障碍，我都得等你告诉我该怎么做吗？</div>
+<div class="questionBar">
+<div class="eyebrow teacher-detail">让机器人自己学</div>
+<h2>没有教练提醒，它怎样学会自己选择？</h2>
+<div class="row">
+<button class="choiceCard" data-learning="imit">跟着教练学<small class="teacher-detail">观察示范：什么情况下跳，什么情况下蹲？</small>
+</button>
+<button class="choiceCard" data-learning="rl">自己试错学<small class="teacher-detail">根据成功和失败的反馈调整选择。</small>
+</button>
+</div>
+<div class="action" style="margin-top:17px">
+<p class="cue teacher-detail" id="learnChoiceText">让同学们先讨论，两种方法有什么不同。</p>
+<button class="btn" disabled="" id="learnOpen">开始训练　→</button>
+</div>
+</div>
+</div>
+</section>
+<section class="scene inset" id="s4">
+<div class="sceneTitle teacher-detail">
+<div>
+<div class="eyebrow teacher-detail">第二关 / 机器人训练营</div>
+<h1>它是怎样一步一步学会的？</h1>
+</div>
+<div class="small teacher-detail">每一次动作与成绩都由当前运行生成<br/>短道训练使用标准四感官配置</div>
+</div>
+<div class="splitLayout trainingLayout">
+<div class="trainingVisual">
+<img class="trainStage" data-img="stadium" id="trainPoster"/>
+<canvas aria-label="使用标准训练配置的机器人" class="hurdleRobot" id="trainRobot" width="327" height="475" style="height:42%;left:26%;bottom:17%"></canvas>
+<canvas class="raceCanvas" height="650" hidden="" id="trainCanvas" width="1600">
+</canvas>
+<span class="tag label" id="trainTag">训练场 · 等待教练</span>
+<div class="trainVisualCaption" id="trainCaption">先选择一种学习方式。每轮结束都停下来，观察结果。</div>
+<div class="tabs">
+<button class="active" id="tabImit">模仿学习</button>
+<button id="tabRl">强化学习</button>
+</div>
+</div>
+<div class="panel trainSide">
+<div id="imitPane">
+<h2 class="teacher-detail">看别人怎么做</h2>
+<p class="note teacher-detail">规则教练实际示范，记录障碍距离、速度、支撑状态与动作，机器人用这些样本作出选择。</p>
+<div class="row trainActions">
+<button class="btn sm" id="imitRun">观看教练示范</button>
+<button class="btn secondary sm" hidden="" id="imitPause">暂停</button>
+<button class="btn sm" disabled="" id="imitCompare">对照试跑</button>
+<button class="btn secondary sm" disabled="" id="imitMove">移动栏架</button>
+</div>
+<div class="resultStrip trainingMetrics">
+<div class="metric">
+<small>示范</small>
+<b id="sampleCount">0</b>
+</div>
+<div class="metric">
+<small>越障</small>
+<b id="imitPass">—</b>
+</div>
+</div>
+<p class="statusText teacher-detail" id="imitStatus">先观察教练的动作，不急着公布结果。</p>
+<div class="trainReadout" hidden="" id="imitResult">
+</div>
+</div>
+<div hidden="" id="rlPane">
+<h2 class="teacher-detail">从结果中学习</h2>
+<p class="note teacher-detail">成功越障 +8，碰撞或失败 −12；Q 值根据每一次动作的结果真正更新。</p>
+<div class="row trainActions">
+<button class="btn sm" id="rlOne">慢看一轮</button>
+<button class="btn secondary sm" id="rl30">练 30 轮</button>
+<button class="btn secondary sm" id="rl300">练 300 轮</button>
+<button class="btn secondary sm" hidden="" id="rlPause">暂停</button>
+<button class="btn sm" disabled="" id="rlTest">测试新赛道</button>
+<button class="btn secondary sm" id="rlReset">清空</button>
+</div>
+<div class="resultStrip trainingMetrics">
+<div class="metric">
+<small>训练轮数</small>
+<b id="rounds">0</b>
+</div>
+<div class="metric teacher-detail">
+<small>实际 Q 值更新</small>
+<b id="updates">0</b>
+</div>
+</div>
+<div class="qrow rewardChip">
+<span class="teacher-detail" id="lastAction">等待训练</span>
+<b id="lastReward">—</b>
+</div>
+<div class="rewardLine teacher-detail" id="rewardLine">
+</div>
+<p class="statusText teacher-detail" id="rlStatus">可先慢看一轮，再加速训练。</p>
+<div class="trainReadout" hidden="" id="rlResult">
+</div>
+</div>
+<div class="action trainNext">
+<button class="btn secondary sm" id="learnExplain">学习区别</button>
+<button class="btn sm" id="toRace">总决赛　→</button>
+</div>
+<div class="teacher-detail">
+<p class="note" hidden="" id="learningSummary">模仿学习从示范中获得动作答案；强化学习从行动后果中更新策略。改变场景还需要重新验证。</p>
+</div>
+</div>
+</div>
+</section>
+<section class="scene inset" id="s5">
+<div class="frame raceFrame">
+<canvas height="630" id="raceCanvas" width="1600">
+</canvas>
+<span class="tag label" id="raceSegment">检录 · 赛前准备</span>
+<div class="raceReadout">
+<span class="teacher-detail" id="raceEvent">选择最终装备和策略，再开始比赛。</span>
+<b id="raceDist">0.0 / 190 m</b>
+<span id="raceTime">0.0 秒 · 越障 0</span>
+</div>
+</div>
+<div class="segments" id="segments">
+</div>
+<div class="raceHead">
+<div class="teacher-detail">
+<div class="eyebrow">第三关 / 综合挑战</div>
+<h1 style="font-size:38px;margin:5px 0 0">把学到的能力，带进总决赛</h1>
+</div>
+<div>
+<div class="row" id="raceGear">
+</div>
+<div class="row" style="margin-top:8px">
+<label style="font-size:16px">决策策略　<select class="select" id="policy">
+<option value="rule">规则参考</option>
+<option value="learned">本堂课学习策略</option>
+</select>
+</label>
+<label style="font-size:16px">速度　<select class="select" id="raceSpeed">
+<option value="1">1× 实时</option>
+<option value="2">2×</option>
+<option value="4">4×</option>
+</select>
+</label>
+</div>
+</div>
+</div>
+<div class="raceBottom">
+<div class="row">
+<button class="btn" id="raceRun">开始比赛</button>
+<button class="btn secondary sm" hidden="" id="racePause">暂停</button>
+<button class="btn secondary sm" hidden="" id="raceReset">同条件重试</button>
+</div>
+<div class="row">
+<span class="note teacher-detail" id="raceResult">一场比赛，六种环境。</span>
+<button class="btn sm" disabled="" id="toWorld">走向真实世界　→</button>
+</div>
+</div>
+</section>
+<section class="scene inset" id="s6">
+<div class="sceneTitle teacher-detail">
+<div>
+<div class="eyebrow teacher-detail">第三关 / 真实世界</div>
+<h1>没有跑道线，下一步落在哪里？</h1>
+</div>
+<div class="small teacher-detail">先由学生判断，再核对 AI 已归档的识别结果</div>
+</div>
+<div class="splitLayout visionFrame">
+<div class="visionLeft">
+<div aria-label="选择真实照片上的落脚点" class="photoWrap" id="photoClick" tabindex="0">
+<img alt="九寨沟实拍栈道和水面" data-img="photo" id="realPhoto"/>
+<img alt="归档模型输出" data-img="overlay" hidden="" id="maskOverlay"/>
+<div class="point" hidden="" id="point">
+</div>
+</div>
+<span class="tag label" id="photoTag">九寨沟 · 实拍照片</span>
+</div>
+<aside class="panel">
+<h2 class="visionQuestion">下一步，落在哪里？</h2>
+<div class="eyebrow teacher-detail">AI 探险家</div>
+<h2 class="teacher-detail">如果你是它的教练……</h2>
+<p class="teacher-detail">请在照片里指出机器人下一步可以考虑落脚的位置。</p>
+<p class="statusText teacher-detail" id="visionStatus">先观察原图。点击水面、木板或其他区域，选一个点。</p>
+<div class="paperBox">
+<div class="note teacher-detail">选中位置的模型判断</div>
+<h2 id="visionLabel" style="font-size:29px;margin-top:7px">尚未揭晓</h2>
+<span class="archiveLabel">归档识别 · 不代表安全通行</span>
+<p class="note teacher-detail" id="visionDetail" style="margin-top:7px">讨论完成以后，再看 AI 的结果。</p>
+</div>
+<div class="legend" hidden="" id="legend">
+<span>
+<i>
+</i>候选路面</span>
+<span>
+<i class="water">
+</i>水面/需谨慎</span>
+</div>
+<div class="row">
+<button class="btn" disabled="" id="visionReveal">揭晓 AI 判断</button>
+<button class="btn secondary sm" hidden="" id="visionToggle">原图 / 识别</button>
+</div>
+<p class="note teacher-detail">此离线版使用原课堂记录的模型识别图，不是现场重新推理。视觉候选路面也不等于实际安全通行。</p>
+<button class="btn" disabled="" id="toEnding">走向救援　→</button>
+</aside>
+<div class="visionIntro" id="visionIntro">
+<img class="image" data-img="trail"/>
+<span class="tag label">从赛场，到真实世界</span>
+<div class="dialogue">机器人：没有跑道线，我该往哪儿走？</div>
+<button class="btn" id="showPhoto">看真实照片　→</button>
+</div>
+</div>
+</section>
+<section class="scene" id="s7">@@RESCUE@@</section>
+</main>
+<footer class="footer">
+<div class="side">
+<button aria-label="上一幕" class="nav" id="prev">‹</button>
+<span class="pageNo" id="pageNo">01 / 08</span>
+</div>
+<div class="dots" id="dots">
+</div>
+<div class="side">
+<span class="hint teacher-detail" id="hint">→ / 空格　教师推进</span>
+<button aria-label="下一步" class="nav next" id="next">›</button>
+</div>
+<div id="progress">
+</div>
+</footer>
+<div class="toast" hidden="" id="toast" role="status">
+</div>
+<div class="modal" hidden="" id="help">
+<article>
+<h2>教师控场</h2>
+<p>左右方向键：上一幕 / 推进当前环节。空格或右箭头只在你按下时推进，不会自动翻页。动画、提问和实验均可停留讨论；实验默认正常速度。</p>
+<p>按 F 全屏。顶部可跳转关卡，本堂实验结果会保留。巡检时按 1、2、3 选择观察点，按 T 切换热成像。结尾配音可离线播放。</p>
+<p>课堂沿用 V6 与救援篇原画。九寨沟照片由 rheins 拍摄，课堂版缩放了原图并另加识别图层。<a href="https://commons.wikimedia.org/wiki/File:栈道_-_Boardwalk_-_2011.10_-_panoramio.jpg" target="_blank" rel="noopener">摄影原作</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a></p>
+<div class="row">
+<button class="btn" id="closeHelp">继续课堂</button>
+<button class="btn secondary" id="resetAll">重新开始整堂课</button>
+</div>
+</article>
+</div>
+<div class="modal detailModal" hidden="" id="detailModal">
+<article class="">
+<h2 class="">教师参考</h2>
+<div class="detailContent" id="detailContent">
+</div>
+<button class="btn" id="closeDetail">返回课堂</button>
+</article>
+</div>
+<div class="loading" id="loading">
+<div>
+<b>正在准备高清课堂素材</b>
+<p id="loadingText">预加载原画和角色动作……</p>
+<div class="bar">
+<i id="loadBar">
+</i>
+</div>
+</div>
+</div>
+</div>
+<script id="assets" type="application/json">@@ASSETS@@</script>
+<!-- Motion and learning code license
+@@LICENSE@@
+-->
+<audio id="closingVoice" preload="auto" src="@@VOICE@@">
+</audio>
+<script>@@MODEL@@</script>
+<script>@@UI@@</script>
+</body>
+</html>

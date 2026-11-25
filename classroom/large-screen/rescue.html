@@ -1,0 +1,22 @@
+<div id="patrol">
+  <div class="patrolPicture">
+    <canvas id="rescueScene" width="1600" height="616" aria-label="受损建筑巡检图。点击 A、B、C 观察点移动，切换热成像探查异常。"></canvas>
+    <div class="patrolHeading"><span>模拟应用演示</span><h2>震后热源巡检</h2></div>
+    <div class="sensorSwitch" aria-label="观察方式">
+      <button id="normalView" aria-pressed="true">普通视觉</button>
+      <button id="heatView" aria-pressed="false">热成像</button>
+    </div>
+    <div id="heatScale" hidden><i></i>低温　→　高温</div>
+    <div class="waypoints" aria-label="巡检观察点"></div>
+  </div>
+  <div class="patrolDesk">
+    <div class="patrolBrief"><span id="patrolCount">已标记 0 / 3</span><h2 id="patrolStatus" role="status">选择观察点，让机器人先进去。</h2></div>
+    <div class="patrolCommands"><button class="btn secondary sm" id="patrolPause" hidden>暂停巡检</button>
+      <button class="btn" id="sendReport" hidden>发回救援报告　→</button></div>
+  </div>
+</div>
+<div id="closing" hidden>
+  <img data-img="hands" alt="救援人员与蓝白机器人在灾区握手"/>
+  <p>让科技抵达危险，让生命远离危险。</p>
+  <button id="readClosing" class="btn dark sm" aria-label="重听结尾配音">重听配音</button>
+</div>

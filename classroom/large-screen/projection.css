@@ -1,0 +1,34 @@
+#incidentFrame {display:grid;grid-template-rows:minmax(0,1fr) 210px;background:#f7f3e7}
+#bendScene {display:block;width:100%;height:100%;grid-row:1}
+#incidentFrame .questionBar {grid-row:2;position:relative;inset:auto;width:100%;height:auto;min-height:0;box-sizing:border-box}
+#incidentFrame .overlayTop {right:22px;left:auto;top:15px}
+#incidentFrame[data-step="motion"] .questionBar {display:flex;align-items:center;justify-content:center;color:#526277}
+#incidentFrame[data-step="motion"] .questionBar .action {display:none}
+#incidentFrame #incidentFeedback:empty {display:none}
+#patrol {height:100%;display:grid;grid-template-rows:minmax(0,1fr) 134px}
+.patrolPicture {position:relative;overflow:hidden;background:#17263e}
+#rescueScene {display:block;height:100%;width:100%}
+.patrolHeading,.sensorSwitch,#heatScale {position:absolute;z-index:1}
+.patrolHeading {top:24px;left:30px;color:white;text-shadow:0 2px 6px #08101f}
+.patrolHeading span {display:inline-block;padding:5px 13px;background:#eeec81;color:#122239;text-shadow:none;font-size:19px;font-weight:900;letter-spacing:1px;border:2px solid #16253a}
+.patrolHeading h2 {font-size:48px;line-height:1.12;margin:9px 0}
+.sensorSwitch {display:flex;top:25px;right:30px;padding:5px;background:#12223a;border:1px solid #c6d7dbaa;border-radius:8px}
+.sensorSwitch button {padding:10px 21px;border:0;border-radius:4px;color:white;font-size:25px;background:transparent;font-weight:bold}
+.sensorSwitch button[aria-pressed="true"] {background:#eafb79;color:#14283c}
+#heatScale {top:95px;right:33px;padding:5px 11px;background:#0b182ae6;color:white;font-size:17px}
+#heatScale i {display:inline-block;width:86px;height:10px;margin-right:8px;background:linear-gradient(90deg,#2d3a92,#a53088,#ff6c38,#ffe99c)}
+.waypoints {position:absolute;inset:0;pointer-events:none}
+.waypoints button {pointer-events:auto;position:absolute;transform:translate(-50%,0);min-width:80px;height:42px;background:#14283af5;color:white;border:2px solid #90e3ed;border-radius:22px;font-size:22px;line-height:1;font-weight:800;box-shadow:0 2px 8px #061a2a55}
+.waypoints button::before {content:"";position:absolute;width:2px;height:11px;background:#9df0ef;left:50%;bottom:100%}
+.waypoints button[aria-current="true"] {background:#eafb79;border-color:#233447;color:#13263a}
+.waypoints button.marked {border-color:#5ce7bb}
+.patrolDesk {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 34px;background:var(--paper);border-top:5px solid var(--navy)}
+.patrolBrief span {font-size:21px;color:#4f6477;font-weight:750}
+.patrolBrief h2 {font-size:37px;line-height:1.18;margin:5px 0 0}
+.patrolCommands {display:flex;align-items:center;gap:12px}
+.patrolCommands .btn {white-space:nowrap}
+#closing {position:absolute;inset:0;background:#122239;color:white;isolation:isolate}
+#closing img {width:100%;height:100%;object-fit:cover;object-position:center 43%}
+#closing::after {content:"";position:absolute;inset:42% 0 0;background:linear-gradient(transparent,#071524df);pointer-events:none}
+#closing p {position:absolute;z-index:1;left:5%;bottom:5%;margin:0;font-size:57px;font-weight:850;text-shadow:0 2px 7px #102235}
+#readClosing {position:absolute;z-index:1;right:25px;top:18px}
