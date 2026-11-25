@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f4ed">
+  <title>机器人看路 · RobotCoach</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/robot.svg">
+  <link rel="stylesheet" href="../assets/vision/lab.css">
+</head>
+<body>
+  <main class="lab">
+    <header class="masthead">
+      <div><a id="return" class="back" href="../index.html#workshop">← 返回感官工坊</a>
+        <h1>机器人看路</h1>
+        <p>机器人能从哪儿走？看看照片里哪些路面连着脚下，哪里有障碍。</p>
+      </div>
+      <div class="import">
+        <button id="upload" class="accent" type="button"><span aria-hidden="true">＋</span> 导入照片</button>
+        <input id="files" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/bmp" multiple hidden>
+        <small>可多选，照片只在此设备处理</small>
+      </div>
+    </header>
+    <div class="workbench">
+      <section class="viewer" aria-label="照片与识别图层">
+        <header class="viewer-bar"><h2 id="photoName">照片</h2>
+          <div class="switch" role="group" aria-label="图层">
+            <button id="original" type="button" aria-pressed="true">原图</button>
+            <button id="overlay" type="button" aria-pressed="false" disabled>模型叠加</button>
+            <button id="truth" type="button" aria-pressed="false" hidden>人工标注</button>
+          </div>
+        </header>
+        <div class="stage" id="stage">
+          <canvas id="photo" width="720" height="440" tabindex="0" aria-label="选取路面区域" aria-describedby="pickHelp photoCaption"></canvas>
+        </div>
+        <div class="viewer-foot">
+          <fieldset id="layerFilters" class="layer-filters" aria-label="叠加内容" disabled>
+            <label><input id="showRoad" type="checkbox" checked>可通行路面</label>
+            <label><input id="showObstacles" type="checkbox" checked>障碍物</label>
+          </fieldset>
+          <p id="pickHelp">点照片查看该处，或用方向键移动白框。</p>
+          <div id="photoCredit" class="photo-credit" hidden>
+            <p id="photoCaption"></p>
+            <p><span id="photoPlace"></span> · <span id="creditRole">摄影</span> <a id="photoSource" target="_blank" rel="noopener"></a><span id="photoLicenseWrap"> · <a id="photoLicense" target="_blank" rel="noopener"></a></span></p>
+          </div>
+        </div>
+      </section>
+      <aside class="readings" aria-labelledby="readingTitle">
+        <h2 id="readingTitle">模型识别结果</h2>
+        <button id="analyze" class="accent" type="button" disabled>开始识别 <span aria-hidden="true">→</span></button>
+        <p id="status" class="status" role="status">正在打开照片…</p>
+        <section class="metric"><h3><i class="road-key" aria-hidden="true"></i>可通行路面</h3>
+          <p id="roadReading">等你开始识别</p>
+          <p class="hint">绿色表示与近处连通的候选路面。点未着色的位置，可查看水面、台阶或待确认等判断。</p></section>
+        <section class="metric"><h3><i class="obstacle-key" aria-hidden="true"></i>画面中的障碍</h3>
+          <p id="objects">等你开始识别</p></section>
+        <section class="metric"><h3><i class="patch-key" aria-hidden="true"></i>选区内的路面</h3>
+          <label class="whole"><input id="whole" type="checkbox">用整张近照判断路况</label>
+          <dl><div id="pointRow" hidden><dt>所点位置</dt><dd id="pointReading">—</dd></div><div><dt>干湿</dt><dd id="wet">—</dd></div><div><dt>平整度</dt><dd id="rough">—</dd></div></dl>
+          <p id="surfaceNote" class="hint">干湿是外观判断，实际打滑要靠足底反馈观察。</p>
+        </section>
+        <details id="corrections" hidden><summary>这处识别有误？记录纠错</summary>
+          <label for="correctClass">你在白点处看到了什么？</label>
+          <select id="correctClass"><option value="">选择实际看到的类别</option></select>
+          <div class="note-actions"><button id="saveNote" type="button" disabled>保存这一处</button><button id="deleteNote" type="button" hidden>移除记录</button></div>
+          <div id="savedNotes" hidden><select id="savedPoints" aria-label="查看已记录的位置"></select><button id="exportNotes" type="button">导出本图记录</button></div>
+          <p id="noteStatus" role="status"></p>
+        </details>
+        <details id="reference" hidden><summary>对照人工标注</summary><p id="referenceText"></p></details>
+      </aside>
+    </div>
+    <section class="gallery" aria-labelledby="galleryTitle">
+      <div class="gallery-heading"><h2 id="galleryTitle">照片集</h2><span id="photoCount"></span></div>
+      <div id="photos">
+        <div class="photo-group"><h3 id="campusTitle">渤海校区</h3><div>
+          <div id="campusPhotos" class="photos photo-cards" role="group" aria-labelledby="campusTitle"></div>
+          <div id="campusSources" hidden>
+            <p>下面是校方拍摄的校园场景，保存照片后可点「导入照片」分析。</p>
+            <p><a href="https://xyh.univs.cn/a/xyh_xyh_hbnydx/240411/1882256.shtml" target="_blank" rel="noopener">求是街与务实街</a> · <a href="https://bohai.hebau.edu.cn/info/1054/4456.htm" target="_blank" rel="noopener">树荫路缘</a> · <a href="https://bohai.hebau.edu.cn/info/1054/2087.htm" target="_blank" rel="noopener">学生生活区</a> · <a href="https://xyh.univs.cn/a/xyh_xyh_hbnydx/240909/1971719.shtml" target="_blank" rel="noopener">广场前斑马线</a> · <a href="https://bohai.hebau.edu.cn/info/1050/1326.htm" target="_blank" rel="noopener">校门前通道</a></p>
+          </div>
+        </div></div>
+        <div class="photo-group"><h3 id="huanghuaTitle">黄骅道路</h3><div id="huanghuaPhotos" class="photos" role="group" aria-labelledby="huanghuaTitle"></div></div>
+        <div class="photo-group"><h3 id="lessonTitle">课堂对照</h3><div id="lessonPhotos" class="photos" role="group" aria-labelledby="lessonTitle"></div></div>
+        <div class="photo-group"><h3 id="scenicTitle">景区实拍</h3><div id="scenicPhotos" class="photos photo-cards" role="group" aria-labelledby="scenicTitle"></div></div>
+        <div id="importedGroup" class="photo-group" hidden><h3 id="importedTitle">我的照片</h3><div id="importedPhotos" class="photos" role="group" aria-labelledby="importedTitle"></div></div>
+      </div>
+      <p id="importStatus" role="status"></p>
+    </section>
+    <footer><details><summary>模型与照片来源</summary>
+      <p>GOOSE PP-LiteSeg 识别路面和物体，PP-MobileSeg 结合整张照片和有歧义的局部，复核水面、步道、台阶和行人车辆。绿色沿着与画面近处连通的路面延伸。水面、台阶和待确认区域会中断连接。照片无法测出承重或真实摩擦。</p>
+      <p>三张课堂场景图可对照人工类别标注，绿色使用同一条连通规则。点选普通路面时，独立的路况分类器判断白框内的干湿和凹凸。选中水面时，水下平整度显示「水下看不清」。</p>
+      <p><a href="https://goose-dataset.de/docs/setup/">GOOSE 模型和数据</a> · <a href="https://github.com/PaddlePaddle/PaddleSeg/tree/release/2.8/configs/pp_mobileseg">PaddleSeg 场景模型</a> · <a href="https://data.mendeley.com/datasets/w86hvkrzc5/3">RSCD 2022 路面照片</a> · <a href="../THIRD_PARTY_NOTICES.md">署名与许可</a></p>
+    </details></footer>
+  </main>
+  <script type="module" src="../assets/vision/lab.js"></script>
+</body>
+</html>

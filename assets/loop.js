@@ -99,7 +99,7 @@ function connect(type){
   S.linked=true;S.phase='ready';S.fromAction=false;
   S.placed.action.classList.remove('pick');
   persist();sync();
-  say('行动已连接回感知。先运行完整闭环，再关掉一个环节对比。');
+  say('行动已连接回感知。运行后可关闭环节做对比。');
 }
 function stop(keepRobot=false){
   S.running=false;cancelAnimationFrame(S.raf);
@@ -112,7 +112,7 @@ function toggleFault(key){
   stop();clearClip();
   S.fault[key+'On']=!enabled(key);
   storageNotice(save({fault:S.fault}));sync();
-  say(`${enabled(key)?'已恢复':'已关闭'}${FAULT_NAMES[key]}。再次运行，观察信息如何传递。`);
+  say(`${enabled(key)?'已恢复':'已关闭'}${FAULT_NAMES[key]}。请再次运行。`);
 }
 function fail(key){
   stop(true);
@@ -150,11 +150,11 @@ function run(){
       elapsed=0;segment++;
       if(!S.linked&&segment===2){
         stop();S.phase='connect';sync();
-        say('一次行动结束，但没有再观察。点击「行动」再点「感知」，把反馈连回来。');return;
+        say('一次行动结束。要发现下一栏，依次点击「行动」「感知」。');return;
       }
       if(segment===steps.length){
         segment=0;laps++;
-        say(`闭环已循环 ${laps} 次：行动改变环境，再感知提供新信息。`);
+        say(`闭环已循环 ${laps} 次。`);
       }else say('信息正在通过：'+FAULT_NAMES[steps[segment]]);
     }
     S.raf=requestAnimationFrame(tick);

@@ -1,5 +1,6 @@
 // Independent lightweight motion demo. No course state, trained policy or hidden success clips.
 // Reuses the project's deterministic random generator (MIT upstream adaptation).
+import {arcCurvature,trialBend} from './track-arc.js';
 import {rng} from '../learning.js';
 import {explainFall} from './fall-feedback.js';
 export const DT=1/120;
@@ -40,8 +41,9 @@ export class MotionWorld{
     this.observation=this.observe();this.control={target:0,torque:0,steer:0,jump:false,duck:false,placement:0};
   }
   get scene(){return this.track?.segmentAt(this.x).id??this.singleScene;}
-  center(x){return this.track?.center(x)??(this.scene==='curve'?3.8*Math.sin(Math.max(0,x-7)*.24)**2:0);}
-  curvature(x){return this.track?.curvature(x)??(this.scene==='curve'&&x>7?.30*Math.sin((x-7)*.48):0);}
+  get bend(){return this.track?this.track.bend:this.scene==='curve'?trialBend:null;}
+  center(x){return this.track?.center(x)??0;}
+  curvature(x){return this.track?.curvature(x)??(this.bend?arcCurvature(this.bend,x):0);}
   height(x){return this.track?.height(x)??(this.scene==='rough'?(.105*Math.sin(x*3.7+this.terrainPhase)+.045*Math.sin(x*8.1))*smooth((x-5)/3):0);}
   friction(x){return this.track?.friction(x)??(this.scene==='wet'&&x>7?.22+.045*Math.sin(x*1.9+this.terrainPhase):.88);}
   lightAt(x){return this.track?.lightAt(x)??(this.scene==='night'?0:1);}
@@ -198,10 +200,17 @@ export class MotionWorld{
       return;
     }
     // Passive mechanical damping exists with or without sensing; sensors add feedback torque.
-    const disturbance=tractionExcess*.24+this.slip*.68+Math.abs(this.lateral)*.13;
+    // The planted foot can shift the centre of pressure up to the stance half-width.
+    // A turn loads the body even when the sole still grips the track.
+    const hipHeight=.94,stanceHalfWidth=.15;
+    const turnLoad=this.speed*Math.abs(this.turn);
+    const rollAccel=this.contacts.some(Boolean)
+      ? Math.max(0,turnLoad*hipHeight-9.81*stanceHalfWidth)/(hipHeight*hipHeight):0;
+    const disturbance=rollAccel+tractionExcess*.24+this.slip*.68+Math.abs(this.lateral)*.13;
     const angularAccel=disturbance+3.5*Math.sin(this.theta)-4.7*this.theta-1.5*this.omega+c.torque;
     this.omega+=angularAccel*DT;this.theta+=this.omega*DT;
     this.peakTilt=Math.max(this.peakTilt,Math.abs(this.theta));
+    if(rollAccel>0&&Math.abs(this.theta)>.13)this.cause='转弯侧倾 · 重心超出支撑范围';
     if(this.slip>.15)this.cause='足部滑移 · 支撑点向前滑动';
     if(tractionExcess>1)this.cause='转弯侧向载荷超过可用抓地力';
     if(Math.abs(this.lateral)>1.5){this.omega+=DT*.9;this.cause='转向不足 · 偏离中间跑道';}

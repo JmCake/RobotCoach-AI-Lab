@@ -18,7 +18,7 @@ h1 { font-size: clamp(22px,4vw,36px); margin-block: 8px 18px; }
 .race-status { min-height: 0; margin-bottom: 0; padding: 8px 10px; }
 .race-status[data-outcome="failed"] { border-left-color: #edaa78; }
 .race-sidebar { display: grid; gap: 8px; }
-.race-setup, .race-result, .race-events, .race-legacy { background: #1e2637; border: 1px solid #394762; border-radius: 8px; margin: 0; padding: 10px 12px; }
+.race-setup, .race-result, .race-events { background: #1e2637; border: 1px solid #394762; border-radius: 8px; margin: 0; padding: 10px 12px; }
 .race-setup fieldset { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2px 9px; margin: 0 0 8px; }
 .race-setup legend { margin-bottom: 1px; }
 .race-sensor { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 14px; cursor: pointer; }
@@ -51,9 +51,6 @@ h1 { font-size: clamp(22px,4vw,36px); margin-block: 8px 18px; }
 .replay-events button { width: 100%; height: 100%; padding: 4px 8px; font-size: 13px; line-height: 1.3; text-align: left; overflow-wrap: anywhere; }
 .race-event-time { display: block; color: #b5bfd0; font-size: 12px; font-variant-numeric: tabular-nums; }
 .replay-events [aria-current="time"] { border-color: #7ad0aa; background: #245b4f; }
-.race-legacy { padding-block: 0; }
-.race-legacy summary { font-size: 14px; }
-.race-legacy a { display: inline-block; margin-top: 6px; }
 .broadcast-head, .broadcast-call { position: absolute; z-index: 1; pointer-events: none; left: 12px; }
 .broadcast-head { display: inline-flex; align-items: stretch; top: 12px; color: #f9f8ec; background: #142d25f5; border-radius: 4px; overflow: hidden; font-variant-numeric: tabular-nums; }
 .broadcast-head strong { color: #182c24; background: #d3f56f; padding: 5px 10px; }

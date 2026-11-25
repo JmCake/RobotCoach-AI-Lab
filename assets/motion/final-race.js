@@ -3,7 +3,7 @@ import {motionSettled} from './playback.js';
 import {CONDITIONS,DECISION_STEPS,MotionActionClock,RULE_ACTION_PARAMETERS,ruleAction} from './short-course.js';
 import {MotionTrainer,freezePolicy,readModel} from './short-learning.js';
 import {RACE_SEED,RACE_TARGET,FinalTrack,createFinalTrack} from './final-track.js';
-import {FRAME_FIELDS,RACE_RECORD_VERSION,captureRaceFrame} from './race-record.js';
+import {MOTION_MODEL,FRAME_FIELDS,RACE_RECORD_VERSION,captureRaceFrame} from './race-record.js';
 
 export {RACE_RECORD_VERSION};
 export const RACE_RULE='rule';
@@ -49,7 +49,7 @@ export class FinalRace {
     this.previousLanding=null;
     this.passed=0;
     this.record={
-      version:RACE_RECORD_VERSION,motionModel:'motion-world-continuous-v1',track:this.track,
+      version:RACE_RECORD_VERSION,motionModel:MOTION_MODEL,track:this.track,
       contracts:{observation:CONDITIONS.observation,actions:CONDITIONS.actions,controller:CONDITIONS.controller,
         physicsHz:CONDITIONS.physicsHz,decisionHz:CONDITIONS.decisionHz,decisionSteps:DECISION_STEPS,
         unknownState:'greedy argmax of zero values, first action wins',targetSpeed:RACE_TARGET,timeLimit:MAX_RACE_SECONDS},
@@ -99,7 +99,7 @@ export class FinalRace {
     }
     if(world.state!==this.previousState){
       this.previousState=world.state;
-      this.event('motion-state',{state:world.state});
+      this.event('motion-state',world.state==='falling'?{state:world.state,speech:world.fallFeedback?.text}:{state:world.state});
     }
     if(world.result&&!this.score){
       const {success,reason,distance,collisions,falls,offTrack}=world.result;

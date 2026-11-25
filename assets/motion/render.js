@@ -1,8 +1,11 @@
+import {robotSpeech} from './fall-feedback.js';
+import {trackPoint} from './track-arc.js';
 import {makePose,ROBOT_COLORS as C} from './rig.js';
 import {clamp,mix,smooth} from './world.js';
 const TAU=Math.PI*2;
 export class MotionRenderer{
   constructor(canvas){
+    this.speech=canvas.parentElement?.querySelector('.track-speech');
     this.canvas=canvas;this.ctx=canvas.getContext('2d');this.width=1200;this.height=610;this.dpr=1;
     this.grandstand=new Image();
     this.grandstand.onload=()=>{
@@ -18,7 +21,16 @@ export class MotionRenderer{
     this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);
     this.ctx.setTransform(this.canvas.width/w,0,0,this.canvas.height/h,0,0);
   }
-  project(x,h,z=0){return {x:(x-this.camera)*this.scale+this.anchor+z*13,y:this.ground+z*26-h*this.scale};}
+  project(x,h,z=0){
+    let forward=x-this.camera,side=z;
+    if(this.bend){
+      const point=trackPoint(this.bend,x,z),camera=this.cameraPoint;
+      const dx=point.x-camera.x,dz=point.z-camera.z;
+      forward=dx*camera.cos+dz*camera.sin;
+      side=dz*camera.cos-dx*camera.sin;
+    }
+    return {x:forward*this.scale+this.anchor+side*13,y:this.ground+side*26-h*this.scale};
+  }
   path(points,fill,stroke,width=1){const c=this.ctx;c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));if(fill){c.closePath();c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
   line(a,b,color,width=1){this.path([a,b],null,color,width);}
   ellipse(x,y,rx,ry,fill){const c=this.ctx;c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);c.fillStyle=fill;c.fill();}
@@ -27,6 +39,8 @@ export class MotionRenderer{
     this.lastWorld=w;
     const c=this.ctx,W=this.width,H=this.height,night=!w.track&&w.scene==='night',mobile=W<800;
     this.scale=mobile?145:113;this.anchor=mobile?240:390;this.camera=w.x;this.ground=mobile?H*.65:H*.68;
+    this.bend=w.track?w.track.bend:w.bend;
+    this.cameraPoint=this.bend?trackPoint(this.bend,w.x):null;
     if(w.scene==='curve'){
       // Leave room for the full fallen pose when the runner drifts toward the near edge.
       const runnerGround=this.project(w.x,0,w.center(w.x)+w.lateral);
@@ -60,6 +74,25 @@ export class MotionRenderer{
       c.fillStyle='#bed3da';c.font='11px system-ui';c.fillText(w.sensors.camera?'摄像头视距 1.05 m':'摄像头已关闭',28,H-74);
     }
     this.scaleBar(night);
+    if(this.speech)this.placeSpeech(w);
+  }
+  placeSpeech(w){
+    const bubble=this.speech,canvas=this.canvas;
+    const line=robotSpeech(w);
+    bubble.hidden=!line||!canvas.clientWidth;
+    if(bubble.hidden)return;
+    if(bubble.textContent!==line)bubble.textContent=line;
+    const width=canvas.clientWidth,height=canvas.clientHeight;
+    const x=this.speechAnchor.x*width/this.width,y=this.speechAnchor.y*height/this.height;
+    const right=x<width/2,gap=24,margin=7;
+    const room=(right?width-x:x)-gap-margin;
+    bubble.style.width=Math.min(228,Math.max(90,room))+'px';
+    const left=right?x+gap:x-gap-bubble.offsetWidth;
+    const top=clamp(y-bubble.offsetHeight/2,margin,Math.max(margin,height-bubble.offsetHeight-margin));
+    bubble.dataset.side=right?'right':'left';
+    bubble.style.left=(canvas.offsetLeft+clamp(left,margin,width-bubble.offsetWidth-margin))+'px';
+    bubble.style.top=(canvas.offsetTop+top)+'px';
+    bubble.style.setProperty('--tip',clamp(y-top,10,bubble.offsetHeight-10)+'px');
   }
   background(w,night){
     const c=this.ctx,W=this.width,H=this.height;
@@ -132,7 +165,7 @@ export class MotionRenderer{
     surface.addColorStop(.55,night?'#875055':'#c9604a');
     surface.addColorStop(1,night?'#74464e':'#9b463a');
     this.path(points,surface);
-    for(let lane=-3;lane<=3;lane+=1.5){const ps=[];for(let x=left;x<right;x+=.15)ps.push(this.project(x,w.height(x)+.005,w.center(x)+lane));this.path(ps,null,night?'#bc9080':'#f4cbb0',lane===-3||lane===3?2:1.5);}
+    for(let i=0;i<=5;i++){const lane=-3.6+i*1.44,ps=[];for(let x=left;x<right;x+=.15)ps.push(this.project(x,w.height(x)+.005,w.center(x)+lane));this.path(ps,null,night?'#bc9080':'#f4cbb0',i===0||i===5?2:1.5);}
     for(let n=Math.floor(left/5);n<right/5;n++){
       const x=n*5,p=this.project(x,w.height(x),w.center(x)+3.1),q=this.project(x,w.height(x),w.center(x)+3.5);
       this.line(p,q,night?'#a27f72':'#e5b49a',2);c.save();c.translate(q.x+5,q.y-6);c.fillStyle=night?'#bc9684':'#eac5ab';c.font='10px ui-monospace,monospace';c.fillText(`${n*5}m`,0,0);c.restore();
@@ -163,8 +196,6 @@ export class MotionRenderer{
       const label=this.project(x,h+.18,z-3.6);
       c.fillStyle='#493c35';c.font='bold 14px system-ui';c.fillText(segment.name,label.x+4,label.y-8);
     }
-    // A subtle marked middle lane makes drift, curvature and foot locations readable.
-    c.setLineDash([9,13]);const mid=[];for(let x=left;x<right;x+=.12)mid.push(this.project(x,w.height(x),w.center(x)));this.path(mid,null,night?'#d6ad7d55':'#f6d6aa75',1);c.setLineDash([]);
   }
   obstacle(w,o,front,night){
     const c=this.ctx,cols=o.hit?['#ed8c66','#663c38']:['#f1c687','#656c60'];

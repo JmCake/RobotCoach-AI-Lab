@@ -1,9 +1,10 @@
+import {arcCurvature} from './track-arc.js';
 import {rng} from '../learning.js';
 import {clamp,mix,smooth} from './world.js';
 
 export const RACE_SEED=2026;
 export const RACE_TARGET=6.4;
-export const TRACK_VERSION='continuous-six-v1';
+export const TRACK_VERSION='continuous-six-v2';
 
 export function createFinalTrack(seed=RACE_SEED) {
   seed=seed>>>0;
@@ -29,7 +30,7 @@ export function createFinalTrack(seed=RACE_SEED) {
   return Object.freeze({
     version:TRACK_VERSION,seed,distance:end,segments:Object.freeze(segments),obstacles:Object.freeze(obstacles),
     light:Object.freeze({edge:3,minimum:0}),
-    curve:Object.freeze({lead:4,period:18,cycles:2,amplitude:2.8}),
+    curve:Object.freeze({start:segments[3].start+4,length:36}),
     rough:Object.freeze({edge:4,amplitudes:Object.freeze([.105,.045]),frequencies:Object.freeze([3.7,8.1]),phase:random()*2*Math.PI}),
     friction:Object.freeze({dry:.88,wet:.22,wetRipple:.045,wetFrequency:1.9,edge:3,phase:random()*2*Math.PI}),
   });
@@ -38,6 +39,7 @@ export function createFinalTrack(seed=RACE_SEED) {
 export class FinalTrack {
   constructor(definition){
     this.definition=definition;
+    this.bend=definition.version===TRACK_VERSION?definition.curve:null;
   }
 
   segmentAt(x){
@@ -57,10 +59,12 @@ export class FinalTrack {
   }
 
   center(x){
+    if(this.bend)return 0;
     return this.definition.curve.amplitude*Math.sin(this.curveAngle(x))**4;
   }
 
   curvature(x){
+    if(this.bend)return arcCurvature(this.bend,x);
     const {period,amplitude}=this.definition.curve;
     const a=this.curveAngle(x),k=Math.PI/period,s=Math.sin(a),c=Math.cos(a);
     const slope=4*amplitude*k*s**3*c;

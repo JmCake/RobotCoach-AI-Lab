@@ -1,0 +1,51 @@
+// Reference labels are for comparison after inference. The worker receives pixels only.
+const by20 = {name: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/'};
+const by30 = {name: 'CC BY 3.0', url: 'https://creativecommons.org/licenses/by/3.0/'};
+const bySa20 = {name: 'CC BY-SA 2.0', url: 'https://creativecommons.org/licenses/by-sa/2.0/'};
+const bySa30 = {name: 'CC BY-SA 3.0', url: 'https://creativecommons.org/licenses/by-sa/3.0/'};
+const bySa40 = {name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/'};
+
+export const samples = [
+  {name: '黄石高速黄骅段', file: 'huanghua-highway.webp', group: 'huanghua', point: {x: .53, y: .87},
+    caption: '车道向前延伸，前方有车辆和一座铁路桥。可以点车道线两侧观察可通行候选区。',
+    credit: {place: '河北黄骅 · 邻近黄大铁路', author: 'N509FZ',
+      title: 'G1811 Huangshi Expwy near Huanghua-Dajiawa Railway (20250204160321).jpg', license: bySa40}},
+  {name: '黄骅服务区场内车道', file: 'huanghua-service.webp', group: 'huanghua', point: {x: .59, y: .85},
+    caption: '加油站前方是一片开阔的平坦铺装，左侧停着车。可以点开阔处，再与停靠区对照。',
+    credit: {place: '河北黄骅 · 黄石高速黄骅服务区西行侧', author: 'N509FZ',
+      title: 'Sinopec petrol station at G1811 Huanghua Service Area, westbound (20250204161200).jpg', license: bySa40}},
+  {name: '林荫车道', file: 'avenue.webp', mask: 'avenue-classes.png', point: {x: .52, y: .78},
+    reference: '人工标注区分了沥青、路面标线和车辆。切换两张叠加图，看看绿边在哪里绕过停靠的车。'},
+  {name: '街口转角', file: 'street.webp', mask: 'street-classes.png', point: {x: .49, y: .86},
+    reference: '人工标注区分了街口的沥青路面、人行道和路缘。可对照转角的绿色边界，以及左侧车辆的橙色轮廓。'},
+  {name: '林间小径', file: 'trail.webp', mask: 'trail-classes.png', point: {x: .51, y: .78},
+    reference: '近处的小径被标为碎石路面，旁边还有一小片石块。切到人工标注，看看模型有没有漏掉石块。'},
+  {name: '沥青近照', file: 'asphalt.webp', whole: true,
+    reference: 'RSCD 对整张沥青近照的标注是干燥、明显凹凸。移动白框后，模型只分析新的选区。'},
+  {name: '车辙近照', file: 'ruts.webp', whole: true,
+    reference: 'RSCD 对整张沥青近照的标注是积水、明显凹凸。可以点水面和旁边的车辙分别观察。'},
+  {name: '九寨沟木栈道', file: 'jiuzhaigou.webp', point: {x: .82, y: .81},
+    caption: '木栈道沿右岸通向树林，画面左侧是河水。可以对照绿色边界有没有越过岸线。',
+    credit: {place: '四川 · 九寨沟树正沟', author: 'rheins',
+      title: '栈道 - Boardwalk - 2011.10 - panoramio.jpg', license: by30}},
+  {name: '黄山登山石阶', file: 'huangshan.webp', point: {x: .51, y: .81},
+    caption: '石阶从脚下向上延伸，右侧有护栏。逐级的高度差可以在原图中观察。',
+    credit: {place: '安徽 · 黄山', author: 'Politizer（英文维基百科）',
+      title: 'Huangshan steps.jpg', license: by30}},
+  {name: '虎跳峡山径', file: 'tiger-gorge.webp', point: {x: .82, y: .81},
+    caption: '近处的山径靠右，裸露的岩石旁就是山坡。',
+    credit: {place: '云南 · 虎跳峡', author: '© BrokenSphere / Wikimedia Commons',
+      title: 'Tiger Leaping Gorge trail 22.JPG', license: bySa30}},
+  {name: '太鲁阁峡谷公路', file: 'taroko.webp', point: {x: .66, y: .89},
+    caption: '公路沿岩壁转弯，左侧有迎面驶来的摩托车。可以核对橙色轮廓有没有覆盖它。',
+    credit: {place: '花莲 · 太鲁阁峡谷', author: 'Neeson Hsu',
+      title: 'Highway No.8 passing through Taroko.jpg', license: by20}},
+  {name: '熊野古道石铺路', file: 'kumano.webp', point: {x: .39, y: .82},
+    caption: '石铺路上的落叶和两旁林地颜色相近，可以沿石块边缘辨认路面。',
+    credit: {place: '日本和歌山 · 纪伊路', author: 'Indiana jo',
+      title: 'Kiiji Cobblestones 01.jpg', license: bySa40}},
+  {name: '新森林泥泞车辙', file: 'new-forest.webp', point: {x: .55, y: .62},
+    caption: '前方的车辙里有积水。可以把白框从水面移到旁边的泥地，比较干湿读数。',
+    credit: {place: '英国汉普郡 · 霍德尔', author: 'Lewis Clarke / Geograph',
+      title: 'New Forest , Muddy Track - geograph.org.uk - 5733734.jpg', license: bySa20}},
+];

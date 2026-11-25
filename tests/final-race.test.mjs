@@ -6,6 +6,7 @@ import {FinalRace,RACE_LEARNED,RACE_RULE,raceStrategy} from '../assets/motion/fi
 import {CONDITIONS,DECISION_STEPS} from '../assets/motion/short-course.js';
 import {createModel} from '../assets/motion/short-learning.js';
 import {isReplayableRace,raceFrameView} from '../assets/motion/race-record.js';
+import {trackPoint,trialBend,arcCurvature} from '../assets/motion/track-arc.js';
 import {makePose} from '../assets/motion/rig.js';
 
 const sensors=CONDITIONS.sensors;
@@ -15,6 +16,25 @@ const run=options=>{
   while(!race.ended)race.step();
   return race;
 };
+
+test('stadium lanes share one centre and join both straights tangentially',()=>{
+  for(const bend of [trialBend,createFinalTrack().curve]){
+    const radius=bend.length/Math.PI,end=bend.start+bend.length;
+    for(const offset of [-3.6,0,3.6]){
+      for(let i=0;i<=20;i++){
+        const p=trackPoint(bend,bend.start+bend.length*i/20,offset);
+        assert.ok(Math.abs(Math.hypot(p.x-bend.start,p.z-radius)-(radius-offset))<1e-8);
+      }
+      const entry=trackPoint(bend,bend.start-.01,offset),exit=trackPoint(bend,end+.01,offset);
+      assert.ok(Math.abs(entry.z-offset)<1e-8&&Math.abs(exit.z-(2*radius-offset))<1e-8);
+      assert.equal(entry.cos,1);
+      assert.equal(exit.cos,-1);
+    }
+    assert.equal(arcCurvature(bend,bend.start-1),0);
+    assert.equal(arcCurvature(bend,end),0);
+    assert.ok(Math.abs(arcCurvature(bend,end-1)-1/radius)<1e-10);
+  }
+});
 
 test('the continuous surface is sampled at the obstacle and at each support position',()=>{
   const definition=createFinalTrack(),track=new FinalTrack(definition);

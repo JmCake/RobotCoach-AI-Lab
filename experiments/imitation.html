@@ -1,16 +1,39 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>行为克隆原理演示</title><link rel="stylesheet" href="../assets/experiment.css"><style>canvas{width:100%}.two h2{font-size:16px;margin:0 0 8px}</style></head><body>
-<div class="two"><div><h2>示范者</h2><canvas id="expert" width="800" height="300" aria-label="示范者根据障碍选择动作"></canvas></div><div><h2>模仿者</h2><canvas id="copy" width="800" height="300" aria-label="模仿者按相同时间复现示范动作"></canvas></div></div>
-<div class="controls"><button id="demo" class="primary">观看模仿演示</button><button id="change" aria-pressed="false">改变障碍位置</button></div><div class="feedback" id="feedback" role="status"></div>
-<p class="muted">这里用动作回放说明“模仿与局限”，没有训练独立的行为克隆模型。真正的行为克隆学习“观察 → 动作”的映射，而不是死记动作时间。</p>
-<script type="module">
-import {Runner} from '../assets/learning.js';import {drawRunner} from '../assets/runner-render.js';import {load,save,storageNotice} from '../assets/state.js';
-let changed=!!load().imitationChanged,raf=0,active=false,last=0,acc=0,tape=[],expert,copy;
-const $=id=>document.getElementById(id);
-function init(){expert=new Runner();copy=new Runner();for(const w of [expert,copy]){w.spawn=99999;w.obstacles=[{x:600,y:197,width:30,height:38,type:'ground',passed:false},{x:1100,y:170,width:65,height:22,type:'beam',passed:false},{x:1550,y:187,width:30,height:48,type:'ground',passed:false}];}if(changed)copy.obstacles[0].x-=140;draw();}
-function draw(){drawRunner($('expert'),expert);drawRunner($('copy'),copy);$('change').setAttribute('aria-pressed',changed);}
-function stop(){active=false;cancelAnimationFrame(raf);$('demo').disabled=false;$('change').disabled=false;}
-function tick(now){if(!active)return;acc+=Math.min(now-last,100);last=now;while(acc>=1000/15){acc-=1000/15;const o=expert.obstacles.find(o=>o.x+o.width>=expert.robot.x),distance=o?o.x-expert.robot.x-expert.robot.width:999;const action=o?.type==='ground'&&distance<115&&!expert.robot.isJumping?1:o?.type==='beam'&&distance<150?2:0;tape.push(action);if(!expert.done)expert.step(action);if(!copy.done)copy.step(action);if(copy.done||expert.done||expert.passed===3){stop();$('feedback').textContent=copy.done?`障碍提前出现，模仿者${copy.reason}。示范动作未变，环境却变了；学习观察与动作的关系，才能应对变化。`:'相同环境中，回放示范动作也能跨过障碍。试着改变障碍位置，再比较。';storageNotice(save({imitationResult:$('feedback').textContent}));draw();return;}}draw();raf=requestAnimationFrame(tick);}
-$('demo').onclick=()=>{init();active=true;tape=[];last=performance.now();acc=0;$('demo').disabled=true;$('change').disabled=true;$('feedback').textContent='示范者观察障碍做动作，模仿者同步回放同一动作。';raf=requestAnimationFrame(tick);};
-$('change').onclick=()=>{changed=!changed;storageNotice(save({imitationChanged:changed}));init();$('feedback').textContent=changed?'模仿者的第一个障碍提前出现，示范者环境保持原样。再运行比较。':'两个跑道的障碍位置已恢复一致。';};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});document.addEventListener('coursevisibility',e=>{if(e.detail)stop()});window.addEventListener('pagehide',stop);init();$('feedback').textContent=load().imitationResult||'点击观看演示，再改变模仿者跑道中的障碍位置。';
-</script><script src="../assets/frame.js"></script><p><a data-v2-book style="color:#9be9c9" href="../index.html?lab=v2#design" target="_top">前往 V2 综合挑战：实际训练与冻结测试 →</a></p></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>跟教练学越障</title>
+  <link rel="stylesheet" href="../assets/experiment.css">
+  <link rel="stylesheet" href="../assets/motion/course-trial.css">
+  <style>
+    .lanes { display:grid; gap:12px; }
+    .lanes.compare { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .lane header { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .lane h2 { margin:0; font-size:18px; }
+    .lane strong { color:#d3f56f; font-variant-numeric:tabular-nums; }
+    .lane .course-track canvas { display:block; width:100%; height:auto; aspect-ratio:2.6; }
+    .compare .course-track canvas { aspect-ratio:2; }
+    @media(max-width:600px){ .lanes.compare { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div id="lanes" class="lanes">
+    <section class="lane">
+      <header><h2 id="firstTitle">教练示范</h2><strong id="firstCount"></strong></header>
+      <div class="course-track"><canvas id="first" width="800" height="300" aria-labelledby="firstTitle"></canvas><p class="track-speech" hidden></p></div>
+    </section>
+    <section class="lane" id="secondLane" hidden>
+      <header><h2 id="secondTitle">看过示范</h2><strong id="secondCount"></strong></header>
+      <div class="course-track"><canvas id="second" width="800" height="300" aria-labelledby="secondTitle"></canvas><p class="track-speech" hidden></p></div>
+    </section>
+  </div>
+  <div class="controls">
+    <button id="demo" class="primary">看教练示范，再试跑</button>
+    <button id="change" hidden>移近第一栏再试</button>
+  </div>
+  <div class="feedback" id="feedback" role="status"></div>
+  <script type="module" src="../assets/imitation.js"></script>
+  <script src="../assets/frame.js"></script>
+</body>
+</html>

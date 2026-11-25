@@ -80,5 +80,5 @@ test('32x training keeps browser frames responsive and hidden training stops',as
  const perf=await f.locator('body').evaluate(()=>new Promise(resolve=>{const deltas=[];let last=performance.now();function tick(now){deltas.push(now-last);last=now;if(deltas.length<100)requestAnimationFrame(tick);else {const sorted=deltas.slice(5).sort((a,b)=>a-b);resolve({samples:sorted.length,median:sorted[Math.floor(sorted.length*.5)],p95:sorted[Math.floor(sorted.length*.95)],max:Math.max(...sorted)});}}requestAnimationFrame(tick);}));
  expect(perf.samples).toBe(95);expect(perf.p95).toBeLessThan(500);await f.locator('#start').click();const updates=Number(await f.locator('#updates').textContent());expect(updates).toBeGreaterThan(100);
  const dir=process.env.EVIDENCE_DIR||join(tmpdir(),'robotcoach-v1.1');await mkdir(dir,{recursive:true});await writeFile(join(dir,'browser-performance.json'),JSON.stringify({...perf,updates},null,2));
- await page.getByRole('button',{name:'三 · AI闭环'}).click();const snapshot=await saved(page);await page.waitForTimeout(400);expect(await saved(page)).toEqual(snapshot);
+ await page.locator('#openContents').click();await page.locator('#lessonList a[href="#loop"]').click();const snapshot=await saved(page);await page.waitForTimeout(400);expect(await saved(page)).toEqual(snapshot);
 });

@@ -3,6 +3,7 @@ import {FinalTrack,TRACK_VERSION} from './final-track.js';
 import {RULE_ACTION_PARAMETERS} from './short-course.js';
 
 export const RACE_RECORD_VERSION=1;
+export const MOTION_MODEL='motion-world-turn-load-v2';
 const POSITION_FIELDS=['x','speed','phase','y','vy','theta','omega','lateral','heading','turn','slip','crouch','compression','age'];
 export const FRAME_FIELDS=Object.freeze([
   'tick',...POSITION_FIELDS,'state','scene','contacts','footX','footY','footSlip','fallFeet',
@@ -31,7 +32,7 @@ export function isRaceScore(score) {
 }
 
 function validTrack(track) {
-  if(!object(track)||track.version!==TRACK_VERSION||!count(track.seed)||!positive(track.distance))return false;
+  if(!object(track)||![TRACK_VERSION,'continuous-six-v1'].includes(track.version)||!count(track.seed)||!positive(track.distance))return false;
   const {segments,obstacles,light,curve,rough,friction}=track;
   if(!Array.isArray(segments)||segments.length!==segmentIds.length||
     !segments.every((segment,i)=>object(segment)&&segment.id===segmentIds[i]&&
@@ -41,7 +42,9 @@ function validTrack(track) {
     numeric(obstacle.x)&&obstacle.x>=0&&obstacle.x<=track.distance&&positive(obstacle.width)&&
     positive(obstacle.height)&&['beam','hurdle'].includes(obstacle.type))&&
     object(light)&&positive(light.edge)&&numeric(light.minimum)&&light.minimum>=0&&light.minimum<=1&&
-    object(curve)&&positive(curve.period)&&numeric(curve.lead)&&positive(curve.cycles)&&numeric(curve.amplitude)&&
+    object(curve)&&(track.version===TRACK_VERSION
+      ?numeric(curve.start)&&curve.start>=segments[3].start&&positive(curve.length)&&curve.start+curve.length<=segments[3].end
+      :positive(curve.period)&&numeric(curve.lead)&&positive(curve.cycles)&&numeric(curve.amplitude))&&
     object(rough)&&positive(rough.edge)&&pair(rough.amplitudes,numeric)&&pair(rough.frequencies,numeric)&&numeric(rough.phase)&&
     object(friction)&&positive(friction.edge)&&['dry','wet','wetRipple','wetFrequency','phase'].every(key=>numeric(friction[key]));
 }
@@ -68,7 +71,7 @@ function validFrame(frame,tick,obstacleCount) {
 }
 
 export function isReplayableRace(record) {
-  if(!object(record)||record.version!==RACE_RECORD_VERSION||record.motionModel!=='motion-world-continuous-v1')return false;
+  if(!object(record)||record.version!==RACE_RECORD_VERSION||![MOTION_MODEL,'motion-world-continuous-v1'].includes(record.motionModel))return false;
   const {track,sensors,strategy,appearance,contracts,frameFields,frames,score,presentation,events,decisions}=record;
   if(!validTrack(track)||!isRaceSensors(sensors)||!validStrategy(strategy)||!numeric(appearance?.terrainPhase)||
     contracts?.physicsHz!==1/DT||!isRaceScore(score)||!clock(presentation)||score.tick>presentation.tick||
@@ -104,7 +107,11 @@ export function raceFrameView(record,index) {
   if(!frame)return null;
   const state=Object.fromEntries(record.frameFields.map((key,i)=>[key,frame[i]]));
   const track=new FinalTrack(record.track);
+  const failure=record.score.outcome==='failed'&&index>=record.score.tick;
+  const fall=failure&&record.events.findLast(event=>event.tick<=index&&event.type==='motion-state'&&event.state==='falling');
   return {
+    fallFeedback:typeof fall?.speech==='string'?{text:fall.speech}:null,
+    result:failure?record.score:null,
     ...state,track,time:state.tick*DT,finishX:record.track.distance,courseDistance:record.track.distance,
     sensors:record.sensors,hasObstacles:true,terrainPhase:record.appearance.terrainPhase,
     center:x=>track.center(x),height:x=>track.height(x),curvature:x=>track.curvature(x),

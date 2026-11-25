@@ -1,20 +1,24 @@
 import {load,save,storageNotice} from './state.js';
 const pages=[
- ['diagnosis','初代机能跑过急弯吗？','只有一台摄像头，前面是 40 米急弯。举手猜一猜，再让机器人上场。','humanoid-trial.html?mode=baseline'],
- ['workshop','认识并安装机器人的感官','点击机器人身上的部位了解它的作用，再选择或拖入模块，看看机器人的外观怎样改变。','selection.html'],
- ['trial','同一条弯道，这次会怎样？','用刚才安装的感官再跑一次。对照初代机，看看改变感官后，距离和用时有什么变化。','humanoid-trial.html'],
- ['imitation','照着做，能一直做对吗？','行为克隆从人的示范中学习动作。先观察模仿，再改变障碍位置，看看仅仅复读动作的局限。','imitation.html'],
- ['manual','这一次，你来操控','跨过矮栏，从横梁下方通过。试着掌握跳跃和下蹲的时机。','motion-learning.html?mode=manual'],
- ['training','让机器人自己试错','让机器人尝试不同的动作，观察越障和失败怎样改变它下一轮的选择。','motion-learning.html?mode=train'],
- ['showcase','学过以后，真的更好了吗？','冻结训练前后的策略，让它们各跑相同的 20 条留出短道，比较实际成绩。','motion-learning.html?mode=showcase'],
- ['loop','搭建并测试闭环','把「行动」接回「感知」。搭好后，在同一张图上关掉一个环节，再运行观察。','loop.html'],
- ['design','终极挑战：让机器人跑向终点','选好感官和动作策略，挑战连续六段赛道。','final-race.html']
+ ['diagnosis','初代机上场前，先试一个急弯','决赛有六段赛道。只装摄像头，能跑完这 40 米急弯吗？','humanoid-trial.html?mode=baseline'],
+ ['workshop','刚才弯里没站稳，加哪个感官？','','selection.html'],
+ ['trial','回到刚才的弯道，能多跑几米？','','humanoid-trial.html'],
+ ['imitation','弯道之后是跨栏，先跟教练跑一遍','','imitation.html'],
+ ['manual','还是这三道栏，换你掌握时机','空格或 ↑ 跳跃，↓ 切换下蹲。','motion-learning.html?mode=manual'],
+ ['training','松开按键，让它靠试错练跳和蹲','','motion-learning.html?mode=train'],
+ ['showcase','换条没练过的赛道，它还跳得准吗？','','motion-learning.html?mode=showcase'],
+ ['loop','赛前检查：跳完一栏，怎么发现下一栏？','','loop.html'],
+ ['design','终极挑战：带你的机器人跑完六段赛道','','final-race.html']
 ];
 const state=load(),host=document.getElementById('page');
 const previousPages=['diagnosis','discovery','workshop','trial','imitation','manual','training','showcase','loop','fault','design'];
 const aliases={discovery:'workshop',fault:'loop'};
 const findPage=id=>pages.findIndex(([page])=>page===(aliases[id]??id));
-const chapters=[...document.querySelectorAll('[data-chapter]')].map(link=>({link,start:findPage(link.dataset.chapter)}));
+const chapters=[
+  {name:'一 · 弯道试跑',start:findPage('diagnosis')},
+  {name:'二 · 越障训练',start:findPage('imitation')},
+  {name:'三 · 检修与决赛',start:findPage('loop')},
+];
 const options=new URLSearchParams(location.search);
 const legacyRunner=options.get('runner')==='legacy';
 const legacyChallenge=options.get('lab')==='v2';
@@ -37,7 +41,8 @@ function render(index,focus=false){
   const h=document.createElement('h1');h.id='pageTitle';h.textContent=title;h.tabIndex=-1;
   const legacy=legacyRunner&&['manual','training','showcase'].includes(id);
   const p=document.createElement('p');p.className='lead';p.textContent=legacy?'使用旧版 Runner 和本机保留的训练记录。':oldFinal?'继续使用原有 V2 训练、综合实验和图形化方案。':lead;
-  host.append(h,p);
+  host.append(h);
+  if(p.textContent)host.append(p);
   const activity=document.createElement('div');activity.className='book-activity';host.append(activity);
   const frame=document.createElement('iframe');frame.src='experiments/'+(legacy?src.replace('motion-learning.html','runner.html'):oldFinal?'design.html':src);frame.className='experiment';frame.title=title;frame.id='experiment';activity.append(frame);
   if(legacy||oldFinal){
@@ -49,10 +54,7 @@ function render(index,focus=false){
   document.getElementById('next').disabled=index===pages.length-1;
   document.getElementById('pageNumber').textContent=`${String(index+1).padStart(2,'0')} / ${pages.length}`;
   for(const link of lessonList.querySelectorAll('a'))link.setAttribute('aria-current',link.hash==='#'+id?'page':'false');
-  chapters.forEach(({link,start},i)=>{
-    const end=chapters[i+1]?.start??pages.length;
-    link.setAttribute('aria-current',index>=start&&index<end?'page':'false');
-  });
+  document.getElementById('chapterName').textContent=chapters.findLast(chapter=>chapter.start<=index).name;
   if(focus){h.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
 }
 function go(n){
@@ -64,7 +66,6 @@ function go(n){
 }
 document.getElementById('prev').onclick=()=>go(current-1);
 document.getElementById('next').onclick=()=>go(current+1);
-for(const {link,start} of chapters)link.onclick=()=>go(start);
 function openCurrent(focus=false){
   const linked=findPage(location.hash.slice(1));
   render(linked>=0?linked:findPage(state.pageId??previousPages[state.page]),focus);
@@ -78,9 +79,9 @@ function syncVisibility(){
 }
 document.addEventListener('visibilitychange',syncVisibility);
 contents.addEventListener('close',syncVisibility);
-for(const [i,{link,start}] of chapters.entries()){
+for(const [i,{name,start}] of chapters.entries()){
   const group=document.createElement('section'),heading=document.createElement('h3');
-  heading.textContent=link.textContent;group.append(heading);
+  heading.textContent=name;group.append(heading);
   for(let j=start;j<(chapters[i+1]?.start??pages.length);j++){
     const [id,title]=pages[j],a=document.createElement('a'),number=document.createElement('small');
     a.href='#'+id;number.textContent=String(j+1).padStart(2,'0');a.append(number,title);

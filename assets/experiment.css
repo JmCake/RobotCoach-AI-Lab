@@ -35,3 +35,4 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
 .workshop-stage { background: #e6ebe0; border: 1px solid #879a8b; }
 .sensor-install-layout .sensor-card[aria-pressed="true"] { border-color: #d1eb8a; background: #25473b; }
 .sensor-install-layout .sensor-card[aria-pressed="true"] b { color: #e2f9a7; }
+.vision-entry { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 8px; color: #d3f56f; text-underline-offset: 4px; font-weight: 650; }

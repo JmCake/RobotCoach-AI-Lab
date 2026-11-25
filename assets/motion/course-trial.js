@@ -1,11 +1,9 @@
 import {COURSE_STATE_KEY,INITIAL_SENSORS,load,sameSensors,save,storageNotice} from '../state.js';
-import {MotionWorld,COURSE_DISTANCE,DEFAULT_SPEED,SCENES,SENSOR_NAMES,STATE_NAMES} from './world.js';
+import {SENSOR_NAMES,STATE_NAMES} from './world.js';
+import {CURVE_TRIAL as conditions,createCurveTrial} from './curve-trial.js';
 import {MotionRenderer} from './render.js';
 import {createMotionPlayback} from './playback.js';
 
-const conditions=Object.freeze({
-  scene:'curve',seed:2026,distance:COURSE_DISTANCE,target:DEFAULT_SPEED,controller:'motion-rule-v1',
-});
 const keys=Object.keys(SENSOR_NAMES); // The course's 激光雷达 maps directly to motion's lidar/激光测距.
 const baselineOnly=new URLSearchParams(location.search).get('mode')==='baseline';
 const state=load();
@@ -15,7 +13,7 @@ const records={baseline:state.chapter1BaselineRun,student:state.chapter1StudentR
 const revision=state.sensorRevision??0;
 const $=id=>document.getElementById(id);
 const canvas=$('motionCanvas'),renderer=new MotionRenderer(canvas);
-const play=$('play'),feedback=$('runFeedback');
+const play=$('play');
 const modes=document.querySelectorAll('[data-setup]');
 let mode=baselineOnly?'baseline':'student',world=null,settled=false,recorded=null;
 let prediction=null;
@@ -59,7 +57,7 @@ function showResult(setup) {
   const result=setup===mode&&world.time>0?world.result:storedResult(setup);
   const name=setup==='student'?'我的配置':'初代机';
   const status=result
-    ? `${result.success?'已过终点':`未通过 · ${result.reason}`} · ${result.distance.toFixed(1)} / ${conditions.distance} m · ${result.time.toFixed(1)} 秒 · 摔倒 ${result.falls} 次`
+    ? `${result.success?'已过终点':'未通过'} · ${result.distance.toFixed(1)} / ${conditions.distance} m · ${result.time.toFixed(1)} 秒 · 摔倒 ${result.falls} 次`
     : setup===mode&&world.time>0?'试跑尚未结束':'尚未测试';
   const text=`${name} · ${status}`;
   if(output.textContent!==text)output.textContent=text;
@@ -78,8 +76,6 @@ function readout() {
   $('motionState').textContent=status;
   $('motionState').dataset.state=world.time===0?'ready':world.state;
   play.textContent=playback.running?'暂停':settled?'重新试跑':world.time>0?'继续试跑':'开始试跑';
-  const text=(world.finishFeedback??world.fallFeedback)?.text;
-  if(text){feedback.textContent=text;feedback.hidden=false;}
   if(!baselineOnly)showResult('student');
   showResult('baseline');
   if(baselineOnly){
@@ -87,7 +83,7 @@ function readout() {
     if(prediction&&world.result){
       const result=world.result,correct=(prediction==='pass')===result.success;
       $('verdict').hidden=false;
-      setText($('verdict'),`${correct?'猜中了！':'结果揭晓：'}${result.success?'机器人冲过终点。':`跑到 ${result.distance.toFixed(1)} 米时，${result.reason}。`}`);
+      setText($('verdict'),`${correct?'猜中了！':'结果揭晓：'}${result.success?'机器人冲过终点。':`跑到 ${result.distance.toFixed(1)} 米。`}`);
     }
   }else{
     const other=mode==='student'?'baseline':'student';
@@ -114,17 +110,16 @@ function pause() {
 
 function reset() {
   playback.pause();
-  world=new MotionWorld({...conditions,sensors:configs[mode],repeat:false});
+  world=createCurveTrial(configs[mode]);
   settled=false;
   recorded=null;
-  feedback.hidden=true;
   prediction=null;
   $('verdict').hidden=true;
   for(const button of guesses)button.setAttribute('aria-pressed','false');
   draw();
 }
 
-$('trialModes').hidden=$('studentResult').hidden=$('demoEntry').hidden=baselineOnly;
+$('trialModes').hidden=$('studentResult').hidden=baselineOnly;
 $('prediction').hidden=!baselineOnly;
 $('studentLane').hidden=baselineOnly;
 for(const button of guesses)button.addEventListener('click',()=>{
@@ -132,7 +127,6 @@ for(const button of guesses)button.addEventListener('click',()=>{
   prediction=button.dataset.guess;
   for(const choice of guesses)choice.setAttribute('aria-pressed',String(choice===button));
 });
-$('conditions').textContent=`${SCENES[conditions.scene].name} · ${conditions.distance} m · 目标速度 ${conditions.target} m/s · 种子 ${conditions.seed} · 规则控制`;
 function showSetup() {
   renderer.referenceDistance=mode==='student'?storedResult('baseline')?.distance:null;
   for(const button of modes)button.setAttribute('aria-pressed',String(button.dataset.setup===mode));
@@ -153,9 +147,6 @@ play.addEventListener('click',()=>{
   readout();
 });
 
-const demo=new URL($('motionLink').href);
-demo.search=new URLSearchParams({from:'book',scene:conditions.scene,sensors:keys.filter(key=>studentSensors[key]).join(',')});
-$('motionLink').href=demo;
 
 let parentHidden=false;
 document.addEventListener('coursevisibility',event=>{

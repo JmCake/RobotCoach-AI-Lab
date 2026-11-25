@@ -26,8 +26,8 @@ test('manual keyboard commands drive the humanoid and retry starts at zero',asyn
   await f.locator('#retry').click();
   await expect(f.locator('#distance')).toHaveText('0.0 / 32 m');
   expect(await stored(page)).toBeNull();
-  await f.getByText('实验条件与操作',{exact:true}).click();
-  await f.getByRole('link',{name:'打开旧版 Runner 实验'}).click();
+  await expect(f.locator('#legacy')).toHaveCount(0);
+  await page.goto('/?runner=legacy#manual');
   await expect(page).toHaveURL(/\?runner=legacy#manual$/);
   await expect(frame(page).locator('#game')).toBeVisible();
   await page.getByRole('link',{name:'返回人形短道实验'}).click();
@@ -51,10 +51,10 @@ test('a real training batch saves Q updates and page eight compares two read-onl
   await page.screenshot({path:join(evidence,'chapter2-desktop-training.png'),fullPage:true});
   await page.reload();
   await expect(f.locator('#updates')).toHaveText(String(model.updates));
-  await f.getByText('奖励规则与真实 Q 更新',{exact:true}).click();
+  await f.getByText('训练详情',{exact:true}).click();
   await expect(f.locator('#auditRows tr')).toHaveCount(12);
   await expect(f.locator('#rewardBreakdown')).toContainText('上轮奖励构成');
-  await f.locator('#showcaseLink').click();
+  await page.locator('#next').click();
   await expect(page).toHaveURL(/#showcase$/);
   await f.locator('#compare').click();
   await expect(f.locator('#comparison')).toBeVisible();
@@ -109,7 +109,7 @@ test('training pauses on hide, flushes on navigation and respects a reset in ano
   await f.locator('#play').click();
   await expect.poll(updates).toBeGreaterThan(paused);
   const shown=await updates();
-  await page.getByRole('button',{name:'三 · AI闭环'}).click();
+  await page.locator('#openContents').click();await page.locator('#lessonList a[href="#loop"]').click();
   const checkpoint=await stored(page);
   expect(JSON.parse(checkpoint).updates).toBeGreaterThanOrEqual(shown);
   await page.waitForTimeout(300);
@@ -119,7 +119,7 @@ test('training pauses on hide, flushes on navigation and respects a reset in ano
   await f.locator('#play').click();
   const other=await context.newPage();
   await other.goto('/#training');
-  await frame(other).getByText('奖励规则与真实 Q 更新',{exact:true}).click();
+  await frame(other).getByText('训练详情',{exact:true}).click();
   await frame(other).locator('#reset').click();
   await expect(f.locator('#updates')).toHaveText('0');
   await expect(f.locator('#play')).toHaveText('开始训练');
@@ -137,6 +137,7 @@ test('320px touch controls and an untrained comparison remain usable',async({bro
   await f.locator('#duck').tap();
   await expect(f.locator('#duck')).toHaveAttribute('aria-pressed','true');
   await page.goto('/#showcase');
+  await expect(f.locator('#compare')).toBeVisible();
   await f.locator('body').evaluate(()=>{
     document.getElementById('compare').click();
     document.getElementById('cancelCompare').click();
